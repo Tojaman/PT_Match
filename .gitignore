@@ -43,3 +43,4 @@ out/
 /scripts
 AGENTS.md
 GEMINI.md
+/.gradle-home
