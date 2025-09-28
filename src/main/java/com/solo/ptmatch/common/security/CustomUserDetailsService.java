@@ -28,7 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     private UserDetails toUserDetails(User user) {
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(resolveRole(user.getRole())));
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(resolveRole(user.getRole().name())));
         return org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
             .password(user.getPassword())
             .authorities(authorities)
