@@ -1,6 +1,7 @@
 package com.solo.ptmatch.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -8,7 +9,7 @@ import java.util.Objects;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
 
-    private static final String DEFAULT_ERROR_CODE = "INTERNAL_SERVER_ERROR";
+    private static final String DEFAULT_ERROR_CODE = ErrorCode.INTERNAL_SERVER_ERROR.getCode();
 
     private final LocalDateTime errorTime;
     private final String code;
@@ -24,11 +25,17 @@ public class ErrorResponse {
 
     public static ErrorResponse from(GlobalException exception) {
         Objects.requireNonNull(exception, "exception must not be null");
-        return new ErrorResponse(LocalDateTime.now(), DEFAULT_ERROR_CODE, exception.getMessage(), null);
+        ErrorCode errorCode = exception.getErrorCode();
+        Object errorData = exception.getData().orElse(null);
+        String resolvedCode = errorCode != null ? errorCode.getCode() : DEFAULT_ERROR_CODE;
+        String resolvedMessage = exception.getMessage();
+        return new ErrorResponse(LocalDateTime.now(), resolvedCode, resolvedMessage, errorData);
     }
 
-    public static ErrorResponse of(String code, String message, Object data) {
-        return new ErrorResponse(LocalDateTime.now(), Objects.requireNonNullElse(code, DEFAULT_ERROR_CODE), message, data);
+    public static ErrorResponse of(ErrorCode errorCode, String message, Object data) {
+        ErrorCode safeCode = errorCode == null ? ErrorCode.INTERNAL_SERVER_ERROR : errorCode;
+        String resolvedMessage = message == null || message.isBlank() ? safeCode.getMessage() : message;
+        return new ErrorResponse(LocalDateTime.now(), safeCode.getCode(), resolvedMessage, data);
     }
 
     public LocalDateTime getErrorTime() {
