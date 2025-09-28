@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.solo.ptmatch.common.security.JwtTokenProvider;
 import com.solo.ptmatch.trainer.application.TrainerProfileService;
 import com.solo.ptmatch.trainer.presentation.request.TrainerCertificationRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerProfileUpsertRequest;
@@ -28,45 +29,33 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@ExtendWith(MockitoExtension.class)
+@AutoConfigureMockMvc(addFilters = false)
+@WebMvcTest(TrainerController.class)
 class TrainerContractTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    @Autowired // Spring이 제공하는 ObjectMapper를 사용
     private ObjectMapper objectMapper;
 
-    @Mock
+    @MockitoBean // @WebMvcTest에서는 @Mock 대신 @MockitoBean 사용
     private TrainerProfileService trainerProfileService;
 
-    @InjectMocks // 4. @Mock 객체를 이 컨트롤러에 주입
-    private TrainerController trainerController;
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
 
-    @BeforeEach // 5. 각 테스트 실행 전, 수동으로 MockMvc 설정
-    void setUp() {
-        // ObjectMapper를 직접 생성하고, JavaTimeModule을 등록
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        mockMvc = MockMvcBuilders.standaloneSetup(trainerController)
-            .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
-            .build();
-    }
+    // 기존 setUp() 메서드와 @InjectMocks private TrainerController trainerController;는 @WebMvcTest에서 필요 없으므로 제거됨
     
     @Test
     @DisplayName("트레이너 목록 조회 시 필터 파라미터를 적용해 응답한다")
