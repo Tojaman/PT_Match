@@ -37,3 +37,9 @@ out/
 .vscode/
 
 /문서
+/specs
+/.codex
+/.specify
+/scripts
+AGENTS.md
+GEMINI.md
