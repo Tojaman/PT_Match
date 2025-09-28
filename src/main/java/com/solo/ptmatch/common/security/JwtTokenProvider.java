@@ -20,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -54,10 +55,10 @@ public class JwtTokenProvider {
             .collect(Collectors.toList());
 
         return Jwts.builder()
-            .subject(subject)
+            .setSubject(subject)
             .claim(AUTHORITIES_KEY, roles)
-            .issuedAt(Date.from(now))
-            .expiration(Date.from(expiry))
+            .setIssuedAt(Date.from(now))
+            .setExpiration(Date.from(expiry))
             .signWith(secretKey)
             .compact();
     }
@@ -65,7 +66,7 @@ public class JwtTokenProvider {
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
         List<SimpleGrantedAuthority> authorities = extractAuthorities(claims);
-        User principal = User.withUsername(claims.getSubject())
+        UserDetails principal = User.withUsername(claims.getSubject())
             .password("")
             .authorities(authorities)
             .accountLocked(false)
