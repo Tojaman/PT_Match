@@ -1,9 +1,5 @@
 package com.solo.ptmatch.trainer.presentation.response;
 
-import com.solo.ptmatch.trainer.application.dto.TrainerCertificationResult;
-import com.solo.ptmatch.trainer.application.dto.TrainerDetailResult;
-import com.solo.ptmatch.trainer.application.dto.TrainerReviewSnippetResult;
-import com.solo.ptmatch.trainer.application.dto.TrainerScheduleResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,23 +34,6 @@ public record TrainerDetailResponse(
     List<CertificationResponse> certifications
 ) {
 
-    public static TrainerDetailResponse from(TrainerDetailResult result) {
-        return new TrainerDetailResponse(
-            result.trainerId(),
-            result.name(),
-            result.bio(),
-            joinSpecialties(result.specialties()),
-            result.careerYears(),
-            result.gymAddress(),
-            result.profileImageUrl(),
-            result.likesCount(),
-            result.averageRating(),
-            result.schedules().stream().map(ScheduleResponse::from).toList(),
-            result.reviews().stream().map(ReviewResponse::from).toList(),
-            result.certifications().stream().map(CertificationResponse::from).toList()
-        );
-    }
-
     private static String joinSpecialties(Iterable<String> specialties) {
         StringJoiner joiner = new StringJoiner(", ");
         specialties.forEach(joiner::add);
@@ -70,10 +49,6 @@ public record TrainerDetailResponse(
         @Schema(description = "종료 시간", example = "18:00")
         String endTime
     ) {
-
-        private static ScheduleResponse from(TrainerScheduleResult result) {
-            return new ScheduleResponse(result.day(), result.startTime(), result.endTime());
-        }
     }
 
     @Schema(description = "리뷰 요약 응답")
@@ -87,10 +62,6 @@ public record TrainerDetailResponse(
         @Schema(description = "리뷰 내용")
         String content
     ) {
-
-        private static ReviewResponse from(TrainerReviewSnippetResult result) {
-            return new ReviewResponse(result.reviewId(), result.reviewerName(), result.rating(), result.content());
-        }
     }
 
     @Schema(description = "자격증 응답")
@@ -104,9 +75,5 @@ public record TrainerDetailResponse(
         @Schema(description = "취득일", example = "2023-01-01")
         LocalDate acquisitionDate
     ) {
-
-        private static CertificationResponse from(TrainerCertificationResult result) {
-            return new CertificationResponse(result.certificationId(), result.name(), result.issuingOrganization(), result.acquisitionDate());
-        }
     }
 }

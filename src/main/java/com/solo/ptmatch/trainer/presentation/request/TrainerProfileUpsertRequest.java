@@ -1,0 +1,38 @@
+package com.solo.ptmatch.trainer.presentation.request;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import java.util.List;
+
+@Schema(description = "트레이너 프로필 등록 요청")
+public record TrainerProfileUpsertRequest(
+    @Schema(description = "자기소개", example = "10년 경력의 전문 트레이너입니다.")
+    @NotBlank
+    String bio,
+
+    @Schema(description = "경력 년수", example = "10")
+    @Min(0)
+    int careerYears,
+
+    @Schema(description = "전문 분야 목록", example = "[\"다이어트\", \"근력강화\"]")
+    @NotEmpty
+    List<@NotBlank String> specialties,
+
+    @Schema(description = "활동 지점", example = "서울 강남구 ...")
+    @NotBlank
+    String gymAddress,
+
+    @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
+    @NotBlank
+    String profileImageUrl,
+
+    @Schema(description = "자격증 목록")
+    @NotNull
+    @Valid
+    List<TrainerCertificationRequest> certifications
+) {
+}

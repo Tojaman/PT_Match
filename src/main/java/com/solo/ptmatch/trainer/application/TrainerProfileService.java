@@ -1,10 +1,11 @@
 package com.solo.ptmatch.trainer.application;
 
-import com.solo.ptmatch.trainer.application.dto.FindTrainersQuery;
-import com.solo.ptmatch.trainer.application.dto.TrainerDetailResult;
-import com.solo.ptmatch.trainer.application.dto.TrainerProfileUpsertCommand;
-import com.solo.ptmatch.trainer.application.dto.TrainerProfileUpsertResult;
-import com.solo.ptmatch.trainer.application.dto.TrainerSummaryResult;
+import com.solo.ptmatch.trainer.presentation.request.TrainerProfileUpsertRequest;
+import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
+import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
+import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
+import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
+
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,19 +14,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class TrainerProfileService {
 
-    public List<TrainerSummaryResult> getTrainerSummaries(FindTrainersQuery query) {
+    public List<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest trainerSearchRequest) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    public TrainerDetailResult getTrainerDetail(Long trainerId) {
+    public TrainerDetailResponse getTrainerDetail(Long trainerId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    public TrainerProfileUpsertResult registerTrainerProfile(TrainerProfileUpsertCommand command) {
+    public TrainerProfileUpsertResponse registerTrainerProfile(TrainerProfileUpsertRequest trainerProfileRegisterRequest) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    public TrainerProfileUpsertResult updateTrainerProfile(TrainerProfileUpsertCommand command) {
+    public TrainerProfileUpsertResponse updateTrainerProfile(TrainerProfileUpsertRequest trainerProfileRegisterRequest) {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 }

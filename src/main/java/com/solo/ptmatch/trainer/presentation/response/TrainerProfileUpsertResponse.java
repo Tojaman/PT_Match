@@ -1,6 +1,5 @@
 package com.solo.ptmatch.trainer.presentation.response;
 
-import com.solo.ptmatch.trainer.application.dto.TrainerProfileUpsertResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
@@ -19,15 +18,4 @@ public record TrainerProfileUpsertResponse(
     @Schema(description = "프로필 이미지 URL")
     String profileImageUrl
 ) {
-
-    public static TrainerProfileUpsertResponse from(TrainerProfileUpsertResult result) {
-        return new TrainerProfileUpsertResponse(
-            result.profileId(),
-            result.bio(),
-            result.careerYears(),
-            result.specialties(),
-            result.gymAddress(),
-            result.profileImageUrl()
-        );
-    }
 }

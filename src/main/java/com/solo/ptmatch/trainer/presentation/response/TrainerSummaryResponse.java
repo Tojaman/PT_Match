@@ -1,6 +1,5 @@
 package com.solo.ptmatch.trainer.presentation.response;
 
-import com.solo.ptmatch.trainer.application.dto.TrainerSummaryResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.StringJoiner;
@@ -26,20 +25,6 @@ public record TrainerSummaryResponse(
     @Schema(description = "리뷰 수", example = "120")
     Long reviewCount
 ) {
-
-    public static TrainerSummaryResponse from(TrainerSummaryResult result) {
-        return new TrainerSummaryResponse(
-            result.trainerId(),
-            result.name(),
-            joinSpecialties(result.specialties()),
-            result.careerYears(),
-            result.averageRating(),
-            result.gymAddress(),
-            result.profileImageUrl(),
-            result.followerCount(),
-            result.reviewCount()
-        );
-    }
 
     private static String joinSpecialties(Iterable<String> specialties) {
         StringJoiner joiner = new StringJoiner(", ");
