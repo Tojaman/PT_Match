@@ -1,7 +1,7 @@
 package com.solo.ptmatch.user.presentation.request;
 
 import com.solo.ptmatch.user.application.dto.RegisterCommand;
-import com.solo.ptmatch.user.domain.UserRole;
+import com.solo.ptmatch.user.domain.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -27,7 +27,7 @@ public record RegisterRequest(
 
     @Schema(description = "사용자 역할", example = "USER", allowableValues = {"USER", "TRAINER"})
     @NotNull
-    UserRole role
+    Role role
 ) {
 
     public RegisterCommand toCommand() {

@@ -1,6 +1,6 @@
 package com.solo.ptmatch.user.domain;
 
-public enum UserRole {
+public enum Role {
     USER,
     TRAINER
 }
