@@ -1,0 +1,14 @@
+spring:
+    datasource:
+        url: jdbc:mysql://127.0.0.1:3306/ptmatch?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+        username: root
+        password: "0000"
+        driver-class-name: com.mysql.cj.jdbc.Driver
+    jpa:
+        hibernate:
+            ddl-auto: update
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.MySQLDialect
+                format_sql: true
+            show-sql: false
