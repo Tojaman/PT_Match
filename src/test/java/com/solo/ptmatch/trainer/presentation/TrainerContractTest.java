@@ -11,24 +11,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.solo.ptmatch.common.security.JwtTokenProvider;
 import com.solo.ptmatch.trainer.application.TrainerProfileService;
 import com.solo.ptmatch.trainer.presentation.request.TrainerCertificationRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerProfileUpsertRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
+import com.solo.ptmatch.trainer.presentation.response.TrainerCertificationResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse.CertificationResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse.ReviewResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse.ScheduleResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
+import com.solo.ptmatch.trainer.presentation.response.TrainerReviewResponse;
+import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -125,9 +121,9 @@ class TrainerContractTest {
             "https://example.com/profile.jpg",
             50L,
             new BigDecimal("4.8"),
-            List.of(new ScheduleResponse("MON", "09:00", "18:00")),
-            List.of(new ReviewResponse(1L, "김회원", 5, "덕분에 목표 달성했습니다!")),
-            List.of(new CertificationResponse(1L, "생활체육지도사 1급", "대한체육회", LocalDate.of(2023, 1, 1)))
+            List.of(new TrainerScheduleResponse("MON", "09:00", "18:00")),
+            List.of(new TrainerReviewResponse(1L, "김회원", 5, "덕분에 목표 달성했습니다!")),
+            List.of(new TrainerCertificationResponse(1L, "생활체육지도사 1급", "대한체육회", LocalDate.of(2023, 1, 1)))
         );
 
         given(trainerProfileService.getTrainerDetail(1L)).willReturn(serviceResult);
