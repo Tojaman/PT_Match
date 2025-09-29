@@ -87,20 +87,7 @@ public class Reservation {
         if (status == targetStatus) {
             return;
         }
-
-        switch (status) {
-            case PENDING_APPROVAL -> {
-                if (targetStatus != ReservationStatus.SCHEDULED && targetStatus != ReservationStatus.CANCELED) {
-                    throw new IllegalStateException("Pending approval reservations can only be scheduled or canceled");
-                }
-            }
-            case SCHEDULED -> {
-                if (targetStatus != ReservationStatus.COMPLETED && targetStatus != ReservationStatus.CANCELED) {
-                    throw new IllegalStateException("Scheduled reservations can only be completed or canceled");
-                }
-            }
-            case COMPLETED, CANCELED -> throw new IllegalStateException("No transitions allowed from status " + status);
-        }
+        status.ensureTransitionAllowed(targetStatus);
     }
 
     private void changeStatus(ReservationStatus targetStatus) {
@@ -139,12 +126,5 @@ public class Reservation {
     @PreUpdate
     private void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    public enum ReservationStatus {
-        PENDING_APPROVAL,
-        SCHEDULED,
-        COMPLETED,
-        CANCELED
     }
 }
