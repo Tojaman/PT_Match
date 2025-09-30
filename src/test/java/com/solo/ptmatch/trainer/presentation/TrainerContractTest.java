@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solo.ptmatch.common.security.JwtTokenProvider;
 import com.solo.ptmatch.trainer.application.TrainerProfileService;
+import com.solo.ptmatch.trainer.domain.Specialty;
 import com.solo.ptmatch.trainer.presentation.request.TrainerCertificationRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerProfileUpsertRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
@@ -20,7 +21,6 @@ import com.solo.ptmatch.trainer.presentation.response.TrainerCertificationRespon
 import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerReviewResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -143,9 +143,6 @@ class TrainerContractTest {
             .andExpect(jsonPath("$.data.profileImageUrl").value("https://example.com/profile.jpg"))
             .andExpect(jsonPath("$.data.likesCount").value(50))
             .andExpect(jsonPath("$.data.averageRating").value(4.8))
-            .andExpect(jsonPath("$.data.schedules[0].day").value("MON"))
-            .andExpect(jsonPath("$.data.schedules[0].startTime").value("09:00"))
-            .andExpect(jsonPath("$.data.schedules[0].endTime").value("18:00"))
             .andExpect(jsonPath("$.data.reviews[0].reviewId").value(1))
             .andExpect(jsonPath("$.data.reviews[0].reviewerName").value("김회원"))
             .andExpect(jsonPath("$.data.reviews[0].rating").value(5))
@@ -166,7 +163,7 @@ class TrainerContractTest {
         TrainerProfileUpsertRequest requestPayload = new TrainerProfileUpsertRequest(
             "10년 경력의 전문 트레이너입니다.",
             10,
-            List.of("다이어트", "근력강화"),
+            Specialty.DIET,
             "서울 강남구 ...",
             "https://example.com/profile.jpg",
             List.of(new TrainerCertificationRequest(
@@ -180,39 +177,41 @@ class TrainerContractTest {
             1L,
             "10년 경력의 전문 트레이너입니다.",
             10,
-            List.of("다이어트", "근력강화"),
+            Specialty.DIET,
             "서울 강남구 ...",
             "https://example.com/profile.jpg"
         );
 
-        given(trainerProfileService.registerTrainerProfile(any(TrainerProfileUpsertRequest.class)))
+        given(trainerProfileService.registerTrainerProfile(any(), any(TrainerProfileUpsertRequest.class)))
             .willReturn(serviceResult);
 
         // when
         mockMvc.perform(post("/api/trainers/me")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestPayload)))
-            // then
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.status").value(200))
-            .andExpect(jsonPath("$.message").value("success"))
-            .andExpect(jsonPath("$.data.profileId").value(1))
-            .andExpect(jsonPath("$.data.bio").value("10년 경력의 전문 트레이너입니다."))
-            .andExpect(jsonPath("$.data.careerYears").value(10))
-            .andExpect(jsonPath("$.data.specialties[0]").value("다이어트"))
-            .andExpect(jsonPath("$.data.specialties[1]").value("근력강화"))
-            .andExpect(jsonPath("$.data.gymAddress").value("서울 강남구 ..."))
-            .andExpect(jsonPath("$.data.profileImageUrl").value("https://example.com/profile.jpg"))
-            .andExpect(jsonPath("$.pageResponse").doesNotExist());
+                // then
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.data.profileId").value(1))
+                .andExpect(jsonPath("$.data.bio").value("10년 경력의 전문 트레이너입니다."))
+                .andExpect(jsonPath("$.data.careerYears").value(10))
+                .andExpect(jsonPath("$.data.specialties").value(Specialty.DIET.name()))
+                .andExpect(jsonPath("$.data.gymAddress").value("서울 강남구 ..."))
+                .andExpect(jsonPath("$.data.profileImageUrl").value("https://example.com/profile.jpg"))
+                .andExpect(jsonPath("$.pageResponse").doesNotExist());
 
+        ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<TrainerProfileUpsertRequest> commandCaptor = ArgumentCaptor.forClass(TrainerProfileUpsertRequest.class);
-        then(trainerProfileService).should().registerTrainerProfile(commandCaptor.capture());
+        then(trainerProfileService).should().registerTrainerProfile(emailCaptor.capture(), commandCaptor.capture());
+
+        assertThat(emailCaptor.getValue()).isNull();
 
         TrainerProfileUpsertRequest captured = commandCaptor.getValue();
         assertThat(captured.bio()).isEqualTo("10년 경력의 전문 트레이너입니다.");
         assertThat(captured.careerYears()).isEqualTo(10);
-        assertThat(captured.specialties()).containsExactly("다이어트", "근력강화");
+        assertThat(captured.specialties()).isEqualTo(Specialty.DIET);
         assertThat(captured.gymAddress()).isEqualTo("서울 강남구 ...");
         assertThat(captured.profileImageUrl()).isEqualTo("https://example.com/profile.jpg");
         assertThat(captured.certifications()).hasSize(1);
@@ -230,7 +229,7 @@ class TrainerContractTest {
         TrainerProfileUpsertRequest requestPayload = new TrainerProfileUpsertRequest(
             "업데이트된 소개",
             12,
-            List.of("재활", "다이어트"),
+            Specialty.REHABILITATION,
             "서울 서초구 ...",
             "https://example.com/new-profile.jpg",
             List.of(new TrainerCertificationRequest(
@@ -244,18 +243,18 @@ class TrainerContractTest {
             1L,
             "업데이트된 소개",
             12,
-            List.of("재활", "다이어트"),
+            Specialty.REHABILITATION,
             "서울 서초구 ...",
             "https://example.com/new-profile.jpg"
         );
 
-        given(trainerProfileService.updateTrainerProfile(any(TrainerProfileUpsertRequest.class)))
+        given(trainerProfileService.updateTrainerProfile(any(), any(TrainerProfileUpsertRequest.class)))
             .willReturn(serviceResult);
 
         // when
         mockMvc.perform(put("/api/trainers/me")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestPayload)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(requestPayload)))
             // then
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -264,19 +263,21 @@ class TrainerContractTest {
             .andExpect(jsonPath("$.data.profileId").value(1))
             .andExpect(jsonPath("$.data.bio").value("업데이트된 소개"))
             .andExpect(jsonPath("$.data.careerYears").value(12))
-            .andExpect(jsonPath("$.data.specialties[0]").value("재활"))
-            .andExpect(jsonPath("$.data.specialties[1]").value("다이어트"))
+            .andExpect(jsonPath("$.data.specialties").value(Specialty.REHABILITATION.name()))
             .andExpect(jsonPath("$.data.gymAddress").value("서울 서초구 ..."))
             .andExpect(jsonPath("$.data.profileImageUrl").value("https://example.com/new-profile.jpg"))
             .andExpect(jsonPath("$.pageResponse").doesNotExist());
 
+        ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<TrainerProfileUpsertRequest> commandCaptor = ArgumentCaptor.forClass(TrainerProfileUpsertRequest.class);
-        then(trainerProfileService).should().updateTrainerProfile(commandCaptor.capture());
+        then(trainerProfileService).should().updateTrainerProfile(emailCaptor.capture(), commandCaptor.capture());
+
+        assertThat(emailCaptor.getValue()).isNull();
 
         TrainerProfileUpsertRequest captured = commandCaptor.getValue();
         assertThat(captured.bio()).isEqualTo("업데이트된 소개");
         assertThat(captured.careerYears()).isEqualTo(12);
-        assertThat(captured.specialties()).containsExactly("재활", "다이어트");
+        assertThat(captured.specialties()).isEqualTo(Specialty.REHABILITATION);
         assertThat(captured.gymAddress()).isEqualTo("서울 서초구 ...");
         assertThat(captured.profileImageUrl()).isEqualTo("https://example.com/new-profile.jpg");
         assertThat(captured.certifications()).hasSize(1);

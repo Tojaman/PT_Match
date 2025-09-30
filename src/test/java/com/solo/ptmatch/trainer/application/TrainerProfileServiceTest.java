@@ -10,11 +10,15 @@ import com.solo.ptmatch.trainer.domain.Specialty;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.CertificationRepository;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
+import com.solo.ptmatch.trainer.presentation.request.TrainerCertificationRequest;
+import com.solo.ptmatch.trainer.presentation.request.TrainerProfileUpsertRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
 import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
+import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 import com.solo.ptmatch.user.domain.Role;
 import com.solo.ptmatch.user.domain.User;
+import com.solo.ptmatch.user.infrastructure.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,6 +59,9 @@ class TrainerProfileServiceTest {
     private CertificationRepository certificationRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private AvailableScheduleRepository availableScheduleRepository; // 사용되지는 않지만 의존성으로 존재
 
     @DisplayName("트레이너 목록을 조건에 맞게 조회하고 DTO 리스트로 변환하여 반환한다.")
@@ -62,7 +69,7 @@ class TrainerProfileServiceTest {
     void getTrainerSummaries_Success() {
         // given
         // 1. 검색 조건 및 페이징 정보 생성
-        TrainerSearchRequest request = new TrainerSearchRequest("DIET", "서울", "averageRating_desc", 0, 10);
+        TrainerSearchRequest request = new TrainerSearchRequest("다이어트", "서울", "averageRating_desc", 0, 10);
         Sort sort = Sort.by(Sort.Direction.DESC, "averageRating");
         Pageable pageable = PageRequest.of(0, 10, sort);
 
@@ -169,5 +176,146 @@ class TrainerProfileServiceTest {
 
         verify(reviewRepository, never()).findTop5ByTrainerProfileOrderByCreatedAtDesc(any());
         verify(certificationRepository, never()).findAllByTrainerProfileId(any());
+    }
+
+    @DisplayName("트레이너 프로필과 자격증을 성공적으로 등록한다")
+    @Test
+    void registerTrainerProfile_Success() {
+        // given
+        String email = "new.trainer@ptmatch.com";
+        User user = User.create(email, "password", "새트레이너", Role.TRAINER);
+        TrainerProfileUpsertRequest request = new TrainerProfileUpsertRequest(
+                "새로운 자기소개", 1, Specialty.DIET, "서울", "url",
+                List.of(new TrainerCertificationRequest("자격증1", "발급기관1", LocalDate.now()))
+        );
+
+        TrainerProfile profile = request.toEntity(user);
+        TrainerProfileUpsertResponse response = TrainerProfileUpsertResponse.from(profile);
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(trainerProfileRepository.findByTrainerId(any())).thenReturn(Optional.empty());
+        when(trainerProfileRepository.save(any(TrainerProfile.class))).thenReturn(profile);
+
+        // when
+        TrainerProfileUpsertResponse result = trainerProfileService.registerTrainerProfile(email, request);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.bio()).isEqualTo("새로운 자기소개");
+
+        verify(userRepository, times(1)).findByEmail(email);
+        verify(trainerProfileRepository, times(1)).findByTrainerId(user.getId());
+        verify(trainerProfileRepository, times(1)).save(any(TrainerProfile.class));
+        verify(certificationRepository, times(1)).saveAll(any());
+    }
+
+    @DisplayName("프로필 등록 시 사용자를 찾을 수 없으면 예외를 발생시킨다")
+    @Test
+    void registerTrainerProfile_UserNotFound() {
+        // given
+        String email = "nonexistent@ptmatch.com";
+        TrainerProfileUpsertRequest request = new TrainerProfileUpsertRequest(
+                "자기소개", 1, Specialty.DIET, "서울", "url", List.of()
+        );
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> trainerProfileService.registerTrainerProfile(email, request))
+                .isInstanceOf(GlobalException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+
+        verify(trainerProfileRepository, never()).save(any());
+    }
+
+    @DisplayName("프로필 등록 시 이미 프로필이 존재하면 예외를 발생시킨다")
+    @Test
+    void registerTrainerProfile_ProfileAlreadyExists() {
+        // given
+        String email = "new.trainer@ptmatch.com";
+        User user = User.create(email, "password", "새트레이너", Role.TRAINER);
+        TrainerProfileUpsertRequest request = new TrainerProfileUpsertRequest(
+                "자기소개", 1, Specialty.DIET, "서울", "url", List.of()
+        );
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(mock(TrainerProfile.class)));
+
+        // when & then
+        assertThatThrownBy(() -> trainerProfileService.registerTrainerProfile(email, request))
+                .isInstanceOf(GlobalException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.CONFLICT);
+
+        verify(trainerProfileRepository, never()).save(any());
+    }
+
+    @DisplayName("기존 트레이너 프로필 정보를 성공적으로 수정한다")
+    @Test
+    void updateTrainerProfile_Success() {
+        // given
+        String email = "trainer@ptmatch.com";
+        User user = User.create(email, "password", "트레이너", Role.TRAINER);
+        TrainerProfile existingProfile = mock(TrainerProfile.class);
+
+        TrainerProfileUpsertRequest request = new TrainerProfileUpsertRequest(
+                "수정된 자기소개", 10, Specialty.DIET, "서울 용산구", "new_url", null
+        );
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(existingProfile));
+
+        // when
+        trainerProfileService.updateTrainerProfile(email, request);
+
+        // then
+        // 1. profile 객체의 updateProfile 메서드가 정확한 인자와 함께 호출되었는지 검증 (가장 중요)
+        verify(existingProfile, times(1)).updateProfile(
+                request.bio(),
+                request.careerYears(),
+                request.specialties(),
+                request.gymAddress(),
+                request.profileImageUrl()
+        );
+
+        // 2. 불필요한 save 호출이 없는지 검증 (더티 체킹으로 업데이트되므로)
+        verify(trainerProfileRepository, never()).save(any(TrainerProfile.class));
+    }
+
+    @DisplayName("프로필 수정 시 사용자를 찾을 수 없으면 예외를 발생시킨다")
+    @Test
+    void updateTrainerProfile_UserNotFound() {
+        // given
+        String email = "nonexistent@ptmatch.com";
+        TrainerProfileUpsertRequest request = new TrainerProfileUpsertRequest(
+                "자기소개", 1, Specialty.DIET, "서울", "url", null
+        );
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> trainerProfileService.updateTrainerProfile(email, request))
+                .isInstanceOf(GlobalException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+    }
+
+    @DisplayName("수정할 프로필이 존재하지 않으면 예외를 발생시킨다")
+    @Test
+    void updateTrainerProfile_ProfileNotFound() {
+        // given
+        String email = "trainer@ptmatch.com";
+        User user = User.create(email, "password", "트레이너", Role.TRAINER);
+        TrainerProfileUpsertRequest request = new TrainerProfileUpsertRequest(
+                "자기소개", 1, Specialty.DIET, "서울", "url", null
+        );
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> trainerProfileService.updateTrainerProfile(email, request))
+                .isInstanceOf(GlobalException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.TRAINER_PROFILE_NOT_FOUND);
     }
 }
