@@ -6,7 +6,10 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.Getter;
 
+import jakarta.persistence.MappedSuperclass;
+
 @Getter
+@MappedSuperclass
 public abstract class BaseEntity {
 
     @Column(name = "created_at", nullable = false, updatable = false)

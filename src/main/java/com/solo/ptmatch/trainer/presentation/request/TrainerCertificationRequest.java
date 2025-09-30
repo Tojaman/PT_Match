@@ -2,6 +2,8 @@ package com.solo.ptmatch.trainer.presentation.request;
 
 import java.time.LocalDate;
 
+import com.solo.ptmatch.trainer.domain.Certification;
+import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,4 +22,13 @@ public record TrainerCertificationRequest(
     @NotNull
     LocalDate acquisitionDate
 ) {
+    public Certification toEntity(TrainerProfile savedProfile) {
+
+        return Certification.create(
+            savedProfile,
+            name,
+            issuingOrganization,
+            acquisitionDate
+        );
+    }
 }

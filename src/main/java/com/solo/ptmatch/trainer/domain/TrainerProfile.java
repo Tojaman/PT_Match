@@ -46,7 +46,7 @@ public class TrainerProfile  extends BaseEntity {
     private int careerYears;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "specialty", nullable = false)
+    @Column(name = "specialty", nullable = false, length = 30)
     private Specialty specialty;
 
     @Column(name = "gym_address", nullable = false)

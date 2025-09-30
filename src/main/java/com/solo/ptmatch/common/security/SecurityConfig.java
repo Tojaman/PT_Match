@@ -40,11 +40,12 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable) // 기본 form 로그인 비활성화
             .httpBasic(AbstractHttpConfigurer::disable) // HTTP Basic 인증 비활성화
             .authorizeHttpRequests(authorize -> authorize // HTTP 요청에 대한 인가 규칙 설정
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/v1/auth/register", "/api/v1/auth/login").permitAll() // 회원가입/로그인 API는 인증 없이 허용
+                .requestMatchers("/api/auth/register", "/login", "/api/v1/auth/register", "/api/v1/auth/login").permitAll() // 회원가입/로그인 API는 인증 없이 허용
                 .requestMatchers(HttpMethod.GET, "/api/trainers", "/api/trainers/*").permitAll() // 트레이너 정보 조회(GET)는 인증 없이 허용
                 .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/*").permitAll() // 상품 정보 조회(GET)는 인증 없이 허용
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll() // API 문서 및 헬스 체크는 인증 없이 허용
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS Preflight 요청(OPTIONS)은 인증 없이 허용
+                .requestMatchers(HttpMethod.POST, "/api/trainers/me").hasRole("TRAINER") // 트레이너 프로필 등록/수정은 TRAINER 역할만 가능
                 .anyRequest().authenticated() // 나머지 모든 요청은 인증 필요
             )
             .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class) // 로그인 처리를 위한 커스텀 필터(LoginFilter)를 기본 필터 위치에 추가
