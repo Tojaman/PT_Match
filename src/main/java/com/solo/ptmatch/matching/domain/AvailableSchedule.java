@@ -1,5 +1,6 @@
 package com.solo.ptmatch.matching.domain;
 
+import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,8 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -22,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "available_schedules")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AvailableSchedule {
+public class AvailableSchedule extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,12 +40,6 @@ public class AvailableSchedule {
 
     @Column(name = "is_booked", nullable = false)
     private boolean booked;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 
     private AvailableSchedule(TrainerProfile trainerProfile, LocalDateTime startTime, LocalDateTime endTime) {
         this.trainerProfile = Objects.requireNonNull(trainerProfile, "trainerProfile must not be null");
@@ -82,18 +75,5 @@ public class AvailableSchedule {
         if (!startTime.isBefore(endTime)) {
             throw new IllegalArgumentException("startTime must be before endTime");
         }
-    }
-
-    @PrePersist
-    private void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-        booked = false;
-    }
-
-    @PreUpdate
-    private void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }

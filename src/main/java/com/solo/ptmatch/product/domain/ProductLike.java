@@ -1,5 +1,6 @@
 package com.solo.ptmatch.product.domain;
 
+import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,7 +14,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
         uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "product_id"})
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ProductLike {
+public class ProductLike extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,12 +40,9 @@ public class ProductLike {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     private ProductLike(User member, Product product) {
-        this.member = Objects.requireNonNull(member, "member must not be null");
-        this.product = Objects.requireNonNull(product, "product must not be null");
+        this.member = member;
+        this.product = product;
     }
 
     public static ProductLike create(User member, Product product) {
@@ -53,19 +50,14 @@ public class ProductLike {
     }
 
     public boolean isOwner(User member) {
-        return this.member.equals(Objects.requireNonNull(member, "member must not be null"));
+        return this.member.equals(member);
     }
 
     public boolean isSameProduct(Product product) {
-        return this.product.equals(Objects.requireNonNull(product, "product must not be null"));
+        return this.product.equals(product);
     }
 
     public boolean matches(User member, Product product) {
         return isOwner(member) && isSameProduct(product);
-    }
-
-    @PrePersist
-    private void onCreate() {
-        createdAt = LocalDateTime.now();
     }
 }

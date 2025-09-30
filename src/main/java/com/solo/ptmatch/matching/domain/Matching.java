@@ -1,5 +1,6 @@
 package com.solo.ptmatch.matching.domain;
 
+import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.user.domain.User;
@@ -14,10 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -27,7 +25,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "matching")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Matching {
+public class Matching extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,12 +50,6 @@ public class Matching {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MatchingStatus status;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 
     private Matching(User user, TrainerProfile trainerProfile, Product product, String message) {
         this.user = Objects.requireNonNull(user, "user must not be null");
@@ -111,17 +103,5 @@ public class Matching {
             }
             case REJECTED, COMPLETED -> throw new IllegalStateException("No further transitions allowed for status " + status);
         }
-    }
-
-    @PrePersist
-    private void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    private void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }

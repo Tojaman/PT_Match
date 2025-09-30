@@ -11,7 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.Objects;
+import com.solo.ptmatch.common.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "product_images")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ProductImage {
+public class ProductImage extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,12 +37,9 @@ public class ProductImage {
     @Column(name = "display_order", nullable = false)
     private int displayOrder;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     private ProductImage(Product product, String imageUrl, int displayOrder) {
-        this.product = Objects.requireNonNull(product, "product must not be null");
-        this.imageUrl = Objects.requireNonNull(imageUrl, "imageUrl must not be null");
+        this.product = product;
+        this.imageUrl = imageUrl;
         this.displayOrder = validateDisplayOrder(displayOrder);
     }
 
@@ -55,7 +52,7 @@ public class ProductImage {
     }
 
     public void updateImage(String imageUrl) {
-        this.imageUrl = Objects.requireNonNull(imageUrl, "imageUrl must not be null");
+        this.imageUrl = imageUrl;
     }
 
     private int validateDisplayOrder(int displayOrder) {
@@ -63,10 +60,5 @@ public class ProductImage {
             throw new IllegalArgumentException("displayOrder must be zero or positive");
         }
         return displayOrder;
-    }
-
-    @PrePersist
-    private void onCreate() {
-        createdAt = LocalDateTime.now();
     }
 }

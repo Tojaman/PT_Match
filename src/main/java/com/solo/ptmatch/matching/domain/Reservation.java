@@ -1,5 +1,6 @@
 package com.solo.ptmatch.matching.domain;
 
+import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,7 +25,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "reservations")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Reservation {
+public class Reservation extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,16 +48,10 @@ public class Reservation {
     @Column(nullable = false)
     private ReservationStatus status;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
     private Reservation(Matching matching, AvailableSchedule schedule, User user) {
-        this.matching = Objects.requireNonNull(matching, "matching must not be null");
-        this.schedule = Objects.requireNonNull(schedule, "schedule must not be null");
-        this.user = Objects.requireNonNull(user, "user must not be null");
+        this.matching = matching;
+        this.schedule = schedule;
+        this.user = user;
         validateAssociations();
         this.status = ReservationStatus.PENDING_APPROVAL;
     }
@@ -68,7 +63,7 @@ public class Reservation {
     public void approve() {
         ensureMatchingAllowsReservation();
         changeStatus(ReservationStatus.SCHEDULED);
-        schedule.markBooked();
+        schedule.markBooked(); // 다른 애그리게이터 상태 변경 - 갓객체
     }
 
     public void complete() {
@@ -77,21 +72,12 @@ public class Reservation {
 
     public void cancel() {
         if (status == ReservationStatus.SCHEDULED) {
-            schedule.release();
+            schedule.release(); // 다른 애그리게이터 상태 변경 - 갓객체
         }
         changeStatus(ReservationStatus.CANCELED);
     }
 
-    public void validateStatusTransition(ReservationStatus targetStatus) {
-        Objects.requireNonNull(targetStatus, "targetStatus must not be null");
-        if (status == targetStatus) {
-            return;
-        }
-        status.ensureTransitionAllowed(targetStatus);
-    }
-
     private void changeStatus(ReservationStatus targetStatus) {
-        validateStatusTransition(targetStatus);
         this.status = targetStatus;
     }
 
@@ -114,17 +100,5 @@ public class Reservation {
         if (schedule.isBooked()) {
             throw new IllegalStateException("Schedule is already booked");
         }
-    }
-
-    @PrePersist
-    private void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    private void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }

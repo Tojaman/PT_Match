@@ -8,12 +8,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Objects;
+import com.solo.ptmatch.common.BaseEntity;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "certifications")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Certification {
+public class Certification  extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,17 +39,11 @@ public class Certification {
     @Column(name = "acquisition_date", nullable = false)
     private LocalDate acquisitionDate;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
     private Certification(TrainerProfile trainerProfile, String name, String issuingOrganization, LocalDate acquisitionDate) {
-        this.trainerProfile = Objects.requireNonNull(trainerProfile, "trainerProfile must not be null");
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.issuingOrganization = Objects.requireNonNull(issuingOrganization, "issuingOrganization must not be null");
-        this.acquisitionDate = Objects.requireNonNull(acquisitionDate, "acquisitionDate must not be null");
+        this.trainerProfile = trainerProfile;
+        this.name = name;
+        this.issuingOrganization = issuingOrganization;
+        this.acquisitionDate = acquisitionDate;
     }
 
     public static Certification create(
@@ -65,24 +56,12 @@ public class Certification {
     }
 
     public void updateCertification(String name, String issuingOrganization, LocalDate acquisitionDate) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.issuingOrganization = Objects.requireNonNull(issuingOrganization, "issuingOrganization must not be null");
-        this.acquisitionDate = Objects.requireNonNull(acquisitionDate, "acquisitionDate must not be null");
+        this.name = name;
+        this.issuingOrganization = issuingOrganization;
+        this.acquisitionDate = acquisitionDate;
     }
 
     public boolean belongsToTrainer(TrainerProfile profile) {
-        return this.trainerProfile.equals(Objects.requireNonNull(profile, "profile must not be null"));
-    }
-
-    @PrePersist
-    private void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    private void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        return this.trainerProfile.equals(profile);
     }
 }

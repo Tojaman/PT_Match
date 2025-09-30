@@ -1,5 +1,6 @@
 package com.solo.ptmatch.product.domain;
 
+import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,13 +13,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "products")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Product {
+public class Product extends BaseEntity {
 
     private static final BigDecimal ZERO_PRICE = BigDecimal.ZERO.setScale(2, RoundingMode.UNNECESSARY);
 
@@ -63,12 +60,6 @@ public class Product {
     @Column(name = "likes_count", nullable = false)
     private int likesCount;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
     private Product(
             TrainerProfile trainerProfile,
             String name,
@@ -78,10 +69,10 @@ public class Product {
             int sessionCount,
             String thumbnailUrl
     ) {
-        this.trainerProfile = Objects.requireNonNull(trainerProfile, "trainerProfile must not be null");
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.description = Objects.requireNonNull(description, "description must not be null");
-        this.category = Objects.requireNonNull(category, "category must not be null");
+        this.trainerProfile = trainerProfile;
+        this.name = name;
+        this.description = description;
+        this.category = category;
         this.pricePerSession = sanitizePrice(pricePerSession);
         this.sessionCount = validateSessionCount(sessionCount);
         this.thumbnailUrl = thumbnailUrl;
@@ -107,9 +98,9 @@ public class Product {
             int sessionCount,
             String thumbnailUrl
     ) {
-        this.name = Objects.requireNonNull(name, "name must not be null");
-        this.description = Objects.requireNonNull(description, "description must not be null");
-        this.category = Objects.requireNonNull(category, "category must not be null");
+        this.name = name;
+        this.description = description;
+        this.category = category;
         this.pricePerSession = sanitizePrice(pricePerSession);
         this.sessionCount = validateSessionCount(sessionCount);
         this.thumbnailUrl = thumbnailUrl;
@@ -127,7 +118,7 @@ public class Product {
     }
 
     private BigDecimal sanitizePrice(BigDecimal price) {
-        BigDecimal validated = Objects.requireNonNull(price, "price must not be null");
+        BigDecimal validated = price;
         if (validated.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("price must not be negative");
         }
@@ -139,21 +130,5 @@ public class Product {
             throw new IllegalArgumentException("sessionCount must be positive");
         }
         return sessionCount;
-    }
-
-    @PrePersist
-    private void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-        likesCount = 0;
-        if (pricePerSession == null) {
-            pricePerSession = ZERO_PRICE;
-        }
-    }
-
-    @PreUpdate
-    private void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }

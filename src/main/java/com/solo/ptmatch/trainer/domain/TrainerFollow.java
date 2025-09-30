@@ -1,5 +1,6 @@
 package com.solo.ptmatch.trainer.domain;
 
+import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,11 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +23,7 @@ import lombok.NoArgsConstructor;
         uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "trainer_profile_id"})
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TrainerFollow {
+public class TrainerFollow  extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,12 +38,9 @@ public class TrainerFollow {
     @JoinColumn(name = "trainer_profile_id", nullable = false)
     private TrainerProfile trainerProfile;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     private TrainerFollow(User member, TrainerProfile trainerProfile) {
-        this.member = Objects.requireNonNull(member, "member must not be null");
-        this.trainerProfile = Objects.requireNonNull(trainerProfile, "trainerProfile must not be null");
+        this.member = member;
+        this.trainerProfile = trainerProfile;
         validateDifferentAccounts(member, trainerProfile);
     }
 
@@ -54,11 +49,11 @@ public class TrainerFollow {
     }
 
     public boolean isSameFollower(User member) {
-        return this.member.equals(Objects.requireNonNull(member, "member must not be null"));
+        return this.member.equals(member);
     }
 
     public boolean isSameTrainer(TrainerProfile trainerProfile) {
-        return this.trainerProfile.equals(Objects.requireNonNull(trainerProfile, "trainerProfile must not be null"));
+        return this.trainerProfile.equals(trainerProfile);
     }
 
     public boolean matches(User member, TrainerProfile trainerProfile) {
@@ -69,10 +64,5 @@ public class TrainerFollow {
         if (trainerProfile.getTrainer().equals(member)) {
             throw new IllegalArgumentException("trainer cannot follow themselves");
         }
-    }
-
-    @PrePersist
-    private void onCreate() {
-        createdAt = LocalDateTime.now();
     }
 }

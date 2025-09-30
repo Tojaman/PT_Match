@@ -1,5 +1,6 @@
 package com.solo.ptmatch.review.domain;
 
+import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.Column;
@@ -24,7 +25,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "reviews")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Review {
+public class Review extends BaseEntity {
 
     private static final int MIN_RATING = 1;
     private static final int MAX_RATING = 5;
@@ -48,12 +49,6 @@ public class Review {
     @Lob
     @Column(nullable = false)
     private String content;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 
     private Review(User author, TrainerProfile trainerProfile, int rating, String content) {
         this.author = Objects.requireNonNull(author, "author must not be null");
@@ -80,17 +75,5 @@ public class Review {
             throw new IllegalArgumentException("rating must be between 1 and 5");
         }
         return rating;
-    }
-
-    @PrePersist
-    private void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    private void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 }
