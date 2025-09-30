@@ -1,5 +1,6 @@
 package com.solo.ptmatch.trainer.presentation.response;
 
+import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.StringJoiner;
@@ -21,10 +22,24 @@ public record TrainerSummaryResponse(
     @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
     String profileImageUrl,
     @Schema(description = "팔로워 수", example = "50")
-    Long followerCount,
+    int followerCount,
     @Schema(description = "리뷰 수", example = "120")
     Long reviewCount
 ) {
+
+    public static TrainerSummaryResponse from(TrainerProfile trainer) {
+        return new TrainerSummaryResponse(
+                trainer.getId(),
+                trainer.getTrainer().getName(),
+                trainer.getSpecialty().name(),
+                trainer.getCareerYears(),
+                trainer.getAverageRating(),
+                trainer.getGymAddress(),
+                trainer.getProfileImageUrl(),
+                trainer.getFollowersCount(),
+                trainer.getReviewCount()
+        );
+    }
 
     private static String joinSpecialties(Iterable<String> specialties) {
         StringJoiner joiner = new StringJoiner(", ");
