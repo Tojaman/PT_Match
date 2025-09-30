@@ -55,8 +55,11 @@ public class TrainerProfile  extends BaseEntity {
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
-    @Column(name = "likes_count", nullable = false)
-    private int likesCount;
+    @Column(name = "followers_count", nullable = false)
+    private int followersCount;
+
+    @Column(name = "review_count", nullable = false)
+    private long reviewCount;
 
     @Column(name = "average_rating", nullable = false, precision = 4, scale = 2)
     private BigDecimal averageRating;
@@ -105,15 +108,26 @@ public class TrainerProfile  extends BaseEntity {
         this.profileImageUrl = profileImageUrl;
     }
 
-    public void increaseLikes() {
-        this.likesCount += 1;
+    public void increaseFollowrs() {
+        this.followersCount += 1;
     }
 
-    public void decreaseLikes() {
-        if (likesCount == 0) {
+    public void decreaseFollowrs() {
+        if (followersCount == 0) {
             return;
         }
-        this.likesCount -= 1;
+        this.followersCount -= 1;
+    }
+
+    public void increaseReviewCount() {
+        this.reviewCount += 1;
+    }
+
+    public  void decreaseReviewCount() {
+        if (reviewCount == 0) {
+            return;
+        }
+        this.reviewCount -= 1;
     }
 
     public void recalculateAverageRating(BigDecimal newAverage) {
