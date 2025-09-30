@@ -1,6 +1,5 @@
 package com.solo.ptmatch.user.presentation.response;
 
-import com.solo.ptmatch.user.application.dto.RegisterResult;
 import com.solo.ptmatch.user.domain.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -15,8 +14,4 @@ public record RegisterResponse(
     @Schema(description = "회원 역할", example = "USER")
     Role role
 ) {
-
-    public static RegisterResponse from(RegisterResult result) {
-        return new RegisterResponse(result.userId(), result.email(), result.name(), result.role());
-    }
 }

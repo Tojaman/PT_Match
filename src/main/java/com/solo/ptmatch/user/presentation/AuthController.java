@@ -25,7 +25,7 @@ public class AuthController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원가입 성공")
     @PostMapping("/register")
     public ApiResponse<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
-        RegisterResponse response = RegisterResponse.from(authService.register(request.toCommand()));
+        RegisterResponse response = authService.register(request);
         return ApiResponse.success(response);
     }
 
@@ -33,7 +33,7 @@ public class AuthController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공")
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        LoginResponse response = LoginResponse.from(authService.login(request.toCommand()));
+        LoginResponse response = authService.login(request);
         return ApiResponse.success(response);
     }
 }

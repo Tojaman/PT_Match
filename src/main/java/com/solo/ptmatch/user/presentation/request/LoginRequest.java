@@ -1,6 +1,5 @@
 package com.solo.ptmatch.user.presentation.request;
 
-import com.solo.ptmatch.user.application.dto.LoginCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -16,8 +15,4 @@ public record LoginRequest(
     @NotBlank
     String password
 ) {
-
-    public LoginCommand toCommand() {
-        return new LoginCommand(email, password);
-    }
 }

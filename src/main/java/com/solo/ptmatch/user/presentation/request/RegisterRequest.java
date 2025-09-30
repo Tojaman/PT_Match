@@ -1,6 +1,5 @@
 package com.solo.ptmatch.user.presentation.request;
 
-import com.solo.ptmatch.user.application.dto.RegisterCommand;
 import com.solo.ptmatch.user.domain.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
@@ -29,8 +28,4 @@ public record RegisterRequest(
     @NotNull
     Role role
 ) {
-
-    public RegisterCommand toCommand() {
-        return new RegisterCommand(email, password, name, role);
-    }
 }
