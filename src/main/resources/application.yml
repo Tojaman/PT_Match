@@ -12,3 +12,11 @@ spring:
                 dialect: org.hibernate.dialect.MySQLDialect
                 format_sql: true
             show-sql: false
+
+security:
+    jwt:
+        # Base64 인코딩된 32바이트 이상의 문자열이어야 함
+        # 운영 환경에서는 반드시 환경 변수나 외부 설정으로 이 값을 재정의해야 함
+        secret: ZEVWRUxPUE1FTlQtU1BSSU5HLUJPT1QtUFRNQVRDSC1KV1QtU0VDUkVULUtFWQ==
+        # 액세스 토큰 만료 시간 (단위: 밀리초). 기본값: 3600000 (1시간)
+        access-token-validity-ms: 3600000

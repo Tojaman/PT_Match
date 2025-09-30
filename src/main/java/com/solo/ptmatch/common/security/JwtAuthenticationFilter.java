@@ -22,21 +22,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-        throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
         String token = resolveToken(request);
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
+            Authentication authentication = jwtTokenProvider.getAuthentication(token); // 인증 정보 생성(Principal(UserDetails 객체), Credentials(Jwt 문자열), Authorities(role|권한) 포함)
             if (authentication != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (authentication instanceof AbstractAuthenticationToken authToken) {
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request)); // 요청 주체(어디서/어떻게 요청했는가?) 저장
                 }
+                /*
+                SecurityContext에 인증 정보 등록
+                추후 인가할 때 SecurityContext에서 사용자 정보 추출 가능(username, role, jwt)
+                */
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
         filterChain.doFilter(request, response);
     }
 
+    // 헤더에서 토큰 추출 -> "Bearer "빼고 토큰만 추출
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {

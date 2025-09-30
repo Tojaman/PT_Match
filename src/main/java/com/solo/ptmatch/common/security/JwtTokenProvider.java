@@ -33,6 +33,7 @@ public class JwtTokenProvider {
     private final SecretKey secretKey;
     private final long accessTokenValidityMillis;
 
+    // JWT 시크릿 키와 토큰 유효기간을 설정하는 생성자
     public JwtTokenProvider(
         @Value("${security.jwt.secret:}") String secret,
         @Value("${security.jwt.access-token-validity-ms:3600000}") long accessTokenValidityMillis
@@ -63,20 +64,18 @@ public class JwtTokenProvider {
             .compact();
     }
 
+    // JWT를 복호화하여 Spring Security의 Authentication 객체 생성
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
         List<SimpleGrantedAuthority> authorities = extractAuthorities(claims);
         UserDetails principal = User.withUsername(claims.getSubject())
-            .password("")
+            .password("") // JWT 기반 인증에선 비밀번호 불필요
             .authorities(authorities)
-            .accountLocked(false)
-            .accountExpired(false)
-            .credentialsExpired(false)
-            .disabled(false)
             .build();
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
+    // 주어진 토큰의 유효성(서명, 만료일 등) 검증
     public boolean validateToken(String token) {
         try {
             parse(token);
@@ -86,10 +85,12 @@ public class JwtTokenProvider {
         }
     }
 
+    // 토큰에서 사용자 식별자(subject)만 추출
     public String extractSubject(String token) {
         return parseClaims(token).getSubject();
     }
 
+    // 토큰을 파싱하여 서명을 검증하고 Jws<Claims> 객체 반환(만료 시간도 검증)
     private Jws<Claims> parse(String token) {
         return Jwts.parserBuilder()
             .setSigningKey(secretKey)
@@ -97,10 +98,12 @@ public class JwtTokenProvider {
             .parseClaimsJws(token);
     }
 
+    // 토큰의 본문(payload)에 해당하는 Claims를 반환
     private Claims parseClaims(String token) {
         return parse(token).getBody();
     }
 
+    // Claims에서 권한 정보를 추출하여 GrantedAuthority 리스트로 변환
     private List<SimpleGrantedAuthority> extractAuthorities(Claims claims) {
         Object rawAuthorities = claims.get(AUTHORITIES_KEY);
         if (rawAuthorities instanceof Collection<?> collection) {
@@ -114,6 +117,7 @@ public class JwtTokenProvider {
         return List.of();
     }
 
+    // 설정 파일의 시크릿 문자열을 디코딩하여 바이트 배열로 변환
     private byte[] decodeSecret(String secret) {
         try {
             return Decoders.BASE64.decode(secret);
