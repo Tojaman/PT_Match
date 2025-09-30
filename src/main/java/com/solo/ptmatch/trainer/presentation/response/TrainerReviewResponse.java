@@ -2,6 +2,8 @@ package com.solo.ptmatch.trainer.presentation.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import com.solo.ptmatch.review.domain.Review;
+
 @Schema(description = "리뷰 요약 응답")
 public record TrainerReviewResponse(
     @Schema(description = "리뷰 ID", example = "1")
@@ -13,4 +15,12 @@ public record TrainerReviewResponse(
     @Schema(description = "리뷰 내용")
     String content
 ) {
+    public static TrainerReviewResponse from(Review review) {
+        return new TrainerReviewResponse(
+                review.getId(),
+                review.getAuthor().getName(),
+                review.getRating(),
+                review.getContent()
+        );
+    }
 }

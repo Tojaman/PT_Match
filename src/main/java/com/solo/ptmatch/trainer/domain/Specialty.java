@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum Specialty {
-    WEIGHT_LOSS("다이어트"),
+    DIET("다이어트"),
     REHABILITATION("재활"),
     STRENGTH_CONDITIONING("근력 강화"),
     POSTURE_CORRECTION("체형 교정"),
@@ -19,4 +19,13 @@ public enum Specialty {
 ;
 
     private final String description;
+
+    public static Specialty fromDescription(String description) {
+        for (Specialty specialty : Specialty.values()) {
+            if (specialty.getDescription().equals(description)) {
+                return specialty;
+            }
+        }
+        return null; // 혹은 예외 처리
+    }
 }
