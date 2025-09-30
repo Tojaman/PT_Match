@@ -43,6 +43,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (!StringUtils.hasText(role)) {
             return ROLE_PREFIX + "USER";
         }
-        return role.startsWith(ROLE_PREFIX) ? role : ROLE_PREFIX + role;
+        return ROLE_PREFIX + role;
     }
 }
