@@ -164,7 +164,6 @@ class TrainerProfileIntegrationTest {
             updateRequest.profileImageUrl(),
             120L,
             new BigDecimal("4.8"),
-            List.of(new TrainerScheduleResponse("MON", "09:00", "18:00")),
             List.of(new TrainerReviewResponse(1L, "김회원", 5, "덕분에 목표 달성했습니다!")),
             List.of(new TrainerCertificationResponse(1L, "생활체육지도사 2급", "대한체육회", LocalDate.of(2024, 5, 1)))
         );
