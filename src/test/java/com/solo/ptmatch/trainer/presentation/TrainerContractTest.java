@@ -66,7 +66,7 @@ class TrainerContractTest {
                 new BigDecimal("4.8"),
                 "피트니스 센터",
                 "https://example.com/profile.jpg",
-                50L,
+                50,
                 120L
             )
         );
