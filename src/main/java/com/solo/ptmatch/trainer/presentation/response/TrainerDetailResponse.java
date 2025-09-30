@@ -34,7 +34,7 @@ public record TrainerDetailResponse(
 ) {
 
     public static TrainerDetailResponse from(
-            com.solo.ptmatch.trainer.domain.TrainerProfile profile,
+            TrainerProfile profile,
             List<TrainerReviewResponse> reviews,
             List<TrainerCertificationResponse> certifications
     ) {

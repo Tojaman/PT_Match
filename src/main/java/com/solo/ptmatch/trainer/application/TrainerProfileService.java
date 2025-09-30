@@ -4,6 +4,7 @@ import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
 import com.solo.ptmatch.matching.infrastructure.AvailableScheduleRepository;
 import com.solo.ptmatch.review.infrastructure.ReviewRepository;
+import com.solo.ptmatch.trainer.domain.Certification;
 import com.solo.ptmatch.trainer.domain.Specialty;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.CertificationRepository;
@@ -18,6 +19,9 @@ import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 
 import java.util.List;
+
+import com.solo.ptmatch.user.domain.User;
+import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,8 +35,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class TrainerProfileService {
 
     private final TrainerProfileRepository trainerProfileRepository;
-    private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
     private final CertificationRepository certificationRepository;
+    private final ReviewRepository reviewRepository;
 
     @Transactional(readOnly = true)
     public List<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request) {
@@ -70,12 +75,59 @@ public class TrainerProfileService {
         return TrainerDetailResponse.from(profile, reviews, certifications);
     }
 
-    public TrainerProfileUpsertResponse registerTrainerProfile(TrainerProfileUpsertRequest trainerProfileRegisterRequest) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    @Transactional
+    public TrainerProfileUpsertResponse registerTrainerProfile(
+            String email,
+            TrainerProfileUpsertRequest request
+    ) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        trainerProfileRepository.findByTrainerId(user.getId()).ifPresent(profile -> {
+            throw GlobalException.of(ErrorCode.CONFLICT);
+        });
+
+        TrainerProfile savedProfile = trainerProfileRepository.save(request.toEntity(user));
+
+        if (request.certifications() != null && !request.certifications().isEmpty()) {
+            List<Certification> certifications = request.certifications().stream()
+                    .map(certRequest -> certRequest.toEntity(savedProfile)) // TrainerCertificationRequest에 toEntity가 있다고 가정
+                    .toList();
+            certificationRepository.saveAll(certifications);
+        }
+
+        return TrainerProfileUpsertResponse.from(savedProfile);
     }
 
-    public TrainerProfileUpsertResponse updateTrainerProfile(TrainerProfileUpsertRequest trainerProfileRegisterRequest) {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public TrainerProfileUpsertResponse updateTrainerProfile(
+            String email,
+            TrainerProfileUpsertRequest request
+    ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        TrainerProfile profile = trainerProfileRepository.findByTrainerId(user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
+
+        profile.updateProfile(
+                request.bio(),
+                request.careerYears(),
+                request.specialties(),
+                request.gymAddress(),
+                request.profileImageUrl()
+        );
+
+        // 프로필 수정 시 기존 자격증 삭제 후 재등록
+        certificationRepository.deleteByTrainerProfileId(profile.getId());
+        if (request.certifications() != null && !request.certifications().isEmpty()) {
+            List<Certification> certifications = request.certifications().stream()
+                    .map(certRequest -> certRequest.toEntity(profile))
+                    .toList();
+            certificationRepository.saveAll(certifications);
+        }
+
+        return TrainerProfileUpsertResponse.from(profile);
     }
 
     private Sort createSort(String sortString) {

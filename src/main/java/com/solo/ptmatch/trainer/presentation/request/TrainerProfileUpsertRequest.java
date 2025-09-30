@@ -1,10 +1,12 @@
 package com.solo.ptmatch.trainer.presentation.request;
 
+import com.solo.ptmatch.trainer.domain.Specialty;
+import com.solo.ptmatch.trainer.domain.TrainerProfile;
+import com.solo.ptmatch.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
@@ -18,9 +20,9 @@ public record TrainerProfileUpsertRequest(
     @Min(0)
     int careerYears,
 
-    @Schema(description = "전문 분야 목록", example = "[\"다이어트\", \"근력강화\"]")
-    @NotEmpty
-    List<@NotBlank String> specialties,
+    @Schema(description = "전문 분야", example = "DIET")
+    @NotNull
+    Specialty specialties,
 
     @Schema(description = "활동 지점", example = "서울 강남구 ...")
     @NotBlank
@@ -35,4 +37,15 @@ public record TrainerProfileUpsertRequest(
     @Valid
     List<TrainerCertificationRequest> certifications
 ) {
+
+    public TrainerProfile toEntity(User trainer) {
+        return TrainerProfile.create(
+            trainer,
+            bio,
+            careerYears,
+            specialties,
+            gymAddress,
+            profileImageUrl
+        );
+    }
 }

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,16 +46,30 @@ public class TrainerController {
     @Operation(summary = "트레이너 프로필 등록", description = "트레이너 자신의 프로필을 신규 등록한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 등록 성공")
     @PostMapping("/me")
-    public ApiResponse<TrainerProfileUpsertResponse> register(@Valid @RequestBody TrainerProfileUpsertRequest trainerProfileRegisterRequest) {
-        TrainerProfileUpsertResponse response = trainerProfileService.registerTrainerProfile(trainerProfileRegisterRequest);
+    public ApiResponse<TrainerProfileUpsertResponse> register(
+            @AuthenticationPrincipal(expression = "username") String loggedInEmail,
+            @Valid @RequestBody TrainerProfileUpsertRequest trainerProfileRegisterRequest
+    ) {
+
+        TrainerProfileUpsertResponse response = trainerProfileService.registerTrainerProfile(
+                loggedInEmail,
+                trainerProfileRegisterRequest
+        );
         return ApiResponse.success(response);
     }
 
     @Operation(summary = "트레이너 프로필 수정", description = "트레이너 자신의 프로필을 수정한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 수정 성공")
     @PutMapping("/me")
-    public ApiResponse<TrainerProfileUpsertResponse> update(@Valid @RequestBody TrainerProfileUpsertRequest trainerProfileRegisterRequest) {
-        TrainerProfileUpsertResponse response = trainerProfileService.updateTrainerProfile(trainerProfileRegisterRequest);
+    public ApiResponse<TrainerProfileUpsertResponse> update(
+            @AuthenticationPrincipal(expression = "username") String loggedInEmail,
+            @Valid @RequestBody TrainerProfileUpsertRequest trainerProfileRegisterRequest
+    ) {
+
+        TrainerProfileUpsertResponse response = trainerProfileService.updateTrainerProfile(
+                loggedInEmail,
+                trainerProfileRegisterRequest
+        );
         return ApiResponse.success(response);
     }
 }

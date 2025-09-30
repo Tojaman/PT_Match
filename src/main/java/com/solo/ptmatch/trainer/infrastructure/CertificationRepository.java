@@ -13,6 +13,5 @@ public interface CertificationRepository extends JpaRepository<Certification, Lo
     // 트레이너 자격증 맞는지 검증
     Optional<Certification> findByIdAndTrainerProfileId(Long certificationId, Long trainerProfileId);
 
-    // 트레이너 프로필 삭제시 관련 자격증 테이블 일괄 삭제
     void deleteByTrainerProfileId(Long trainerProfileId);
 }
