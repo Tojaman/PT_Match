@@ -1,5 +1,6 @@
 package com.solo.ptmatch.trainer.presentation.response;
 
+import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,13 +27,31 @@ public record TrainerDetailResponse(
     Long likesCount,
     @Schema(description = "평균 평점")
     BigDecimal averageRating,
-    @Schema(description = "스케줄 목록")
-    List<TrainerScheduleResponse> schedules,
     @Schema(description = "리뷰 요약 목록")
     List<TrainerReviewResponse> reviews,
     @Schema(description = "자격증 목록")
     List<TrainerCertificationResponse> certifications
 ) {
+
+    public static TrainerDetailResponse from(
+            com.solo.ptmatch.trainer.domain.TrainerProfile profile,
+            List<TrainerReviewResponse> reviews,
+            List<TrainerCertificationResponse> certifications
+    ) {
+        return new TrainerDetailResponse(
+                profile.getId(),
+                profile.getTrainer().getName(),
+                profile.getBio(),
+                profile.getSpecialty().name(),
+                profile.getCareerYears(),
+                profile.getGymAddress(),
+                profile.getProfileImageUrl(),
+                (long) profile.getFollowersCount(),
+                profile.getAverageRating(),
+                reviews,
+                certifications
+        );
+    }
 
     private static String joinSpecialties(Iterable<String> specialties) {
         StringJoiner joiner = new StringJoiner(", ");

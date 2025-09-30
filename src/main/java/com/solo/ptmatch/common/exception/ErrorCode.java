@@ -11,6 +11,7 @@ public enum ErrorCode {
     NOT_FOUND("리소스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     CONFLICT("이미 존재하는 리소스입니다.", HttpStatus.CONFLICT),
     USER_EMAIL_DUPLICATED("이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT),
+    TRAINER_PROFILE_NOT_FOUND("트레이너 프로필을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String message;
