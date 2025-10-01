@@ -38,7 +38,7 @@ public class Product extends BaseEntity {
     private TrainerProfile trainerProfile;
 
     @Column(nullable = false)
-    private String name;
+    private String title;
 
     @Lob
     @Column(nullable = false)
@@ -62,7 +62,7 @@ public class Product extends BaseEntity {
 
     private Product(
             TrainerProfile trainerProfile,
-            String name,
+            String title,
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
@@ -70,7 +70,7 @@ public class Product extends BaseEntity {
             String thumbnailUrl
     ) {
         this.trainerProfile = trainerProfile;
-        this.name = name;
+        this.title = title;
         this.description = description;
         this.category = category;
         this.pricePerSession = sanitizePrice(pricePerSession);
@@ -80,25 +80,25 @@ public class Product extends BaseEntity {
 
     public static Product create(
             TrainerProfile trainerProfile,
-            String name,
+            String title,
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
             int sessionCount,
             String thumbnailUrl
     ) {
-        return new Product(trainerProfile, name, description, category, pricePerSession, sessionCount, thumbnailUrl);
+        return new Product(trainerProfile, title, description, category, pricePerSession, sessionCount, thumbnailUrl);
     }
 
     public void updateDetails(
-            String name,
+            String title,
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
             int sessionCount,
             String thumbnailUrl
     ) {
-        this.name = name;
+        this.title = title;
         this.description = description;
         this.category = category;
         this.pricePerSession = sanitizePrice(pricePerSession);

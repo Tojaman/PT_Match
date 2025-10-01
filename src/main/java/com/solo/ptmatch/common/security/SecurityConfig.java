@@ -45,7 +45,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/*").permitAll() // 상품 정보 조회(GET)는 인증 없이 허용
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll() // API 문서 및 헬스 체크는 인증 없이 허용
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS Preflight 요청(OPTIONS)은 인증 없이 허용
-                .requestMatchers(HttpMethod.POST, "/api/trainers/me").hasRole("TRAINER") // 트레이너 프로필 등록/수정은 TRAINER 역할만 가능
+                .requestMatchers(HttpMethod.POST, "/api/trainers/me", "/api/products/", "/api/products/{productId}").hasRole("TRAINER") // 트레이너 프로필 등록/수정은 TRAINER 역할만 가능
+                .requestMatchers(HttpMethod.PUT, "/api/products/{productId}").hasRole("TRAINER")
+                .requestMatchers(HttpMethod.DELETE, "/api/products/{productId}").hasRole("TRAINER")
+
                 .anyRequest().authenticated() // 나머지 모든 요청은 인증 필요
             )
             .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class) // 로그인 처리를 위한 커스텀 필터(LoginFilter)를 기본 필터 위치에 추가
