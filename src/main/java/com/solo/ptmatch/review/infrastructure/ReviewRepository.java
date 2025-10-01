@@ -9,4 +9,6 @@ import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findTop5ByTrainerProfileOrderByCreatedAtDesc(TrainerProfile trainerProfile);
+
+    List<Review> findByProductIdOrderByCreatedAtDesc(Long productId);
 }

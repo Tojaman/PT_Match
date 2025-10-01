@@ -2,16 +2,18 @@ package com.solo.ptmatch.product.application;
 
 import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
+import com.solo.ptmatch.matching.infrastructure.ReservationRepository;
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.product.domain.ProductCategory;
+import com.solo.ptmatch.product.infrastructure.ProductImageRepository;
 import com.solo.ptmatch.product.infrastructure.ProductRepository;
 import com.solo.ptmatch.product.presentation.request.ProductCreateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductSearchRequest;
 import com.solo.ptmatch.product.presentation.request.ProductUpdateRequest;
 import com.solo.ptmatch.product.presentation.response.*;
+import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
-import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,8 @@ public class ProductService {
     private final UserRepository userRepository;
     private final TrainerProfileRepository trainerProfileRepository;
     private final ProductRepository productRepository;
+    private final ProductImageRepository productImageRepository;
+    private final ReviewRepository reviewRepository;
 
     // 상품 등록
     @Transactional
@@ -69,7 +73,22 @@ public class ProductService {
 
     // 상품 상세 조회
     public ProductDetailResponse getProductDetail(Long productId) {
-        throw new UnsupportedOperationException("Not implemented yet");
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
+        TrainerInfo trainerInfo = TrainerInfo.from(product.getTrainerProfile());
+
+        List<ImageInfo> productImages = productImageRepository.findByProductIdOrderByDisplayOrderAsc(product.getId())
+                .stream()
+                .map(ImageInfo::from)
+                .toList();
+
+        List<ReviewInfo> reviews = reviewRepository.findByProductIdOrderByCreatedAtDesc(product.getId())
+                .stream()
+                .map(ReviewInfo::from)
+                .toList();
+
+        return ProductDetailResponse.from(product, trainerInfo, productImages, reviews);
     }
 
     public ProductUpdateResponse updateProduct(Long productId, ProductUpdateRequest request) {
@@ -80,9 +99,6 @@ public class ProductService {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    public ProductLikeToggleResponse toggleLike(Long productId) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
 
     private Sort createSort(String sortString) {
         if (sortString == null || sortString.isBlank()) {

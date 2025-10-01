@@ -69,12 +69,4 @@ public class ProductController {
         ProductDeleteResponse response = productService.deleteProduct(productId);
         return ApiResponse.success(response);
     }
-
-    @Operation(summary = "PT 상품 좋아요 토글", description = "사용자가 PT 상품 좋아요를 토글한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좋아요 토글 성공")
-    @PostMapping("/{productId}/like")
-    public ApiResponse<ProductLikeToggleResponse> toggleLike(@PathVariable Long productId) {
-        ProductLikeToggleResponse response = productService.toggleLike(productId);
-        return ApiResponse.success(response);
-    }
 }
