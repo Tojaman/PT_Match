@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "PT 상품 검색 조건")
 public record ProductSearchRequest(
+    @Schema(description = "제목 키워드", example = "다이어트")
+    String titleKeyword,
     @Schema(description = "정렬 기준", example = "POPULAR")
     String sort,
     @Schema(description = "카테고리", example = "DIET")

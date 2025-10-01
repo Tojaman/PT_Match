@@ -1,5 +1,6 @@
 package com.solo.ptmatch.product.presentation.response;
 
+import com.solo.ptmatch.product.domain.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 
@@ -14,4 +15,12 @@ public record ProductCreateResponse(
     @Schema(description = "세션 수")
     int sessionCount
 ) {
+
+    public static ProductCreateResponse from(Product product) {
+        return  new ProductCreateResponse(
+                product.getId(),
+                product.getTitle(),
+                product.getPricePerSession(),
+                product.getSessionCount());
+    }
 }

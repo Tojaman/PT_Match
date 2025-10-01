@@ -5,23 +5,15 @@ import com.solo.ptmatch.product.application.ProductService;
 import com.solo.ptmatch.product.presentation.request.ProductCreateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductSearchRequest;
 import com.solo.ptmatch.product.presentation.request.ProductUpdateRequest;
-import com.solo.ptmatch.product.presentation.response.ProductCreateResponse;
-import com.solo.ptmatch.product.presentation.response.ProductDeleteResponse;
-import com.solo.ptmatch.product.presentation.response.ProductDetailResponse;
-import com.solo.ptmatch.product.presentation.response.ProductLikeToggleResponse;
-import com.solo.ptmatch.product.presentation.response.ProductListResponse;
-import com.solo.ptmatch.product.presentation.response.ProductUpdateResponse;
+import com.solo.ptmatch.product.presentation.response.*;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -32,17 +24,20 @@ public class ProductController {
 
     @Operation(summary = "PT 상품 등록", description = "트레이너가 신규 PT 상품을 등록한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 등록 성공")
+    @PreAuthorize("hasRole('TRAINER')")
     @PostMapping
-    public ApiResponse<ProductCreateResponse> createProduct(@Valid @RequestBody ProductCreateRequest request) {
-        ProductCreateResponse response = productService.createProduct(request);
+    public ApiResponse<ProductCreateResponse> createProduct(
+            @AuthenticationPrincipal(expression = "username") String loggedInEmail,
+            @Valid @RequestBody ProductCreateRequest request) {
+        ProductCreateResponse response = productService.createProduct(request, loggedInEmail);
         return ApiResponse.success(response);
     }
 
     @Operation(summary = "PT 상품 목록 조회", description = "정렬/필터 조건으로 상품 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
     @GetMapping
-    public ApiResponse<ProductListResponse> getProducts(ProductSearchRequest request) {
-        ProductListResponse response = productService.getProducts(request);
+    public ApiResponse<List<ProductSummaryResponse>> getProducts(@ModelAttribute ProductSearchRequest request) {
+        List<ProductSummaryResponse> response = productService.getProducts(request);
         return ApiResponse.success(response);
     }
 
@@ -56,6 +51,7 @@ public class ProductController {
 
     @Operation(summary = "PT 상품 수정", description = "기존 PT 상품 정보를 수정한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 수정 성공")
+    @PreAuthorize("hasRole('TRAINER')")
     @PutMapping("/{productId}")
     public ApiResponse<ProductUpdateResponse> updateProduct(
         @PathVariable Long productId,
@@ -67,6 +63,7 @@ public class ProductController {
 
     @Operation(summary = "PT 상품 삭제", description = "기존 PT 상품을 삭제한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 삭제 성공")
+    @PreAuthorize("hasRole('TRAINER')")
     @DeleteMapping("/{productId}")
     public ApiResponse<ProductDeleteResponse> deleteProduct(@PathVariable Long productId) {
         ProductDeleteResponse response = productService.deleteProduct(productId);
