@@ -105,13 +105,19 @@ class ProductServiceTest {
         @Test
         @DisplayName("트레이너 프로필이 존재하면 상품을 저장하고 응답을 반환한다")
         void createProduct_success() {
+
+            List<ImageInfo> images = List.of(
+                new ImageInfo(null, "https://example.com/1.jpg", 0),
+                new ImageInfo(null, "https://example.com/2.jpg", 1)
+            );
             // given
             ProductCreateRequest request = new ProductCreateRequest(
                 "PT 10회 패키지",
                 "체계적인 10회 세션",
                 ProductCategory.MUSCLE_GAIN,
                 new BigDecimal("50000"),
-                10
+                10,
+                images
             );
 
             Product savedProduct = Product.create(
@@ -150,12 +156,18 @@ class ProductServiceTest {
         @DisplayName("사용자를 찾지 못하면 USER_NOT_FOUND 예외를 던진다")
         void createProduct_whenUserNotFound() {
             // given
+            List<ImageInfo> images = List.of(
+                    new ImageInfo(null, "https://example.com/1.jpg", 0),
+                    new ImageInfo(null, "https://example.com/2.jpg", 1)
+            );
+
             ProductCreateRequest request = new ProductCreateRequest(
                 "PT 10회 패키지",
                 "체계적인 10회 세션",
                 ProductCategory.MUSCLE_GAIN,
                 new BigDecimal("50000"),
-                10
+                10,
+                images
             );
 
             when(userRepository.findByEmail(TRAINER_EMAIL)).thenReturn(Optional.empty()); // 사용자 없음
@@ -175,12 +187,18 @@ class ProductServiceTest {
         @DisplayName("트레이너 프로필이 없으면 TRAINER_PROFILE_NOT_FOUND 예외를 던진다")
         void createProduct_whenTrainerProfileNotFound() {
             // given
+            List<ImageInfo> images = List.of(
+                    new ImageInfo(null, "https://example.com/1.jpg", 0),
+                    new ImageInfo(null, "https://example.com/2.jpg", 1)
+            );
+
             ProductCreateRequest request = new ProductCreateRequest(
                 "PT 10회 패키지",
                 "체계적인 10회 세션",
                 ProductCategory.MUSCLE_GAIN,
                 new BigDecimal("50000"),
-                10
+                10,
+                images
             );
 
             when(userRepository.findByEmail(TRAINER_EMAIL)).thenReturn(Optional.of(trainerUser));

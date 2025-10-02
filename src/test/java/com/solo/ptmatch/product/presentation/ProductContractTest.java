@@ -58,12 +58,18 @@ class ProductContractTest {
     @WithMockUser(roles = "TRAINER", username = "trainer@test.com") // 스프링 시큐리티 권한 통과를 위해 TRAINER로 권한 설정
     void createProduct_succeeds_when_user_is_trainer() throws Exception {
         // given
+        List<ImageInfo> images = List.of(
+                new ImageInfo(null, "https://example.com/1.jpg", 0),
+                new ImageInfo(null, "https://example.com/2.jpg", 1)
+        );
+
         ProductCreateRequest requestPayload = new ProductCreateRequest(
             "PT 10회 패키지",
             "10회 집중 관리 프로그램",
                 ProductCategory.MUSCLE_GAIN,
             new BigDecimal("50000"),
-            10
+            10,
+                images
         );
 
         ProductCreateResponse serviceResult = new ProductCreateResponse(1L, "PT 10회 패키지", new BigDecimal("50000"), 10);
@@ -95,12 +101,18 @@ class ProductContractTest {
     @WithMockUser(roles = "USER")
     void createProduct_fails_when_user_is_not_trainer() throws Exception {
         // given
+        List<ImageInfo> images = List.of(
+                new ImageInfo(null, "https://example.com/1.jpg", 0),
+                new ImageInfo(null, "https://example.com/2.jpg", 1)
+        );
+
         ProductCreateRequest requestPayload = new ProductCreateRequest(
             "PT 10회 패키지",
             "10회 집중 관리 프로그램",
                 ProductCategory.MUSCLE_GAIN,
             new BigDecimal("50000"),
-            10
+            10,
+            images
         );
 
         // when
