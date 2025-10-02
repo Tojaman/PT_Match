@@ -24,6 +24,7 @@ import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +40,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ProductService {
@@ -60,6 +62,10 @@ public class ProductService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         Product product = productRepository.save(request.toEntity(trainerProfile));
+        List<ProductImage> productImage = request.images().stream()
+                        .map(image -> ProductImage.create(product, image.imageUrl(), image.displayOrder()))
+                        .toList();
+        productImageRepository.saveAll(productImage);
         return ProductCreateResponse.from(product);
     }
 
