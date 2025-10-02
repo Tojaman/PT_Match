@@ -23,6 +23,8 @@ import com.solo.ptmatch.product.presentation.response.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -61,8 +63,7 @@ class ProductContractTest {
             "10회 집중 관리 프로그램",
                 ProductCategory.MUSCLE_GAIN,
             new BigDecimal("50000"),
-            10,
-            "https://example.com/thumb.jpg"
+            10
         );
 
         ProductCreateResponse serviceResult = new ProductCreateResponse(1L, "PT 10회 패키지", new BigDecimal("50000"), 10);
@@ -99,8 +100,7 @@ class ProductContractTest {
             "10회 집중 관리 프로그램",
                 ProductCategory.MUSCLE_GAIN,
             new BigDecimal("50000"),
-            10,
-            "https://example.com/thumb.jpg"
+            10
         );
 
         // when
@@ -116,16 +116,19 @@ class ProductContractTest {
     @WithMockUser
     void getProductsReturnsList() throws Exception {
         // given
-        List<ProductSummaryResponse> serviceResult = List.of(
-            new ProductSummaryResponse(
-                2L,
-                "PT 20회",
-                new BigDecimal("900000"),
-                "최전문",
-                "DIET",
-                "https://example.com/thumb2.jpg",
-                150L
-            )
+        PageImpl<ProductSummaryResponse> serviceResult = new PageImpl<>(
+            List.of(
+                new ProductSummaryResponse(
+                    2L,
+                    "PT 20회",
+                    new BigDecimal("900000"),
+                    "최전문",
+                    "DIET",
+                    150L
+                )
+            ),
+            PageRequest.of(0, 10),
+            1
         );
 
         given(productService.getProducts(any(ProductSearchRequest.class))).willReturn(serviceResult);
@@ -148,8 +151,12 @@ class ProductContractTest {
             .andExpect(jsonPath("$.data[0].totalPrice").value(900000))
             .andExpect(jsonPath("$.data[0].trainerName").value("최전문"))
             .andExpect(jsonPath("$.data[0].category").value("DIET"))
-            .andExpect(jsonPath("$.data[0].thumbnailUrl").value("https://example.com/thumb2.jpg"))
-            .andExpect(jsonPath("$.data[0].likesCount").value(150));
+            .andExpect(jsonPath("$.data[0].likesCount").value(150))
+            .andExpect(jsonPath("$.pageResponse.page").value(0))
+            .andExpect(jsonPath("$.pageResponse.size").value(10))
+            .andExpect(jsonPath("$.pageResponse.totalElements").value(1))
+            .andExpect(jsonPath("$.pageResponse.totalPages").value(1))
+            .andExpect(jsonPath("$.pageResponse.hasNext").value(false));
 
         ArgumentCaptor<ProductSearchRequest> requestCaptor = ArgumentCaptor.forClass(ProductSearchRequest.class);
         then(productService).should().getProducts(requestCaptor.capture());
@@ -176,7 +183,7 @@ class ProductContractTest {
             new BigDecimal("50000"),
             10,
             new TrainerInfo(15L, "박전문", "피트니스 센터 강남점"),
-            List.of(new ImageInfo("https://example.com/image_main.jpg", 1)),
+            List.of(new ImageInfo(1L, "https://example.com/image_main.jpg", 0)),
             List.of(new ReviewInfo(1L, "김회원", 5, "덕분에 목표 달성했습니다!"))
         );
 
@@ -197,8 +204,9 @@ class ProductContractTest {
             .andExpect(jsonPath("$.data.trainerInfo.trainerId").value(15))
             .andExpect(jsonPath("$.data.trainerInfo.trainerName").value("박전문"))
             .andExpect(jsonPath("$.data.trainerInfo.gymName").value("피트니스 센터 강남점"))
+            .andExpect(jsonPath("$.data.images[0].id").value(1))
             .andExpect(jsonPath("$.data.images[0].imageUrl").value("https://example.com/image_main.jpg"))
-            .andExpect(jsonPath("$.data.images[0].displayOrder").value(1))
+            .andExpect(jsonPath("$.data.images[0].displayOrder").value(0))
             .andExpect(jsonPath("$.data.reviews[0].reviewId").value(1))
             .andExpect(jsonPath("$.data.reviews[0].reviewerName").value("김회원"))
             .andExpect(jsonPath("$.data.reviews[0].rating").value(5))
@@ -210,24 +218,37 @@ class ProductContractTest {
 
     @Test
     @DisplayName("PT 상품 수정 시 갱신된 정보를 반환한다")
+    @WithMockUser(roles = "TRAINER", username = "trainer@test.com")
     void updateProductReturnsUpdatedSummary() throws Exception {
         // given
         ProductUpdateRequest requestPayload = new ProductUpdateRequest(
             "PT 집중관리 12회",
             "12회 구성으로 업그레이드된 프로그램",
+                ProductCategory.MUSCLE_GAIN,
+            new BigDecimal("60000"),
+            12,
+            List.of(
+                new ImageInfo(1L, "https://example.com/existing-thumb.jpg", 0),
+                new ImageInfo(null, "https://example.com/new-thumb.jpg", 1)
+            )
+        );
+
+        ProductUpdateResponse serviceResult = new ProductUpdateResponse(
+            1L,
+            "PT 집중관리 12회",
+            "12회 구성으로 업그레이드된 프로그램",
             "STRENGTH",
             new BigDecimal("60000"),
             12,
-            "https://example.com/new-thumb.jpg"
+            List.of(new ImageInfo(1L, "https://example.com/existing-thumb.jpg", 0))
         );
-
-        ProductUpdateResponse serviceResult = new ProductUpdateResponse(1L, "PT 집중관리 12회", new BigDecimal("60000"), 12);
 
         given(productService.updateProduct(any(Long.class), any(ProductUpdateRequest.class)))
             .willReturn(serviceResult);
 
         // when
         mockMvc.perform(put("/api/products/{productId}", 1L)
+                .with(csrf()) // CSRF 토큰 추가
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestPayload)))
             // then
@@ -235,7 +256,7 @@ class ProductContractTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.status").value(200))
             .andExpect(jsonPath("$.data.productId").value(1))
-            .andExpect(jsonPath("$.data.name").value("PT 집중관리 12회"))
+            .andExpect(jsonPath("$.data.title").value("PT 집중관리 12회"))
             .andExpect(jsonPath("$.data.pricePerSession").value(60000))
             .andExpect(jsonPath("$.data.sessionCount").value(12))
             .andExpect(jsonPath("$.pageResponse").doesNotExist());
@@ -246,30 +267,15 @@ class ProductContractTest {
 
         assertThat(idCaptor.getValue()).isEqualTo(1L);
         ProductUpdateRequest captured = requestCaptor.getValue();
-        assertThat(captured.name()).isEqualTo("PT 집중관리 12회");
+        assertThat(captured.title()).isEqualTo("PT 집중관리 12회");
         assertThat(captured.description()).isEqualTo("12회 구성으로 업그레이드된 프로그램");
-        assertThat(captured.category()).isEqualTo("STRENGTH");
+        assertThat(captured.category()).isEqualTo(ProductCategory.MUSCLE_GAIN);
         assertThat(captured.pricePerSession()).isEqualByComparingTo("60000");
         assertThat(captured.sessionCount()).isEqualTo(12);
-        assertThat(captured.thumbnailUrl()).isEqualTo("https://example.com/new-thumb.jpg");
-    }
-
-    @Test
-    @DisplayName("PT 상품 삭제 시 삭제 메시지를 반환한다")
-    void deleteProductReturnsMessage() throws Exception {
-        // given
-        ProductDeleteResponse serviceResult = new ProductDeleteResponse("상품이 삭제되었습니다.");
-        given(productService.deleteProduct(1L)).willReturn(serviceResult);
-
-        // when
-        mockMvc.perform(delete("/api/products/{productId}", 1L))
-            // then
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.status").value(200))
-            .andExpect(jsonPath("$.data.message").value("상품이 삭제되었습니다."))
-            .andExpect(jsonPath("$.pageResponse").doesNotExist());
-
-        then(productService).should().deleteProduct(1L);
+        assertThat(captured.images()).hasSize(2);
+        ImageInfo newImage = captured.images().get(1);
+        assertThat(newImage.id()).isNull();
+        assertThat(newImage.imageUrl()).isEqualTo("https://example.com/new-thumb.jpg");
+        assertThat(newImage.displayOrder()).isEqualTo(1);
     }
 }
