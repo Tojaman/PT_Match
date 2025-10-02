@@ -2,6 +2,8 @@ package com.solo.ptmatch.product.presentation.request;
 
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.product.domain.ProductCategory;
+import com.solo.ptmatch.product.domain.ProductImage;
+import com.solo.ptmatch.product.presentation.response.ImageInfo;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
@@ -9,6 +11,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Schema(description = "PT 상품 등록 요청")
 public record ProductCreateRequest(
@@ -33,9 +36,10 @@ public record ProductCreateRequest(
     @Min(1)
     int sessionCount,
 
-    @Schema(description = "썸네일 URL", example = "https://example.com/thumb.jpg")
-    @NotBlank
-    String thumbnailUrl
+    @Schema(description = "상품 이미지")
+    @NotNull
+    List<ImageInfo> images
+
 ) {
     public Product toEntity(TrainerProfile trainerProfile) {
         return Product.create(
@@ -44,8 +48,7 @@ public record ProductCreateRequest(
             description,
             category,
             pricePerSession,
-            sessionCount,
-            thumbnailUrl
+            sessionCount
         );
     }
 }

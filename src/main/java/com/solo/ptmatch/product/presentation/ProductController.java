@@ -1,6 +1,7 @@
 package com.solo.ptmatch.product.presentation;
 
 import com.solo.ptmatch.common.response.ApiResponse;
+import com.solo.ptmatch.common.response.PageResponse;
 import com.solo.ptmatch.product.application.ProductService;
 import com.solo.ptmatch.product.presentation.request.ProductCreateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductSearchRequest;
@@ -9,10 +10,10 @@ import com.solo.ptmatch.product.presentation.response.*;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -37,8 +38,8 @@ public class ProductController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
     @GetMapping
     public ApiResponse<List<ProductSummaryResponse>> getProducts(@ModelAttribute ProductSearchRequest request) {
-        List<ProductSummaryResponse> response = productService.getProducts(request);
-        return ApiResponse.success(response);
+        Page<ProductSummaryResponse> response = productService.getProducts(request);
+        return ApiResponse.success(response.getContent(), PageResponse.from(response));
     }
 
     @Operation(summary = "PT 상품 상세 조회", description = "단일 PT 상품의 상세 정보를 조회한다")
@@ -52,7 +53,7 @@ public class ProductController {
     @Operation(summary = "PT 상품 수정", description = "기존 PT 상품 정보를 수정한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 수정 성공")
     @PreAuthorize("hasRole('TRAINER')")
-    @PutMapping("/{productId}")
+    @PatchMapping("/{productId}")
     public ApiResponse<ProductUpdateResponse> updateProduct(
         @PathVariable Long productId,
         @Valid @RequestBody ProductUpdateRequest request
@@ -64,17 +65,9 @@ public class ProductController {
     @Operation(summary = "PT 상품 삭제", description = "기존 PT 상품을 삭제한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 삭제 성공")
     @PreAuthorize("hasRole('TRAINER')")
-    @DeleteMapping("/{productId}")
+    @PostMapping("/{productId}")
     public ApiResponse<ProductDeleteResponse> deleteProduct(@PathVariable Long productId) {
-        ProductDeleteResponse response = productService.deleteProduct(productId);
-        return ApiResponse.success(response);
-    }
-
-    @Operation(summary = "PT 상품 좋아요 토글", description = "사용자가 PT 상품 좋아요를 토글한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좋아요 토글 성공")
-    @PostMapping("/{productId}/like")
-    public ApiResponse<ProductLikeToggleResponse> toggleLike(@PathVariable Long productId) {
-        ProductLikeToggleResponse response = productService.toggleLike(productId);
-        return ApiResponse.success(response);
+        productService.deactivateProduct(productId);
+        return ApiResponse.success();
     }
 }

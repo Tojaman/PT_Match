@@ -47,7 +47,7 @@ public class ProductImage extends BaseEntity {
         return new ProductImage(product, imageUrl, displayOrder);
     }
 
-    public void changeDisplayOrder(int displayOrder) {
+    public void updateDisplayOrder(int displayOrder) {
         this.displayOrder = validateDisplayOrder(displayOrder);
     }
 
