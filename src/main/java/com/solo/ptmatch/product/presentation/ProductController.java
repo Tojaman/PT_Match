@@ -53,7 +53,7 @@ public class ProductController {
     @Operation(summary = "PT 상품 수정", description = "기존 PT 상품 정보를 수정한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 수정 성공")
     @PreAuthorize("hasRole('TRAINER')")
-    @PutMapping("/{productId}")
+    @PatchMapping("/{productId}")
     public ApiResponse<ProductUpdateResponse> updateProduct(
         @PathVariable Long productId,
         @Valid @RequestBody ProductUpdateRequest request
@@ -65,7 +65,7 @@ public class ProductController {
     @Operation(summary = "PT 상품 삭제", description = "기존 PT 상품을 삭제한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 삭제 성공")
     @PreAuthorize("hasRole('TRAINER')")
-    @DeleteMapping("/{productId}")
+    @PostMapping("/{productId}")
     public ApiResponse<ProductDeleteResponse> deleteProduct(@PathVariable Long productId) {
         productService.deactivateProduct(productId);
         return ApiResponse.success();
