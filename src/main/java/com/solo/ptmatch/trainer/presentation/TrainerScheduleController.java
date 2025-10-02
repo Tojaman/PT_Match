@@ -11,12 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -40,16 +35,20 @@ public class TrainerScheduleController {
         return ApiResponse.success(response);
     }
 
-//    @Operation(summary = "트레이너 스케줄 수정", description = "트레이너 자신의 스케줄을 수정한다")
-//    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "스케줄 수정 성공")
-//    @PutMapping("/schedule")
-//    public ApiResponse<TrainerScheduleListResponse> updateTrainerSchedule(
-//            @AuthenticationPrincipal(expression = "username") String loggedInEmail,
-//            @Valid @RequestBody TrainerScheduleUpdateRequest trainerScheduleUpdateRequest
-//    ) {
-//
-//
-//    }
+    @Operation(summary = "트레이너 스케줄 수정", description = "트레이너 자신의 스케줄을 수정한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "스케줄 수정 성공")
+    @PatchMapping
+    public ApiResponse<TrainerScheduleListResponse> updateTrainerSchedule(
+            @AuthenticationPrincipal(expression = "username") String loggedInEmail,
+            @Valid @RequestBody TrainerScheduleUpdateRequest trainerScheduleUpdateRequest
+    ) {
+
+        TrainerScheduleListResponse response = trainerProfileService.updateTrainerSchedule(
+                loggedInEmail,
+                trainerScheduleUpdateRequest
+        );
+        return ApiResponse.success(response);
+    }
 
 //    @Operation(summary = "트레이너 스케줄 삭제", description = "트레이너 자신의 스케줄을 삭제한다")
 //    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "스케줄 삭제 성공")

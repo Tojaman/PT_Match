@@ -40,25 +40,25 @@ public class AvailableSchedule extends BaseEntity {
     @Column(name = "reservation_status", nullable = false)
     private ReservationStatus reservationStatus;
 
-    private AvailableSchedule(TrainerProfile trainerProfile, LocalDateTime startTime, LocalDateTime endTime) {
+    private AvailableSchedule(TrainerProfile trainerProfile,
+                              LocalDateTime startTime,
+                              LocalDateTime endTime,
+                              ReservationStatus reservationStatus) {
         this.trainerProfile = trainerProfile;
         this.startTime = startTime;
         this.endTime = endTime;
-        validateTimeRange();
+        this.reservationStatus = reservationStatus;
     }
 
-    public static AvailableSchedule create(TrainerProfile trainerProfile, LocalDateTime startTime, LocalDateTime endTime) {
-        return new AvailableSchedule(trainerProfile, startTime, endTime);
+    public static AvailableSchedule create(TrainerProfile trainerProfile,
+                                           LocalDateTime startTime,
+                                           LocalDateTime endTime) {
+        return new AvailableSchedule(trainerProfile, startTime, endTime, ReservationStatus.AVAILABLE);
     }
 
-    public void update(LocalDateTime startTime, LocalDateTime endTime) {
+    public void update(LocalDateTime startTime,
+                       LocalDateTime endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
-    }
-
-    private void validateTimeRange() {
-        if (!startTime.isBefore(endTime)) {
-            throw new IllegalArgumentException("startTime must be before endTime");
-        }
     }
 }

@@ -15,7 +15,6 @@ import com.solo.ptmatch.trainer.presentation.response.TrainerCertificationRespon
 import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerReviewResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 
 import java.util.List;

@@ -63,7 +63,25 @@ public class TrainerScheduleService {
             String email,
             TrainerScheduleUpdateRequest request
     ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
+        TrainerProfile profile = trainerProfileRepository.findByTrainerId(user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
+
+        // 업데이트 대상 스케줄 조회 및 업데이트
+        List<TrainerSchedule> updatedSchedules = new ArrayList<>();
+        for (TrainerScheduleUpdateRequestItem req : request.schedules()) {
+            AvailableSchedule schedule = availableScheduleRepository.findByIdAndTrainerProfileId(
+                    req.scheduleId(),
+                    profile.getId());
+            if (schedule == null) {
+                throw GlobalException.of(ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND);
+            }
+            schedule.update(req.startTime(), req.endTime());
+            updatedSchedules.add(TrainerSchedule.of(schedule.getStartTime(), schedule.getEndTime()));
+        }
+        return TrainerScheduleListResponse.from(updatedSchedules);
     }
 
 //    @Transactional
