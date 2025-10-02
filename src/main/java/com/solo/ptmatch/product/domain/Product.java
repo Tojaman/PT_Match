@@ -57,8 +57,9 @@ public class Product extends BaseEntity {
     @Column(name = "likes_count", nullable = false)
     private int likesCount;
 
-    @Column(name = "status", nullable = false)
-    private ProductStatus status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sale_status", nullable = false)
+    private ProductSaleStatus saleStatus;
 
     private Product(
             TrainerProfile trainerProfile,
@@ -75,7 +76,7 @@ public class Product extends BaseEntity {
         this.pricePerSession = sanitizePrice(pricePerSession);
         this.sessionCount = validateSessionCount(sessionCount);
         this.likesCount = 0;
-        this.status = ProductStatus.ACTIVE;
+        this.saleStatus = ProductSaleStatus.ACTIVE;
     }
 
     public static Product create(
@@ -104,7 +105,7 @@ public class Product extends BaseEntity {
     }
 
     public void deactivate() {
-        this.status = ProductStatus.INACTIVE;
+        this.saleStatus = ProductSaleStatus.INACTIVE;
     }
 
     public void toggleLike(boolean liked) {
