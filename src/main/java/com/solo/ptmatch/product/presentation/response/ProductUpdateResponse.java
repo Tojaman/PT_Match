@@ -9,7 +9,7 @@ public record ProductUpdateResponse(
     @Schema(description = "상품 ID", example = "1")
     Long productId,
     @Schema(description = "상품명")
-    String name,
+    String title,
     @Schema(description = "상품 설명")
     String description,
     @Schema(description = "카테고리")

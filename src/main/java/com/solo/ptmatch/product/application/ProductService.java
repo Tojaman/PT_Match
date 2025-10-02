@@ -32,7 +32,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -104,35 +109,20 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
 
-        // ProductImage 삭제
-        List<Long> imagesToDelete = request.imagesToDelete();
-        if (imagesToDelete != null && !imagesToDelete.isEmpty()) {
-            List<ProductImage> deletableImages = productImageRepository.findByProductIdAndIdIn(productId, imagesToDelete); // Product에 맞는 이미지 삭제(안전장치)
-            if (!deletableImages.isEmpty()) {
-                productImageRepository.deleteAll(deletableImages);
-            }
-        }
+        // 이미지 추가, 삭제 및 순서 재정렬
+        updateImage(request.images(), product);
 
-        // 새로운 ProductImage 추가
-        List<ImageInfo> images = request.images();
-        if (images != null && !images.isEmpty()) {
-            List<ProductImage> newImages = images.stream()
-                    .filter(imageInfo -> imageInfo.id() == null) // 새로운 이미지 필터링
-                    .map(imageInfo -> ProductImage.create(product, imageInfo.imageUrl(), imageInfo.displayOrder()))
-                    .toList();
-            if (!newImages.isEmpty()) {
-                productImageRepository.saveAll(newImages);
-            }
-        }
-
-        // Product 정보 업데이트
         product.update(
                 request.title(),
                 request.description(),
-                ProductCategory.valueOf(request.category()),
+                request.category(),
                 request.pricePerSession(),
                 request.sessionCount()
         );
+
+        List<ImageInfo> responseImages = productImageRepository.findByProductIdOrderByDisplayOrderAsc(product.getId()).stream()
+                .map(ImageInfo::from)
+                .toList();
 
         return new ProductUpdateResponse(
                 product.getId(),
@@ -141,15 +131,19 @@ public class ProductService {
                 product.getCategory().name(),
                 product.getPricePerSession(),
                 product.getSessionCount(),
-                images
+                responseImages
         );
     }
 
-    // 상품 삭제
-    public ProductDeleteResponse deleteProduct(Long productId) {
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
+    // 상품 품절 처리
+    @Transactional
+    public void deactivateProduct(Long productId) {
 
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
+
+        product.deactivate();
+    }
 
     private Sort createSort(String sortString) {
         if (sortString == null || sortString.isBlank()) {
@@ -172,5 +166,48 @@ public class ProductService {
                 ? Sort.Direction.fromString(parts[1])
                 : Sort.Direction.ASC;
         return Sort.by(direction, property);
+    }
+
+    public void updateImage(List<ImageInfo> requestedImages, Product product) {
+        if (requestedImages != null) {
+            List<ProductImage> currentImages = productImageRepository.findByProductIdOrderByDisplayOrderAsc(product.getId());
+
+            // 현재 존재하는 이미지 Map
+            Map<Long, ProductImage> currentImageMap = currentImages.stream()
+                    .collect(Collectors.toMap(ProductImage::getId, image -> image));
+
+            // 유지할 이미지 Set
+            Set<Long> requestedIds = requestedImages.stream()
+                    .map(ImageInfo::id)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            // 유지할 이미지를 제외한 나머지 이미지 삭제
+            List<ProductImage> imagesToDelete = currentImages.stream()
+                    .filter(image -> !requestedIds.contains(image.getId()))
+                    .toList();
+            if (!imagesToDelete.isEmpty()) {
+                productImageRepository.deleteAll(imagesToDelete);
+            }
+
+            List<ProductImage> imagesToCreate = new ArrayList<>();
+
+            // 요청된 이미지 처리(업데이트 또는 생성)
+            for (int index = 0; index < requestedImages.size(); index++) {
+                ImageInfo imageInfo = requestedImages.get(index);
+
+                if (imageInfo.id() != null) { // 기존 이미지 업데이트
+                    ProductImage existingImage = currentImageMap.get(imageInfo.id());
+                    existingImage.updateDisplayOrder(imageInfo.displayOrder()); // Dirty Checking
+                } else { // 새로운 이미지 생성
+                    ProductImage newImage = ProductImage.create(product, imageInfo.imageUrl(), imageInfo.displayOrder());
+                    imagesToCreate.add(newImage);
+                }
+            }
+            // 새로운 이미지 생성
+            if (!imagesToCreate.isEmpty()) {
+                productImageRepository.saveAll(imagesToCreate);
+            }
+        }
     }
 }

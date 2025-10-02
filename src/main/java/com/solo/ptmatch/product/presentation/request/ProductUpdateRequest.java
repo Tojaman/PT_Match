@@ -1,5 +1,6 @@
 package com.solo.ptmatch.product.presentation.request;
 
+import com.solo.ptmatch.product.domain.ProductCategory;
 import com.solo.ptmatch.product.presentation.response.ImageInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
@@ -21,7 +22,7 @@ public record ProductUpdateRequest(
 
     @Schema(description = "카테고리", example = "DIET")
     @NotBlank
-    String category,
+    ProductCategory category,
 
     @Schema(description = "회당 가격", example = "50000")
     @NotNull
@@ -31,9 +32,6 @@ public record ProductUpdateRequest(
     @Schema(description = "세션 수", example = "10")
     @Min(1)
     int sessionCount,
-
-    @Schema(description = "삭제할 이미지 ID 목록", example = "[1, 2, 3]")
-    List<Long> imagesToDelete,
 
     @Schema(description = "상품 이미지 목록")
     List<ImageInfo> images

@@ -66,7 +66,7 @@ public class ProductController {
     @PreAuthorize("hasRole('TRAINER')")
     @DeleteMapping("/{productId}")
     public ApiResponse<ProductDeleteResponse> deleteProduct(@PathVariable Long productId) {
-        ProductDeleteResponse response = productService.deleteProduct(productId);
-        return ApiResponse.success(response);
+        productService.deactivateProduct(productId);
+        return ApiResponse.success();
     }
 }
