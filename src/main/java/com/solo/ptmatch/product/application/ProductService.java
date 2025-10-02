@@ -2,15 +2,22 @@ package com.solo.ptmatch.product.application;
 
 import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
-import com.solo.ptmatch.matching.infrastructure.ReservationRepository;
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.product.domain.ProductCategory;
+import com.solo.ptmatch.product.domain.ProductImage;
 import com.solo.ptmatch.product.infrastructure.ProductImageRepository;
 import com.solo.ptmatch.product.infrastructure.ProductRepository;
 import com.solo.ptmatch.product.presentation.request.ProductCreateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductSearchRequest;
 import com.solo.ptmatch.product.presentation.request.ProductUpdateRequest;
-import com.solo.ptmatch.product.presentation.response.*;
+import com.solo.ptmatch.product.presentation.response.ImageInfo;
+import com.solo.ptmatch.product.presentation.response.ProductCreateResponse;
+import com.solo.ptmatch.product.presentation.response.ProductDeleteResponse;
+import com.solo.ptmatch.product.presentation.response.ProductDetailResponse;
+import com.solo.ptmatch.product.presentation.response.ProductSummaryResponse;
+import com.solo.ptmatch.product.presentation.response.ProductUpdateResponse;
+import com.solo.ptmatch.product.presentation.response.ReviewInfo;
+import com.solo.ptmatch.product.presentation.response.TrainerInfo;
 import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
@@ -91,10 +98,54 @@ public class ProductService {
         return ProductDetailResponse.from(product, trainerInfo, productImages, reviews);
     }
 
+    // 상품 수정
+    @Transactional
     public ProductUpdateResponse updateProduct(Long productId, ProductUpdateRequest request) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
+
+        // ProductImage 삭제
+        List<Long> imagesToDelete = request.imagesToDelete();
+        if (imagesToDelete != null && !imagesToDelete.isEmpty()) {
+            List<ProductImage> deletableImages = productImageRepository.findByProductIdAndIdIn(productId, imagesToDelete); // Product에 맞는 이미지 삭제(안전장치)
+            if (!deletableImages.isEmpty()) {
+                productImageRepository.deleteAll(deletableImages);
+            }
+        }
+
+        // 새로운 ProductImage 추가
+        List<ImageInfo> images = request.images();
+        if (images != null && !images.isEmpty()) {
+            List<ProductImage> newImages = images.stream()
+                    .filter(imageInfo -> imageInfo.id() == null) // 새로운 이미지 필터링
+                    .map(imageInfo -> ProductImage.create(product, imageInfo.imageUrl(), imageInfo.displayOrder()))
+                    .toList();
+            if (!newImages.isEmpty()) {
+                productImageRepository.saveAll(newImages);
+            }
+        }
+
+        // Product 정보 업데이트
+        product.update(
+                request.title(),
+                request.description(),
+                ProductCategory.valueOf(request.category()),
+                request.pricePerSession(),
+                request.sessionCount()
+        );
+
+        return new ProductUpdateResponse(
+                product.getId(),
+                product.getTitle(),
+                product.getDescription(),
+                product.getCategory().name(),
+                product.getPricePerSession(),
+                product.getSessionCount(),
+                images
+        );
     }
 
+    // 상품 삭제
     public ProductDeleteResponse deleteProduct(Long productId) {
         throw new UnsupportedOperationException("Not implemented yet");
     }

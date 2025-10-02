@@ -54,9 +54,6 @@ public class Product extends BaseEntity {
     @Column(name = "session_count", nullable = false)
     private int sessionCount;
 
-    @Column(name = "thumbnail_url")
-    private String thumbnailUrl;
-
     @Column(name = "likes_count", nullable = false)
     private int likesCount;
 
@@ -66,8 +63,7 @@ public class Product extends BaseEntity {
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
-            int sessionCount,
-            String thumbnailUrl
+            int sessionCount
     ) {
         this.trainerProfile = trainerProfile;
         this.title = title;
@@ -75,7 +71,6 @@ public class Product extends BaseEntity {
         this.category = category;
         this.pricePerSession = sanitizePrice(pricePerSession);
         this.sessionCount = validateSessionCount(sessionCount);
-        this.thumbnailUrl = thumbnailUrl;
     }
 
     public static Product create(
@@ -84,26 +79,23 @@ public class Product extends BaseEntity {
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
-            int sessionCount,
-            String thumbnailUrl
+            int sessionCount
     ) {
-        return new Product(trainerProfile, title, description, category, pricePerSession, sessionCount, thumbnailUrl);
+        return new Product(trainerProfile, title, description, category, pricePerSession, sessionCount);
     }
 
-    public void updateDetails(
+    public void update(
             String title,
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
-            int sessionCount,
-            String thumbnailUrl
+            int sessionCount
     ) {
         this.title = title;
         this.description = description;
         this.category = category;
         this.pricePerSession = sanitizePrice(pricePerSession);
         this.sessionCount = validateSessionCount(sessionCount);
-        this.thumbnailUrl = thumbnailUrl;
     }
 
     public void toggleLike(boolean liked) {

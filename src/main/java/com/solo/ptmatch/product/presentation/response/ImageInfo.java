@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "상품 이미지 정보")
 public record ImageInfo(
+    @Schema(description = "이미지 ID")
+    Long id,
     @Schema(description = "이미지 URL")
     String imageUrl,
     @Schema(description = "노출 순서")
@@ -12,6 +14,6 @@ public record ImageInfo(
 ) {
 
     public static ImageInfo from(ProductImage productImage) {
-        return new ImageInfo(productImage.getImageUrl(), productImage.getDisplayOrder());
+        return new ImageInfo(productImage.getId(), productImage.getImageUrl(), productImage.getDisplayOrder());
     }
 }
