@@ -16,8 +16,6 @@ public record ProductSummaryResponse(
     String trainerName,
     @Schema(description = "카테고리")
     String category,
-    @Schema(description = "썸네일 URL")
-    String thumbnailUrl,
     @Schema(description = "좋아요 수")
     Long likesCount
 ) {
@@ -31,7 +29,6 @@ public record ProductSummaryResponse(
             totalPrice,
             product.getTrainerProfile().getTrainer().getName(),
             product.getCategory().name(),
-            product.getThumbnailUrl(),
             (long) product.getLikesCount()
         );
     }

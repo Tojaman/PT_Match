@@ -31,11 +31,8 @@ public record ProductCreateRequest(
 
     @Schema(description = "세션 수", example = "10")
     @Min(1)
-    int sessionCount,
+    int sessionCount
 
-    @Schema(description = "썸네일 URL", example = "https://example.com/thumb.jpg")
-    @NotBlank
-    String thumbnailUrl
 ) {
     public Product toEntity(TrainerProfile trainerProfile) {
         return Product.create(
@@ -44,8 +41,7 @@ public record ProductCreateRequest(
             description,
             category,
             pricePerSession,
-            sessionCount,
-            thumbnailUrl
+            sessionCount
         );
     }
 }

@@ -21,6 +21,10 @@ public class ApiResponse<T> {
         this.pageResponse = pageResponse;
     }
 
+    public static <T> ApiResponse<T> success() {
+        return new ApiResponse<>(HttpStatus.NO_CONTENT.value(), DEFAULT_SUCCESS_MESSAGE, null, null);
+    }
+
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(HttpStatus.OK.value(), DEFAULT_SUCCESS_MESSAGE, data, null);
     }

@@ -1,6 +1,7 @@
 package com.solo.ptmatch.product.presentation;
 
 import com.solo.ptmatch.common.response.ApiResponse;
+import com.solo.ptmatch.common.response.PageResponse;
 import com.solo.ptmatch.product.application.ProductService;
 import com.solo.ptmatch.product.presentation.request.ProductCreateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductSearchRequest;
@@ -9,10 +10,10 @@ import com.solo.ptmatch.product.presentation.response.*;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -37,8 +38,8 @@ public class ProductController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
     @GetMapping
     public ApiResponse<List<ProductSummaryResponse>> getProducts(@ModelAttribute ProductSearchRequest request) {
-        List<ProductSummaryResponse> response = productService.getProducts(request);
-        return ApiResponse.success(response);
+        Page<ProductSummaryResponse> response = productService.getProducts(request);
+        return ApiResponse.success(response.getContent(), PageResponse.from(response));
     }
 
     @Operation(summary = "PT 상품 상세 조회", description = "단일 PT 상품의 상세 정보를 조회한다")

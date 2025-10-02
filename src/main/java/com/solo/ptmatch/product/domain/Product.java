@@ -57,9 +57,6 @@ public class Product extends BaseEntity {
     @Column(name = "likes_count", nullable = false)
     private int likesCount;
 
-    @Column(name = "thumbnail_url", length = 500)
-    private String thumbnailUrl;
-
     @Column(name = "status", nullable = false)
     private ProductStatus status;
 
@@ -69,8 +66,7 @@ public class Product extends BaseEntity {
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
-            int sessionCount,
-            String thumbnailUrl
+            int sessionCount
     ) {
         this.trainerProfile = trainerProfile;
         this.title = title;
@@ -78,7 +74,6 @@ public class Product extends BaseEntity {
         this.category = category;
         this.pricePerSession = sanitizePrice(pricePerSession);
         this.sessionCount = validateSessionCount(sessionCount);
-        this.thumbnailUrl = thumbnailUrl;
         this.likesCount = 0;
         this.status = ProductStatus.ACTIVE;
     }
@@ -89,10 +84,9 @@ public class Product extends BaseEntity {
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
-            int sessionCount,
-            String thumbnailUrl
+            int sessionCount
     ) {
-        return new Product(trainerProfile, title, description, category, pricePerSession, sessionCount, thumbnailUrl);
+        return new Product(trainerProfile, title, description, category, pricePerSession, sessionCount);
     }
 
     public void update(

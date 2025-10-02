@@ -65,7 +65,7 @@ public class ProductService {
 
     // 상품 목록 조회
     @Transactional
-    public List<ProductSummaryResponse> getProducts(ProductSearchRequest request) {
+    public Page<ProductSummaryResponse> getProducts(ProductSearchRequest request) {
 
         Sort sort = createSort(request.sort());
         Pageable pageable = PageRequest.of(request.page(), request.size(), sort);
@@ -78,9 +78,7 @@ public class ProductService {
                 pageable
         );
 
-        return products.getContent().stream()
-                .map(ProductSummaryResponse::from)
-                .toList();
+        return products.map(ProductSummaryResponse::from);
     }
 
     // 상품 상세 조회

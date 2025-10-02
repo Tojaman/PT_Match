@@ -21,7 +21,7 @@ public record ProductUpdateRequest(
     String description,
 
     @Schema(description = "카테고리", example = "DIET")
-    @NotBlank
+    @NotNull
     ProductCategory category,
 
     @Schema(description = "회당 가격", example = "50000")
