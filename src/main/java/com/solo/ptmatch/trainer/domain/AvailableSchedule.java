@@ -1,7 +1,6 @@
-package com.solo.ptmatch.matching.domain;
+package com.solo.ptmatch.trainer.domain;
 
 import com.solo.ptmatch.common.BaseEntity;
-import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -38,13 +37,13 @@ public class AvailableSchedule extends BaseEntity {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
-    @Column(name = "is_booked", nullable = false)
-    private boolean booked;
+    @Column(name = "reservation_status", nullable = false)
+    private ReservationStatus reservationStatus;
 
     private AvailableSchedule(TrainerProfile trainerProfile, LocalDateTime startTime, LocalDateTime endTime) {
-        this.trainerProfile = Objects.requireNonNull(trainerProfile, "trainerProfile must not be null");
-        this.startTime = Objects.requireNonNull(startTime, "startTime must not be null");
-        this.endTime = Objects.requireNonNull(endTime, "endTime must not be null");
+        this.trainerProfile = trainerProfile;
+        this.startTime = startTime;
+        this.endTime = endTime;
         validateTimeRange();
     }
 
@@ -52,23 +51,9 @@ public class AvailableSchedule extends BaseEntity {
         return new AvailableSchedule(trainerProfile, startTime, endTime);
     }
 
-    public void markBooked() {
-        if (booked) {
-            throw new IllegalStateException("Schedule is already booked");
-        }
-        booked = true;
-    }
-
-    public void release() {
-        if (!booked) {
-            return;
-        }
-        booked = false;
-    }
-
-    public boolean isAvailable(LocalDateTime at) {
-        Objects.requireNonNull(at, "at must not be null");
-        return !booked && !at.isBefore(startTime) && at.isBefore(endTime);
+    public void update(LocalDateTime startTime, LocalDateTime endTime) {
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 
     private void validateTimeRange() {
