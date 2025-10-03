@@ -4,18 +4,8 @@ import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.user.domain.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -51,16 +41,20 @@ public class Matching extends BaseEntity {
     @Column(nullable = false)
     private MatchingStatus status;
 
-    private Matching(User user, TrainerProfile trainerProfile, Product product, String message) {
-        this.user = Objects.requireNonNull(user, "user must not be null");
-        this.trainerProfile = Objects.requireNonNull(trainerProfile, "trainerProfile must not be null");
-        this.product = Objects.requireNonNull(product, "product must not be null");
+    @Embedded
+    private MatchingUserInfo matchingUserInfo;
+
+    private Matching(User user, TrainerProfile trainerProfile, Product product, String message, MatchingUserInfo matchingUserInfo) {
+        this.user = user;
+        this.trainerProfile = trainerProfile;
+        this.product = product;
         this.message = message;
         this.status = MatchingStatus.PENDING;
+        this.matchingUserInfo = matchingUserInfo;
     }
 
-    public static Matching create(User user, TrainerProfile trainerProfile, Product product, String message) {
-        return new Matching(user, trainerProfile, product, message);
+    public static Matching create(User user, TrainerProfile trainerProfile, Product product, String message, MatchingUserInfo matchingUserInfo) {
+        return new Matching(user, trainerProfile, product, message, matchingUserInfo);
     }
 
     public void accept() {

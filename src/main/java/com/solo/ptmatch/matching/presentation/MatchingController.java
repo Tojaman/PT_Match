@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,9 +33,10 @@ public class MatchingController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "매칭 신청 성공")
     @PostMapping("/request")
     public ApiResponse<MatchingRequestCreateResponse> requestMatching(
+        @AuthenticationPrincipal(expression = "username") String email,
         @Valid @RequestBody MatchingRequestCreateRequest request
     ) {
-        MatchingRequestCreateResponse response = matchingService.requestMatching(request);
+        MatchingRequestCreateResponse response = matchingService.requestMatching(email, request);
         return ApiResponse.success(response);
     }
 
