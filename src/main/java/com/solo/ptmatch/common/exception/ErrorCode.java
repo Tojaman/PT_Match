@@ -15,7 +15,8 @@ public enum ErrorCode {
     TRAINER_PROFILE_NOT_FOUND("트레이너 프로필을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INTERNAL_SERVER_ERROR("서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     PRODUCT_NOT_FOUND("상품을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    AVAILABLE_SCHEDULE_NOT_FOUND("가능한 스케줄을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    AVAILABLE_SCHEDULE_NOT_FOUND("가능한 스케줄을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    CANNOT_DELETE_RESERVED_SCHEDULE("예약된 스케줄은 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus status;

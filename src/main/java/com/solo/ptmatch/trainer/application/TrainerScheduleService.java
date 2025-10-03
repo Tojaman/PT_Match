@@ -4,6 +4,7 @@ import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
 import com.solo.ptmatch.matching.infrastructure.AvailableScheduleRepository;
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
+import com.solo.ptmatch.trainer.domain.ReservationStatus;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.trainer.presentation.request.*;
@@ -84,17 +85,34 @@ public class TrainerScheduleService {
         return TrainerScheduleListResponse.from(updatedSchedules);
     }
 
-//    @Transactional
-//    public TrainerScheduleListResponse deleteTrainerSchedule(
-//            String email,
-//            TrainerScheduleDeleteRequest request
-//    ) {
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
-//
-//        TrainerProfile profile = trainerProfileRepository.findByTrainerId(user.getId())
-//                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
-//
-//
-//    }
+    @Transactional
+    public void deleteTrainerSchedule(
+            String email,
+            TrainerScheduleDeleteRequest request
+    ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        TrainerProfile profile = trainerProfileRepository.findByTrainerId(user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
+
+        /*
+        1. 스케줄 조회
+        2. 해당 스케줄이 트레이너의 스케줄인지 확인
+        3. 해당 스케줄이 예약된 상태인지 확인
+        4. 2, 3번 조건 모두 만족하는지 확인 -> 만족한다면 삭제 아니면 예외 처리
+         */
+        List<AvailableSchedule> schedules = availableScheduleRepository.findAllByIdInAndTrainerProfileId(request.scheduleIds(), profile.getId());
+        // 요청한 스케줄 개수와 조회된 스케줄 개수가 다른 경우 -> 일부 스케줄이 트레이너 스케줄이 아니거나 존재하지 않는 경우
+        if (schedules.size() != request.scheduleIds().size()) {
+            throw GlobalException.of(ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND);
+        }
+        for (AvailableSchedule schedule : schedules) {
+            // 예약 대기 중 또는 예약 확정 상태인 경우 예외 처리
+            if (schedule.getReservationStatus() == ReservationStatus.PENDING || schedule.getReservationStatus() == ReservationStatus.CONFIRMED) {
+                throw GlobalException.of(ErrorCode.CANNOT_DELETE_RESERVED_SCHEDULE);
+            }
+        }
+        availableScheduleRepository.deleteAll(schedules);
+    }
 }
