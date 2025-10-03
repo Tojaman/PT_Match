@@ -7,12 +7,15 @@ import com.solo.ptmatch.trainer.domain.AvailableSchedule;
 import com.solo.ptmatch.trainer.domain.ReservationStatus;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
-import com.solo.ptmatch.trainer.presentation.request.*;
+import com.solo.ptmatch.trainer.presentation.request.TrainerSchedule;
+import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleDeleteRequest;
+import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleListRequest;
+import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequest;
+import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequestItem;
 import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleListResponse;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.web.server.ui.OneTimeTokenSubmitPageGeneratingWebFilter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -114,5 +117,27 @@ public class TrainerScheduleService {
             }
         }
         availableScheduleRepository.deleteAll(schedules);
+    }
+
+    @Transactional(readOnly = true)
+    public TrainerScheduleListResponse getTrainerSchedules(Long trainerId) {
+
+        /*
+        1. 트레이너 프로필로 스케줄 전체 조회
+        2. 스케줄 반환 - 존재하지 않는다면 빈 리스트 반환
+         */
+        if (!trainerProfileRepository.existsById(trainerId)) {
+            throw GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND);
+        }
+
+        List<TrainerSchedule> schedules = availableScheduleRepository.findAllByTrainerProfileId(trainerId)
+                .stream()
+                .map(schedule -> TrainerSchedule.of(
+                        schedule.getStartTime(),
+                        schedule.getEndTime()
+                ))
+                .toList();
+
+        return TrainerScheduleListResponse.from(schedules);
     }
 }

@@ -10,4 +10,6 @@ public interface AvailableScheduleRepository extends JpaRepository<AvailableSche
     public AvailableSchedule findByIdAndTrainerProfileId(Long id, Long trainerId);
 
     public List<AvailableSchedule> findAllByIdInAndTrainerProfileId(List<Long> ids, Long trainerId);
+
+    public List<AvailableSchedule> findAllByTrainerProfileId(Long trainerId);
 }
