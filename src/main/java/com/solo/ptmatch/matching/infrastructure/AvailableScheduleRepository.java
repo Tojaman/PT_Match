@@ -3,6 +3,7 @@ package com.solo.ptmatch.matching.infrastructure;
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AvailableScheduleRepository extends JpaRepository<AvailableSchedule, Long> {
@@ -12,4 +13,6 @@ public interface AvailableScheduleRepository extends JpaRepository<AvailableSche
     public List<AvailableSchedule> findAllByIdInAndTrainerProfileId(List<Long> ids, Long trainerId);
 
     public List<AvailableSchedule> findAllByTrainerProfileId(Long trainerId);
+
+    public AvailableSchedule findByStartTimeAndEndTime(LocalDateTime startTime, LocalDateTime endTime);
 }
