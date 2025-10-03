@@ -13,9 +13,11 @@ import com.solo.ptmatch.matching.infrastructure.AvailableScheduleRepository;
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
 import com.solo.ptmatch.trainer.domain.Specialty;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
+import com.solo.ptmatch.trainer.domain.ReservationStatus;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.trainer.presentation.request.TrainerSchedule;
 import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleListRequest;
+import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleDeleteRequest;
 import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleListResponse;
 import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequestItem;
@@ -193,6 +195,165 @@ class TrainerScheduleServiceTest {
         assertThatThrownBy(() -> trainerScheduleService.updateTrainerSchedule(email, request))
                 .isInstanceOf(GlobalException.class)
                 .hasMessageContaining(ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND.getMessage());
+    }
+
+    @DisplayName("트레이너 스케줄 삭제 시 모든 슬롯이 본인 소유이면서 예약 가능 상태면 삭제한다")
+    @Test
+    void deleteTrainerSchedule_Success() throws Exception {
+        // given
+        String email = "trainer@example.com";
+        User user = User.create(email, "encoded", "홍트레이너", Role.TRAINER);
+        setField(user, "id", 1L);
+
+        TrainerProfile profile = TrainerProfile.create(
+                user,
+                "소개",
+                5,
+                Specialty.DIET,
+                "서울",
+                "image.jpg"
+        );
+        setField(profile, "id", 10L);
+
+        AvailableSchedule schedule = AvailableSchedule.create(
+                profile,
+                LocalDateTime.of(2025, 1, 3, 9, 0),
+                LocalDateTime.of(2025, 1, 3, 10, 0)
+        );
+        setField(schedule, "id", 200L);
+
+        TrainerScheduleDeleteRequest request = new TrainerScheduleDeleteRequest(List.of(200L));
+        List<AvailableSchedule> schedules = List.of(schedule);
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(profile));
+        when(availableScheduleRepository.findAllByIdInAndTrainerProfileId(request.scheduleIds(), profile.getId()))
+                .thenReturn(schedules);
+
+        // when
+        trainerScheduleService.deleteTrainerSchedule(email, request);
+
+        // then
+        verify(availableScheduleRepository).deleteAll(schedules);
+    }
+
+    @DisplayName("트레이너 스케줄 삭제 시 일부 슬롯이 존재하지 않으면 예외를 던진다")
+    @Test
+    void deleteTrainerSchedule_ScheduleNotFound() throws Exception {
+        // given
+        String email = "trainer@example.com";
+        User user = User.create(email, "encoded", "홍트레이너", Role.TRAINER);
+        setField(user, "id", 1L);
+
+        TrainerProfile profile = TrainerProfile.create(
+                user,
+                "소개",
+                5,
+                Specialty.DIET,
+                "서울",
+                "image.jpg"
+        );
+        setField(profile, "id", 10L);
+
+        TrainerScheduleDeleteRequest request = new TrainerScheduleDeleteRequest(List.of(201L, 202L));
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(profile));
+        when(availableScheduleRepository.findAllByIdInAndTrainerProfileId(request.scheduleIds(), profile.getId()))
+                .thenReturn(List.of());
+
+        // when & then
+        assertThatThrownBy(() -> trainerScheduleService.deleteTrainerSchedule(email, request))
+                .isInstanceOf(GlobalException.class)
+                .hasMessageContaining(ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND.getMessage());
+    }
+
+    @DisplayName("트레이너 스케줄 삭제 시 예약 대기 또는 확정 상태 슬롯이 포함되면 예외를 던진다")
+    @Test
+    void deleteTrainerSchedule_ReservedSchedule() throws Exception {
+        // given
+        String email = "trainer@example.com";
+        User user = User.create(email, "encoded", "홍트레이너", Role.TRAINER);
+        setField(user, "id", 1L);
+
+        TrainerProfile profile = TrainerProfile.create(
+                user,
+                "소개",
+                5,
+                Specialty.DIET,
+                "서울",
+                "image.jpg"
+        );
+        setField(profile, "id", 10L);
+
+        AvailableSchedule reservedSchedule = AvailableSchedule.create(
+                profile,
+                LocalDateTime.of(2025, 1, 4, 9, 0),
+                LocalDateTime.of(2025, 1, 4, 10, 0)
+        );
+        setField(reservedSchedule, "id", 300L);
+        setField(reservedSchedule, "reservationStatus", ReservationStatus.CONFIRMED);
+
+        TrainerScheduleDeleteRequest request = new TrainerScheduleDeleteRequest(List.of(300L));
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(profile));
+        when(availableScheduleRepository.findAllByIdInAndTrainerProfileId(request.scheduleIds(), profile.getId()))
+                .thenReturn(List.of(reservedSchedule));
+
+        // when & then
+        assertThatThrownBy(() -> trainerScheduleService.deleteTrainerSchedule(email, request))
+                .isInstanceOf(GlobalException.class)
+                .hasMessageContaining(ErrorCode.CANNOT_DELETE_RESERVED_SCHEDULE.getMessage());
+    }
+
+    @DisplayName("트레이너 스케줄 조회 시 존재하는 프로필의 슬롯 목록을 반환한다")
+    @Test
+    void getTrainerSchedules_Success() throws Exception {
+        // given
+        Long trainerId = 42L;
+
+        when(trainerProfileRepository.existsById(trainerId)).thenReturn(true);
+
+        User user = User.create("trainer@example.com", "encoded", "홍트레이너", Role.TRAINER);
+        setField(user, "id", 1L);
+        TrainerProfile profile = TrainerProfile.create(
+                user,
+                "소개",
+                5,
+                Specialty.DIET,
+                "서울",
+                "image.jpg"
+        );
+        setField(profile, "id", trainerId);
+
+        LocalDateTime start = LocalDateTime.of(2025, 1, 6, 9, 0);
+        LocalDateTime end = start.plusHours(1);
+        AvailableSchedule schedule = AvailableSchedule.create(profile, start, end);
+
+        when(availableScheduleRepository.findAllByTrainerProfileId(trainerId))
+                .thenReturn(List.of(schedule));
+
+        // when
+        TrainerScheduleListResponse response = trainerScheduleService.getTrainerSchedules(trainerId);
+
+        // then
+        assertThat(response.shedules()).hasSize(1);
+        assertThat(response.shedules().get(0).startTime()).isEqualTo(start);
+        assertThat(response.shedules().get(0).endTime()).isEqualTo(end);
+    }
+
+    @DisplayName("트레이너 스케줄 조회 시 프로필이 없으면 예외를 던진다")
+    @Test
+    void getTrainerSchedules_ProfileNotFound() {
+        // given
+        Long trainerId = 99L;
+        when(trainerProfileRepository.existsById(trainerId)).thenReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> trainerScheduleService.getTrainerSchedules(trainerId))
+                .isInstanceOf(GlobalException.class)
+                .hasMessageContaining(ErrorCode.TRAINER_PROFILE_NOT_FOUND.getMessage());
     }
 
     private void setField(Object target, String fieldName, Object value) throws Exception {
