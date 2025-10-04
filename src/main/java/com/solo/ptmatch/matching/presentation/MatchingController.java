@@ -15,13 +15,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -62,21 +56,27 @@ public class MatchingController {
         return ApiResponse.success(response);
     }
 
-    @Operation(summary = "매칭 신청 응답", description = "트레이너가 매칭 신청을 수락 또는 거절한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "매칭 응답 처리 성공")
-    @PutMapping("/{matchingId}/respond")
-    public ApiResponse<MatchingRespondResponse> respondMatching(
-        @PathVariable Long matchingId,
-        @Valid @RequestBody MatchingRespondRequest request
+    @Operation(summary = "매칭 상세 조회", description = "매칭을 조회한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "매칭 조회 성공")
+    @GetMapping("/{matchingId}")
+    public ApiResponse<MatchingDetailResponse> getMatchingDetail(
+            @AuthenticationPrincipal(expression = "username") String email,
+            @PathVariable("matchingId") Long matchingId
     ) {
-        MatchingRespondResponse response = matchingService.respondMatching(matchingId, request);
+        MatchingDetailResponse response = matchingService.getMatchingDetail(email, matchingId);
         return ApiResponse.success(response);
     }
 
-    @GetMapping("/{matchingId}")
-    @Operation(summary = "매칭 상세 조회", description = "단일 매칭의 상세 정보를 조회합니다.")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "성공")
-    public ApiResponse<MatchingDetailResponse> getMatching(@PathVariable Long matchingId) {
-        return ApiResponse.success(matchingService.getMatching(matchingId));
+    @Operation(summary = "매칭 신청 응답", description = "트레이너가 매칭 신청을 수락 또는 거절한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "매칭 응답 처리 성공")
+    @PreAuthorize("hasRole('TRAINER')")
+    @PatchMapping("/respond/{matchingId}")
+    public ApiResponse<Void> respondMatching(
+            @AuthenticationPrincipal(expression = "username") String email,
+            @PathVariable Long matchingId,
+            @Valid @RequestBody MatchingRespondRequest request
+    ) {
+        matchingService.respondMatching(matchingId, email, request);
+        return ApiResponse.success();
     }
 }

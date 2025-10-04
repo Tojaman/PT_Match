@@ -68,44 +68,19 @@ public class Matching extends BaseEntity {
     }
 
     public void accept() {
-        changeStatus(MatchingStatus.ACCEPTED);
+
+        this.matchingStatus = MatchingStatus.ACCEPTED;
     }
 
     public void reject() {
-        changeStatus(MatchingStatus.REJECTED);
+        this.matchingStatus = MatchingStatus.REJECTED;
     }
 
     public void complete() {
-        changeStatus(MatchingStatus.COMPLETED);
+        this.matchingStatus = MatchingStatus.COMPLETED;
     }
 
     public boolean canCreateReservation() {
         return matchingStatus == MatchingStatus.ACCEPTED;
-    }
-
-    private void changeStatus(MatchingStatus targetStatus) {
-        ensureTransitionAllowed(targetStatus);
-        this.matchingStatus = targetStatus;
-    }
-
-    private void ensureTransitionAllowed(MatchingStatus targetStatus) {
-        Objects.requireNonNull(targetStatus, "targetStatus must not be null");
-        if (matchingStatus == targetStatus) {
-            return;
-        }
-
-        switch (matchingStatus) {
-            case PENDING -> {
-                if (targetStatus != MatchingStatus.ACCEPTED && targetStatus != MatchingStatus.REJECTED) {
-                    throw new IllegalStateException("Pending matching can only be accepted or rejected");
-                }
-            }
-            case ACCEPTED -> {
-                if (targetStatus != MatchingStatus.COMPLETED) {
-                    throw new IllegalStateException("Accepted matching can only be completed");
-                }
-            }
-            case REJECTED, COMPLETED -> throw new IllegalStateException("No further transitions allowed for status " + matchingStatus);
-        }
     }
 }
