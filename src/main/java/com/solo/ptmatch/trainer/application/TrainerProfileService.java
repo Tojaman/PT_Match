@@ -2,7 +2,6 @@ package com.solo.ptmatch.trainer.application;
 
 import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
-import com.solo.ptmatch.matching.infrastructure.AvailableScheduleRepository;
 import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 import com.solo.ptmatch.trainer.domain.Certification;
 import com.solo.ptmatch.trainer.domain.Specialty;
@@ -14,7 +13,6 @@ import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
 import com.solo.ptmatch.trainer.presentation.response.TrainerCertificationResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerReviewResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 
 import java.util.List;
@@ -61,17 +59,12 @@ public class TrainerProfileService {
         TrainerProfile profile = trainerProfileRepository.findByTrainerId(trainerId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
-        // 트레이너 리뷰 Top5 조회
-        List<TrainerReviewResponse> reviews = reviewRepository.findTop5ByTrainerProfileOrderByCreatedAtDesc(profile).stream()
-                .map(TrainerReviewResponse::from)
-                .toList();
-
         // 트레이너 자격증 조회
         List<TrainerCertificationResponse> certifications = certificationRepository.findAllByTrainerProfileId(profile.getId()).stream()
                 .map(TrainerCertificationResponse::from)
                 .toList();
 
-        return TrainerDetailResponse.from(profile, reviews, certifications);
+        return TrainerDetailResponse.from(profile, certifications);
     }
 
     @Transactional

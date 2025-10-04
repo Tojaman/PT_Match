@@ -18,7 +18,7 @@ public record ReviewInfo(
     public static ReviewInfo from(Review review) {
         return new ReviewInfo(
             review.getId(),
-            review.getAuthor().getName(),
+            review.getMatching().getUser().getName(),
             review.getRating(),
             review.getContent()
         );

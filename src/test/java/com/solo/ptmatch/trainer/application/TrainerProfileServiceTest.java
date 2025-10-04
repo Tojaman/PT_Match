@@ -136,7 +136,6 @@ class TrainerProfileServiceTest {
 
         // 2. Mock Repository 설정
         when(trainerProfileRepository.findByTrainerId(trainerId)).thenReturn(Optional.of(profile));
-        when(reviewRepository.findTop5ByTrainerProfileOrderByCreatedAtDesc(profile)).thenReturn(reviews);
         when(certificationRepository.findAllByTrainerProfileId(profile.getId())).thenReturn(certifications);
 
         // when
@@ -148,15 +147,11 @@ class TrainerProfileServiceTest {
         assertThat(result.trainerId()).isEqualTo(trainerId);
         assertThat(result.name()).isEqualTo("김상세");
         assertThat(result.bio()).isEqualTo("상세한 자기소개");
-        assertThat(result.reviews()).hasSize(1);
-        assertThat(result.reviews().get(0).reviewerName()).isEqualTo("김상세");
-        assertThat(result.reviews().get(0).content()).isEqualTo("정말 최고의 코칭이었습니다!");
         assertThat(result.certifications()).hasSize(1);
         assertThat(result.certifications().get(0).name()).isEqualTo("NSCA-CPT");
 
         // 4. Repository 메서드 호출 여부 검증
         verify(trainerProfileRepository, times(1)).findByTrainerId(trainerId);
-        verify(reviewRepository, times(1)).findTop5ByTrainerProfileOrderByCreatedAtDesc(profile);
         verify(certificationRepository, times(1)).findAllByTrainerProfileId(profile.getId());
     }
 
@@ -174,7 +169,6 @@ class TrainerProfileServiceTest {
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.TRAINER_PROFILE_NOT_FOUND);
 
-        verify(reviewRepository, never()).findTop5ByTrainerProfileOrderByCreatedAtDesc(any());
         verify(certificationRepository, never()).findAllByTrainerProfileId(any());
     }
 

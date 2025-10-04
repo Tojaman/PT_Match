@@ -3,7 +3,6 @@ package com.solo.ptmatch.trainer.presentation.response;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -27,15 +26,12 @@ public record TrainerDetailResponse(
     Long likesCount,
     @Schema(description = "평균 평점")
     BigDecimal averageRating,
-    @Schema(description = "리뷰 요약 목록")
-    List<TrainerReviewResponse> reviews,
     @Schema(description = "자격증 목록")
     List<TrainerCertificationResponse> certifications
 ) {
 
     public static TrainerDetailResponse from(
             TrainerProfile profile,
-            List<TrainerReviewResponse> reviews,
             List<TrainerCertificationResponse> certifications
     ) {
         return new TrainerDetailResponse(
@@ -48,7 +44,6 @@ public record TrainerDetailResponse(
                 profile.getProfileImageUrl(),
                 (long) profile.getFollowersCount(),
                 profile.getAverageRating(),
-                reviews,
                 certifications
         );
     }
