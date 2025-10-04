@@ -1,6 +1,8 @@
 package com.solo.ptmatch.review.domain;
 
 import com.solo.ptmatch.common.BaseEntity;
+import com.solo.ptmatch.matching.domain.Matching;
+import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.Column;
@@ -12,10 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -36,12 +35,8 @@ public class Review extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
-    private User author;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trainer_profile_id", nullable = false)
-    private TrainerProfile trainerProfile;
+    @JoinColumn(name = "matching_id", nullable = false)
+    private Matching matching;
 
     @Column(nullable = false)
     private int rating;
@@ -51,8 +46,6 @@ public class Review extends BaseEntity {
     private String content;
 
     private Review(User author, TrainerProfile trainerProfile, int rating, String content) {
-        this.author = Objects.requireNonNull(author, "author must not be null");
-        this.trainerProfile = Objects.requireNonNull(trainerProfile, "trainerProfile must not be null");
         this.rating = validateRating(rating);
         this.content = Objects.requireNonNull(content, "content must not be null");
     }
@@ -64,10 +57,6 @@ public class Review extends BaseEntity {
     public void updateContent(int rating, String content) {
         this.rating = validateRating(rating);
         this.content = Objects.requireNonNull(content, "content must not be null");
-    }
-
-    public boolean isOwner(User user) {
-        return this.author.equals(Objects.requireNonNull(user, "user must not be null"));
     }
 
     private int validateRating(int rating) {

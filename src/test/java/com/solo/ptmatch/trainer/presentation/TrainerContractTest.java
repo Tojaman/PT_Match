@@ -20,7 +20,6 @@ import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
 import com.solo.ptmatch.trainer.presentation.response.TrainerCertificationResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerReviewResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -121,7 +120,6 @@ class TrainerContractTest {
             "https://example.com/profile.jpg",
             50L,
             new BigDecimal("4.8"),
-            List.of(new TrainerReviewResponse(1L, "김회원", 5, "덕분에 목표 달성했습니다!")),
             List.of(new TrainerCertificationResponse(1L, "생활체육지도사 1급", "대한체육회", LocalDate.of(2023, 1, 1)))
         );
 
