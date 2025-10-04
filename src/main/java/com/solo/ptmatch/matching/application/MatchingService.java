@@ -99,13 +99,28 @@ public class MatchingService {
         );
     }
 
-    // 보낸 매칭 신청 목록 조회
-    public List<MatchingSentSummaryResponse> getSentMatchings() {
-        throw new UnsupportedOperationException("Not implemented yet");
+    // 보낸 매칭 신청 목록 조회(매칭 스케줄은 별도 API 구성)
+    @Transactional(readOnly = true)
+    public List<MatchingSentSummaryResponse> getSentMatchings(String userEmail) {
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        // 신청한 매칭 목록 조회
+        // N+1 -> fetch join (트레이너 프로필, 유저(트레이너), 상품)
+        List<Matching> matchings = matchingRepository.findAllByUserIdWithDetails(user.getId());
+
+        // 매칭 id, 매칭 상태, 상품 제목, 트레이너 이름 응답
+        return matchings.stream()
+                .map(MatchingSentSummaryResponse::of)
+                .toList();
     }
 
-    // 받은 매칭 신청 목록 조회(트레이너)
+    // 받은 매칭 신청(PENDING) 목록 조회(트레이너)
     public List<MatchingReceivedSummaryResponse> getReceivedMatchings() {
+
+
+
         throw new UnsupportedOperationException("Not implemented yet");
     }
 

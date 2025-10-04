@@ -43,8 +43,10 @@ public class MatchingController {
     @Operation(summary = "보낸 매칭 신청 목록", description = "사용자가 보낸 매칭 신청 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "보낸 매칭 신청 목록 조회 성공")
     @GetMapping("/sent")
-    public ApiResponse<List<MatchingSentSummaryResponse>> getSentMatchings() {
-        List<MatchingSentSummaryResponse> response = matchingService.getSentMatchings();
+    public ApiResponse<List<MatchingSentSummaryResponse>> getSentMatchings(
+            @AuthenticationPrincipal(expression = "username") String email
+    ) {
+        List<MatchingSentSummaryResponse> response = matchingService.getSentMatchings(email);
         return ApiResponse.success(response);
     }
 
