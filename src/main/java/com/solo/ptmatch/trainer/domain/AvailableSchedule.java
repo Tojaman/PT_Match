@@ -56,6 +56,10 @@ public class AvailableSchedule extends BaseEntity {
         return new AvailableSchedule(trainerProfile, startTime, endTime, ReservationStatus.AVAILABLE);
     }
 
+    public void markAsPending() {
+        this.reservationStatus = ReservationStatus.PENDING;
+    }
+
     public void update(LocalDateTime startTime,
                        LocalDateTime endTime) {
         this.startTime = startTime;

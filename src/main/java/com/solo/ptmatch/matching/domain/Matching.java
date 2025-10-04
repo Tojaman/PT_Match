@@ -6,6 +6,8 @@ import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -43,6 +45,14 @@ public class Matching extends BaseEntity {
 
     @Embedded
     private MatchingUserInfo matchingUserInfo;
+
+    @OneToMany(mappedBy = "matching", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<MatchingSchedule> schedules = new ArrayList<>();
+
+    public void addSchedule(MatchingSchedule schedule) {
+        schedule.assignMatching(this);
+        schedules.add(schedule);
+    }
 
     private Matching(User user, TrainerProfile trainerProfile, Product product, String message, MatchingUserInfo matchingUserInfo) {
         this.user = user;
