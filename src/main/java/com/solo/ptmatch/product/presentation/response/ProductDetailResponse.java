@@ -22,15 +22,12 @@ public record ProductDetailResponse(
     @Schema(description = "트레이너 정보")
     TrainerInfo trainerInfo,
     @Schema(description = "상품 이미지 목록")
-    List<ImageInfo> images,
-    @Schema(description = "상품 리뷰 목록")
-    List<ReviewInfo> reviews
+    List<ImageInfo> images
 ) {
 
     public static ProductDetailResponse from(Product product,
                                              TrainerInfo trainerInfo,
-                                             List<ImageInfo> imageInfos,
-                                             List<ReviewInfo> reviewInfos) {
+                                             List<ImageInfo> imageInfos) {
         return new ProductDetailResponse(
             product.getId(),
             product.getTitle(),
@@ -39,8 +36,7 @@ public record ProductDetailResponse(
             product.getPricePerSession(),
             product.getSessionCount(),
             trainerInfo,
-            imageInfos,
-            reviewInfos
+            imageInfos
         );
     }
 }

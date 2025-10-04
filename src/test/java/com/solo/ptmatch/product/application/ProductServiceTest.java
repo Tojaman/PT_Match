@@ -327,14 +327,9 @@ class ProductServiceTest {
             User reviewer = User.create("member@test.com", "encoded", "홍길동", Role.USER);
             ReflectionTestUtils.setField(reviewer, "id", 401L);
 
-            Review review = Review.create(reviewer, trainerProfile, 5, "전반적으로 만족했습니다.");
-            ReflectionTestUtils.setField(review, "id", 501L);
-
             when(productRepository.findById(productId)).thenReturn(Optional.of(product));
             when(productImageRepository.findByProductIdOrderByDisplayOrderAsc(productId))
                 .thenReturn(List.of(firstImage));
-            when(reviewRepository.findByProductIdOrderByCreatedAtDesc(productId))
-                .thenReturn(List.of(review));
 
             // when
             ProductDetailResponse response = productService.getProductDetail(productId);
@@ -349,14 +344,8 @@ class ProductServiceTest {
             assertThat(response.images().get(0).imageUrl()).isEqualTo("https://example.com/1.jpg");
             assertThat(response.images().get(0).displayOrder()).isZero();
 
-            assertThat(response.reviews()).hasSize(1);
-            assertThat(response.reviews().get(0).reviewerName()).isEqualTo("홍길동");
-            assertThat(response.reviews().get(0).rating()).isEqualTo(5);
-            assertThat(response.reviews().get(0).content()).isEqualTo("전반적으로 만족했습니다.");
-
             verify(productRepository).findById(productId);
             verify(productImageRepository).findByProductIdOrderByDisplayOrderAsc(productId);
-            verify(reviewRepository).findByProductIdOrderByCreatedAtDesc(productId);
         }
     }
 

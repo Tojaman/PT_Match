@@ -99,12 +99,7 @@ public class ProductService {
                 .map(ImageInfo::from)
                 .toList();
 
-        List<ReviewInfo> reviews = reviewRepository.findByProductIdOrderByCreatedAtDesc(product.getId())
-                .stream()
-                .map(ReviewInfo::from)
-                .toList();
-
-        return ProductDetailResponse.from(product, trainerInfo, productImages, reviews);
+        return ProductDetailResponse.from(product, trainerInfo, productImages);
     }
 
     // 상품 수정
