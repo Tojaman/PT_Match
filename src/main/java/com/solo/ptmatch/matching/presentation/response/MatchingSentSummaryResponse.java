@@ -15,7 +15,7 @@ public record MatchingSentSummaryResponse(
     public static MatchingSentSummaryResponse of(Matching matching) {
         return new MatchingSentSummaryResponse(
             matching.getId(),
-            matching.getStatus(),
+            matching.getMatchingStatus(),
             MatchingTrainerInfo.from(matching.getTrainerProfile()),
             MatchingProductInfo.from(matching.getProduct())
         );

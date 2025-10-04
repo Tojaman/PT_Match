@@ -40,8 +40,8 @@ public class Matching extends BaseEntity {
     private String message;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MatchingStatus status;
+    @Column(name = "matching_status", nullable = false)
+    private MatchingStatus matchingStatus;
 
     @Embedded
     private MatchingUserInfo matchingUserInfo;
@@ -59,7 +59,7 @@ public class Matching extends BaseEntity {
         this.trainerProfile = trainerProfile;
         this.product = product;
         this.message = message;
-        this.status = MatchingStatus.PENDING;
+        this.matchingStatus = MatchingStatus.PENDING;
         this.matchingUserInfo = matchingUserInfo;
     }
 
@@ -80,21 +80,21 @@ public class Matching extends BaseEntity {
     }
 
     public boolean canCreateReservation() {
-        return status == MatchingStatus.ACCEPTED;
+        return matchingStatus == MatchingStatus.ACCEPTED;
     }
 
     private void changeStatus(MatchingStatus targetStatus) {
         ensureTransitionAllowed(targetStatus);
-        this.status = targetStatus;
+        this.matchingStatus = targetStatus;
     }
 
     private void ensureTransitionAllowed(MatchingStatus targetStatus) {
         Objects.requireNonNull(targetStatus, "targetStatus must not be null");
-        if (status == targetStatus) {
+        if (matchingStatus == targetStatus) {
             return;
         }
 
-        switch (status) {
+        switch (matchingStatus) {
             case PENDING -> {
                 if (targetStatus != MatchingStatus.ACCEPTED && targetStatus != MatchingStatus.REJECTED) {
                     throw new IllegalStateException("Pending matching can only be accepted or rejected");
@@ -105,7 +105,7 @@ public class Matching extends BaseEntity {
                     throw new IllegalStateException("Accepted matching can only be completed");
                 }
             }
-            case REJECTED, COMPLETED -> throw new IllegalStateException("No further transitions allowed for status " + status);
+            case REJECTED, COMPLETED -> throw new IllegalStateException("No further transitions allowed for status " + matchingStatus);
         }
     }
 }

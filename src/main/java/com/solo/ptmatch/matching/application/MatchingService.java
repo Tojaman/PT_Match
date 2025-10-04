@@ -4,6 +4,7 @@ import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
 import com.solo.ptmatch.matching.domain.Matching;
 import com.solo.ptmatch.matching.domain.MatchingSchedule;
+import com.solo.ptmatch.matching.domain.MatchingStatus;
 import com.solo.ptmatch.matching.domain.MatchingUserInfo;
 import com.solo.ptmatch.matching.infrastructure.AvailableScheduleRepository;
 import com.solo.ptmatch.matching.infrastructure.MatchingRepository;
@@ -26,9 +27,11 @@ import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class MatchingService {
@@ -93,7 +96,7 @@ public class MatchingService {
 
         return MatchingRequestCreateResponse.of(
                 savedMatching.getId(),
-                savedMatching.getStatus(),
+                savedMatching.getMatchingStatus(),
                 scheduleSummaries,
                 matchingUserInfo
         );
@@ -117,11 +120,26 @@ public class MatchingService {
     }
 
     // 받은 매칭 신청(PENDING) 목록 조회(트레이너)
-    public List<MatchingReceivedSummaryResponse> getReceivedMatchings() {
+    public List<MatchingReceivedSummaryResponse> getReceivedMatchings(String userEmail) {
+        /* 세부 내용은 별개 API 구현
+        1. 유저id(트레이너)로 매칭 리스트 조회
+        2. 매칭 상태가 PENDING인 매칭 리스트 조회
+        3. 매칭 id, 신청일시, 상품 제목 응답
+         */
 
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
+        TrainerProfile trainerProfile = trainerProfileRepository.findByTrainerId(user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
-        throw new UnsupportedOperationException("Not implemented yet");
+        List<Matching> matchings = matchingRepository.findAllByTrainerProfileIdAndStatusWithProduct(trainerProfile.getId(), MatchingStatus.PENDING);
+        log.info("매칭 리스트: {}", matchings.stream().toList());
+        log.info("트레이너 프로필 아이디: {}", trainerProfile.getId());
+
+        return matchings.stream()
+                .map(MatchingReceivedSummaryResponse::of)
+                .toList();
     }
 
     // 매칭 신청 응답 (수락/거절)

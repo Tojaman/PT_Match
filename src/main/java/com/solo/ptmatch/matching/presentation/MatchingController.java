@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,9 +53,12 @@ public class MatchingController {
 
     @Operation(summary = "받은 매칭 신청 목록", description = "트레이너가 받은 매칭 신청 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "받은 매칭 신청 목록 조회 성공")
+    @PreAuthorize("hasRole('TRAINER')")
     @GetMapping("/received")
-    public ApiResponse<List<MatchingReceivedSummaryResponse>> getReceivedMatchings() {
-        List<MatchingReceivedSummaryResponse> response = matchingService.getReceivedMatchings();
+    public ApiResponse<List<MatchingReceivedSummaryResponse>> getReceivedMatchings(
+            @AuthenticationPrincipal(expression = "username") String email
+    ) {
+        List<MatchingReceivedSummaryResponse> response = matchingService.getReceivedMatchings(email);
         return ApiResponse.success(response);
     }
 
