@@ -195,8 +195,7 @@ class ProductContractTest {
             new BigDecimal("50000"),
             10,
             new TrainerInfo(15L, "박전문", "피트니스 센터 강남점"),
-            List.of(new ImageInfo(1L, "https://example.com/image_main.jpg", 0)),
-            List.of(new ReviewInfo(1L, "김회원", 5, "덕분에 목표 달성했습니다!"))
+            List.of(new ImageInfo(1L, "https://example.com/image_main.jpg", 0))
         );
 
         given(productService.getProductDetail(1L)).willReturn(serviceResult);
@@ -219,10 +218,6 @@ class ProductContractTest {
             .andExpect(jsonPath("$.data.images[0].id").value(1))
             .andExpect(jsonPath("$.data.images[0].imageUrl").value("https://example.com/image_main.jpg"))
             .andExpect(jsonPath("$.data.images[0].displayOrder").value(0))
-            .andExpect(jsonPath("$.data.reviews[0].reviewId").value(1))
-            .andExpect(jsonPath("$.data.reviews[0].reviewerName").value("김회원"))
-            .andExpect(jsonPath("$.data.reviews[0].rating").value(5))
-            .andExpect(jsonPath("$.data.reviews[0].content").value("덕분에 목표 달성했습니다!"))
             .andExpect(jsonPath("$.pageResponse").doesNotExist());
 
         then(productService).should().getProductDetail(1L);
