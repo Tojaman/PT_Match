@@ -15,4 +15,6 @@ public interface AvailableScheduleRepository extends JpaRepository<AvailableSche
     public List<AvailableSchedule> findAllByTrainerProfileId(Long trainerId);
 
     public AvailableSchedule findByStartTimeAndEndTime(LocalDateTime startTime, LocalDateTime endTime);
+
+    public List<AvailableSchedule> findAllByIdIn(List<Long> id);
 }
