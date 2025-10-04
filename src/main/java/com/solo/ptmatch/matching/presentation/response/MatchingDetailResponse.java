@@ -1,19 +1,32 @@
 package com.solo.ptmatch.matching.presentation.response;
 
-import com.solo.ptmatch.matching.domain.MatchingStatus;
+import com.solo.ptmatch.matching.domain.Matching;
+import com.solo.ptmatch.matching.domain.MatchingSchedule;
+import com.solo.ptmatch.product.domain.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
-
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Schema(description = "매칭 상세 정보")
 public record MatchingDetailResponse(
-    @Schema(description = "매칭 ID", example = "200") Long matchingId,
-    @Schema(description = "회원 ID", example = "1") Long memberId,
-    @Schema(description = "트레이너 프로필 ID", example = "10") Long trainerProfileId,
-    @Schema(description = "상품 ID", example = "100") Long productId,
-    @Schema(description = "매칭 상태", implementation = MatchingStatus.class, example = "ACCEPTED") MatchingStatus status,
-    @Schema(description = "매칭 메시지", example = "주 2회 레슨을 희망합니다.") String message,
-    @Schema(description = "생성 일시") LocalDateTime createdAt,
-    @Schema(description = "수정 일시") LocalDateTime updatedAt
+    Long matchingId,
+    String message,
+    MatchingUserInfo applicantInfo,
+    MatchingProductDetailInfo productInfo,
+    List<MatchingScheduleInfo> schedules
 ) {
+    public static MatchingDetailResponse of(Matching matching) {
+        return new MatchingDetailResponse(
+            matching.getId(),
+            matching.getMessage(),
+            MatchingUserInfo.from(matching.getMatchingUserInfo()),
+            MatchingProductDetailInfo.from(matching.getProduct()),
+            matching.getSchedules().stream()
+                .map(MatchingScheduleInfo::from)
+                .toList()
+        );
+    }
 }
+

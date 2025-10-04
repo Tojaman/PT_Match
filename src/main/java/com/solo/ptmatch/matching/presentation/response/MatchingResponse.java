@@ -11,6 +11,6 @@ public record MatchingResponse(
 ) {
 
     public static MatchingResponse from(Matching matching) {
-        return new MatchingResponse(matching.getId(), matching.getStatus());
+        return new MatchingResponse(matching.getId(), matching.getMatchingStatus());
     }
 }

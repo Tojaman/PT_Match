@@ -66,7 +66,7 @@ public class ProductController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 삭제 성공")
     @PreAuthorize("hasRole('TRAINER')")
     @PostMapping("/{productId}")
-    public ApiResponse<ProductDeleteResponse> deleteProduct(@PathVariable Long productId) {
+    public ApiResponse<Void> deleteProduct(@PathVariable Long productId) {
         productService.deactivateProduct(productId);
         return ApiResponse.success();
     }
