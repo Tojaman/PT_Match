@@ -19,6 +19,7 @@ import com.solo.ptmatch.matching.presentation.request.MatchingRequestCreateReque
 import com.solo.ptmatch.matching.presentation.request.UserInfo;
 import com.solo.ptmatch.matching.presentation.response.MatchingRequestCreateResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingScheduleSummary;
+import com.solo.ptmatch.matching.presentation.response.MatchingSentSummaryResponse;
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.product.domain.ProductCategory;
 import com.solo.ptmatch.product.infrastructure.ProductRepository;
@@ -220,5 +221,72 @@ class MatchingServiceTest {
         Field field = target.getClass().getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(target, value);
+    }
+
+    @DisplayName("사용자가 보낸 매칭 목록을 DTO 리스트로 변환하여 반환한다.")
+    @Test
+    void getSentMatchings_Success() throws Exception {
+        // given
+        String userEmail = "applicant@example.com";
+        User user = User.create(userEmail, "password", "김회원", Role.USER);
+        setField(user, "id", 1L);
+
+        User trainer = User.create("trainer@example.com", "password", "김트레이너", Role.TRAINER);
+        setField(trainer, "id", 2L);
+
+        TrainerProfile trainerProfile = TrainerProfile.create(trainer, "bio", 5, Specialty.DIET, "gym address", "img");
+        setField(trainerProfile, "id", 10L);
+
+        Product product1 = Product.create(trainerProfile, "Product 1", "desc", ProductCategory.WEIGHT_LOSS, BigDecimal.TEN, 10);
+        setField(product1, "id", 100L);
+
+        Product product2 = Product.create(trainerProfile, "Product 2", "desc", ProductCategory.MUSCLE_GAIN, BigDecimal.ONE, 1);
+        setField(product2, "id", 101L);
+
+        Matching matching1 = createMockMatching(200L, user, trainerProfile, product1);
+        Matching matching2 = createMockMatching(201L, user, trainerProfile, product2);
+
+        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.of(user));
+        when(matchingRepository.findAllByUserIdWithDetails(user.getId())).thenReturn(List.of(matching1, matching2));
+
+        // when
+        List<MatchingSentSummaryResponse> responses = matchingService.getSentMatchings(userEmail);
+
+        // then
+        assertThat(responses).hasSize(2);
+
+        MatchingSentSummaryResponse response1 = responses.get(0);
+        assertThat(response1.matchingId()).isEqualTo(200L);
+        assertThat(response1.matchingProductInfo().productId()).isEqualTo(100L);
+        assertThat(response1.matchingProductInfo().productTitle()).isEqualTo("Product 1");
+        assertThat(response1.matchingTrainerInfo().trainerId()).isEqualTo(2L);
+        assertThat(response1.matchingTrainerInfo().trainerName()).isEqualTo("김트레이너");
+
+        MatchingSentSummaryResponse response2 = responses.get(1);
+        assertThat(response2.matchingId()).isEqualTo(201L);
+        assertThat(response2.matchingProductInfo().productId()).isEqualTo(101L);
+        assertThat(response2.matchingTrainerInfo().trainerName()).isEqualTo("김트레이너");
+
+        verify(userRepository).findByEmail(userEmail);
+        verify(matchingRepository).findAllByUserIdWithDetails(user.getId());
+    }
+
+    @DisplayName("보낸 매칭 목록 조회 시 사용자를 찾지 못하면 예외를 던진다.")
+    @Test
+    void getSentMatchings_FailsWhenUserNotFound() {
+        // given
+        String userEmail = "nonexistent@example.com";
+        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> matchingService.getSentMatchings(userEmail))
+                .isInstanceOf(GlobalException.class)
+                .hasMessageContaining(ErrorCode.USER_NOT_FOUND.getMessage());
+    }
+
+    private Matching createMockMatching(Long matchingId, User user, TrainerProfile trainerProfile, Product product) throws Exception {
+        Matching matching = Matching.create(user, trainerProfile, product, "message", MatchingUserInfo.of("name", "email", "phone"));
+        setField(matching, "id", matchingId);
+        return matching;
     }
 }
