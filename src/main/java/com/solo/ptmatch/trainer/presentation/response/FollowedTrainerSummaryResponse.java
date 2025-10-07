@@ -20,7 +20,7 @@ public record FollowedTrainerSummaryResponse(
     public static FollowedTrainerSummaryResponse from(TrainerProfile trainerProfile) {
         return new FollowedTrainerSummaryResponse(
             trainerProfile.getId(),
-            trainerProfile.getTrainer().getName(),
+            trainerProfile.getUser().getName(),
             trainerProfile.getGymAddress(),
             trainerProfile.getProfileImageUrl()
         );

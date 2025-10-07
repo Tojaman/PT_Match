@@ -24,13 +24,13 @@ public record TrainerSummaryResponse(
     @Schema(description = "팔로워 수", example = "50")
     int followerCount,
     @Schema(description = "리뷰 수", example = "120")
-    Long reviewCount
+    int reviewCount
 ) {
 
     public static TrainerSummaryResponse from(TrainerProfile trainer) {
         return new TrainerSummaryResponse(
                 trainer.getId(),
-                trainer.getTrainer().getName(),
+                trainer.getUser().getName(),
                 trainer.getSpecialty().name(),
                 trainer.getCareerYears(),
                 trainer.getAverageRating(),
