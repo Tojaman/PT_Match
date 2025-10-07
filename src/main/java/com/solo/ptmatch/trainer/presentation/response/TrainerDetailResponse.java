@@ -23,7 +23,7 @@ public record TrainerDetailResponse(
     @Schema(description = "프로필 이미지 URL")
     String profileImageUrl,
     @Schema(description = "좋아요/팔로우 수")
-    Long likesCount,
+    int likesCount,
     @Schema(description = "평균 평점")
     BigDecimal averageRating,
     @Schema(description = "자격증 목록")
@@ -42,7 +42,7 @@ public record TrainerDetailResponse(
                 profile.getCareerYears(),
                 profile.getGymAddress(),
                 profile.getProfileImageUrl(),
-                (long) profile.getFollowersCount(),
+                profile.getFollowersCount(),
                 profile.getAverageRating(),
                 certifications
         );

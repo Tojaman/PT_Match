@@ -37,7 +37,7 @@ public class TrainerProfileService {
     private final ReviewRepository reviewRepository;
 
     @Transactional(readOnly = true)
-    public List<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request) {
+    public Page<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request) {
         Sort sort = createSort(request.sort());
         Pageable pageable = PageRequest.of(request.page(), request.size(), sort);
 
@@ -49,9 +49,8 @@ public class TrainerProfileService {
                 pageable
         );
 
-        return trainerPage.getContent().stream()
-                .map(TrainerSummaryResponse::from)
-                .toList();
+        // Page 인터페이스에 map() 메서드 정의되어 있음(페이지 정보는 그대로 복사하고, 내용물(`List`)에만 변환 함수를 적용하여, 새로운 `Page` 객체를 반환)
+        return trainerPage.map(TrainerSummaryResponse::from);
     }
 
     @Transactional(readOnly = true)
