@@ -48,16 +48,16 @@ public class Review extends BaseEntity {
     private Review(Matching matching, int rating, String content) {
         this.matching = matching;
         this.rating = validateRating(rating);
-        this.content = Objects.requireNonNull(content, "content must not be null");
+        this.content = content;
     }
 
     public static Review create(Matching matching, int rating, String content) {
         return new Review(matching, rating, content);
     }
 
-    public void updateContent(int rating, String content) {
+    public void update(int rating, String content) {
         this.rating = validateRating(rating);
-        this.content = Objects.requireNonNull(content, "content must not be null");
+        this.content = content;
     }
 
     private int validateRating(int rating) {
