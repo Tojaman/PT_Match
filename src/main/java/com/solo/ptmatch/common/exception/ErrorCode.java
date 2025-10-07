@@ -19,7 +19,9 @@ public enum ErrorCode {
     SCHEDULE_ALREADY_RESERVED("이미 예약이 진행 중인 스케줄입니다.", HttpStatus.CONFLICT),
     CANNOT_DELETE_RESERVED_SCHEDULE("예약된 스케줄은 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST),
     MATCHING_NOT_FOUND("매칭을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    REVIEW_ALREADY_EXISTS("이미 리뷰가 작성된 매칭입니다.", HttpStatus.CONFLICT);
+    REVIEW_ALREADY_EXISTS("이미 리뷰가 작성된 매칭입니다.", HttpStatus.CONFLICT),
+    REVIEW_NOT_FOUND("유저의 리뷰를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+
 
 
 

@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import javax.swing.text.html.Option;
+import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
@@ -46,4 +46,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<ProductReviewSummaryResponse> findProductReview(Long productId, Pageable pageable);
 
     boolean existsByMatching(Matching matching);
+
+    Optional<Review> findByIdAndMatchingUserId(Long reviewId, Long userId);
 }

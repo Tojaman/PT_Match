@@ -7,6 +7,7 @@ import com.solo.ptmatch.matching.infrastructure.MatchingRepository;
 import com.solo.ptmatch.review.domain.Review;
 import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 import com.solo.ptmatch.review.presentation.request.ReviewCreateRequest;
+import com.solo.ptmatch.review.presentation.request.ReviewUpdateRequest;
 import com.solo.ptmatch.review.presentation.response.*;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
@@ -77,5 +78,40 @@ public class ReviewService {
         Pageable pageable = PageRequest.of(page, size);
 
         return reviewRepository.findProductReview(productId, pageable);
+    }
+
+    @Transactional
+    public ReviewUpdateResponse updateReview(String userEmail, Long reviewId, ReviewUpdateRequest request) {
+        /*
+        1. 유저 조회
+        2. 유저 리뷰 조회(유저 리뷰만 조회)
+        3. 업데이트
+         */
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        Review review = reviewRepository.findByIdAndMatchingUserId(reviewId, user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.REVIEW_NOT_FOUND));
+
+        review.update(request.rating(), request.content());
+        return ReviewUpdateResponse.from(review);
+    }
+
+    @Transactional
+    public void deleteReview(String userEmail, Long reviewId) {
+        /*
+        1. 유저 조회
+        2. 유저 리뷰 조회(유저 리뷰만 조회)
+        3. 삭제
+         */
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        Review review = reviewRepository.findByIdAndMatchingUserId(reviewId, user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.REVIEW_NOT_FOUND));
+
+        reviewRepository.delete(review);
     }
 }
