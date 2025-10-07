@@ -51,4 +51,6 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
         WHERE m.id = :matchingId
     """)
     Optional<Matching> findByIdWithTrainerAndSchedules(@Param("matchingId") Long matchingId);
+
+    Optional<Matching> findByIdAndUserId(Long matchingId, Long userId);
 }
