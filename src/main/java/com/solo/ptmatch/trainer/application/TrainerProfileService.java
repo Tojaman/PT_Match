@@ -37,7 +37,7 @@ public class TrainerProfileService {
     private final ReviewRepository reviewRepository;
 
     @Transactional(readOnly = true)
-    public List<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request) {
+    public Page<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request) {
         Sort sort = createSort(request.sort());
         Pageable pageable = PageRequest.of(request.page(), request.size(), sort);
 
@@ -49,9 +49,8 @@ public class TrainerProfileService {
                 pageable
         );
 
-        return trainerPage.getContent().stream()
-                .map(TrainerSummaryResponse::from)
-                .toList();
+        // Page 인터페이스에 map() 메서드 정의되어 있음(페이지 정보는 그대로 복사하고, 내용물(`List`)에만 변환 함수를 적용하여, 새로운 `Page` 객체를 반환)
+        return trainerPage.map(TrainerSummaryResponse::from);
     }
 
     @Transactional(readOnly = true)
@@ -76,15 +75,16 @@ public class TrainerProfileService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        trainerProfileRepository.findByTrainerId(user.getId()).ifPresent(profile -> {
-            throw GlobalException.of(ErrorCode.CONFLICT);
-        });
+        trainerProfileRepository.findByTrainerId(user.getId())
+                .ifPresent(profile -> {
+                    throw GlobalException.of(ErrorCode.CONFLICT);
+                });
 
         TrainerProfile savedProfile = trainerProfileRepository.save(request.toEntity(user));
 
         if (request.certifications() != null && !request.certifications().isEmpty()) {
             List<Certification> certifications = request.certifications().stream()
-                    .map(certRequest -> certRequest.toEntity(savedProfile)) // TrainerCertificationRequest에 toEntity가 있다고 가정
+                    .map(cert -> cert.toEntity(savedProfile)) // TrainerCertificationRequest에 toEntity가 있다고 가정
                     .toList();
             certificationRepository.saveAll(certifications);
         }
@@ -92,6 +92,7 @@ public class TrainerProfileService {
         return TrainerProfileUpsertResponse.from(savedProfile);
     }
 
+    @Transactional
     public TrainerProfileUpsertResponse updateTrainerProfile(
             String email,
             TrainerProfileUpsertRequest request
@@ -114,7 +115,7 @@ public class TrainerProfileService {
         certificationRepository.deleteByTrainerProfileId(profile.getId());
         if (request.certifications() != null && !request.certifications().isEmpty()) {
             List<Certification> certifications = request.certifications().stream()
-                    .map(certRequest -> certRequest.toEntity(profile))
+                    .map(cert -> cert.toEntity(profile))
                     .toList();
             certificationRepository.saveAll(certifications);
         }
