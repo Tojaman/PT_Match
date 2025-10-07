@@ -1,5 +1,6 @@
 package com.solo.ptmatch.trainer.presentation.request;
 
+import com.solo.ptmatch.trainer.domain.AvailableSchedule;
 import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleListResponse;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,10 +14,10 @@ public record TrainerSchedule(
         @NotNull
         LocalDateTime endTime
 ) {
-        public static TrainerSchedule of(LocalDateTime startTime, LocalDateTime endTime) {
+        public static TrainerSchedule from(AvailableSchedule availableSchedule) {
                 return new TrainerSchedule(
-                        startTime,
-                        endTime
+                        availableSchedule.getStartTime(),
+                        availableSchedule.getEndTime()
                 );
         }
 }

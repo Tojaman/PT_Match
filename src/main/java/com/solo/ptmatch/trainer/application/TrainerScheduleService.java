@@ -53,11 +53,7 @@ public class TrainerScheduleService {
 
         // 저장된 스케줄을 TrainerScheduleListResponse로 변환
         List<TrainerSchedule> schedules = availableSchedules.stream()
-                .map(
-                        schedule -> TrainerSchedule.of(
-                                schedule.getStartTime(),
-                                schedule.getEndTime()
-                        ))
+                .map(TrainerSchedule::from)
                 .toList();
         return TrainerScheduleListResponse.from(schedules);
     }
@@ -83,7 +79,7 @@ public class TrainerScheduleService {
                 throw GlobalException.of(ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND);
             }
             schedule.update(req.startTime(), req.endTime());
-            updatedSchedules.add(TrainerSchedule.of(schedule.getStartTime(), schedule.getEndTime()));
+            updatedSchedules.add(TrainerSchedule.from(schedule));
         }
         return TrainerScheduleListResponse.from(updatedSchedules);
     }
@@ -130,12 +126,8 @@ public class TrainerScheduleService {
             throw GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND);
         }
 
-        List<TrainerSchedule> schedules = availableScheduleRepository.findAllByTrainerProfileId(trainerId)
-                .stream()
-                .map(schedule -> TrainerSchedule.of(
-                        schedule.getStartTime(),
-                        schedule.getEndTime()
-                ))
+        List<TrainerSchedule> schedules = availableScheduleRepository.findAllByTrainerProfileId(trainerId).stream()
+                .map(TrainerSchedule::from)
                 .toList();
 
         return TrainerScheduleListResponse.from(schedules);
