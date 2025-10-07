@@ -30,7 +30,8 @@ public class TrainerController {
     @Operation(summary = "트레이너 목록 조회", description = "필터 및 정렬 조건으로 트레이너 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "목록 조회 성공")
     @GetMapping
-    public ApiResponse<List<TrainerSummaryResponse>> getTrainers(TrainerSearchRequest trainerSearchRequest) {
+    public ApiResponse<List<TrainerSummaryResponse>> getTrainers(
+            @Valid @RequestBody TrainerSearchRequest trainerSearchRequest) {
         List<TrainerSummaryResponse> response = trainerProfileService.getTrainerSummaries(trainerSearchRequest);
         return ApiResponse.success(response);
     }
@@ -38,7 +39,8 @@ public class TrainerController {
     @Operation(summary = "트레이너 상세 조회", description = "특정 트레이너의 상세 정보를 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상세 조회 성공")
     @GetMapping("/{trainerId}")
-    public ApiResponse<TrainerDetailResponse> getTrainer(@PathVariable Long trainerId) {
+    public ApiResponse<TrainerDetailResponse> getTrainer(
+            @PathVariable Long trainerId) {
         TrainerDetailResponse response = trainerProfileService.getTrainerDetail(trainerId);
         return ApiResponse.success(response);
     }

@@ -92,6 +92,7 @@ public class TrainerProfileService {
         return TrainerProfileUpsertResponse.from(savedProfile);
     }
 
+    @Transactional
     public TrainerProfileUpsertResponse updateTrainerProfile(
             String email,
             TrainerProfileUpsertRequest request
