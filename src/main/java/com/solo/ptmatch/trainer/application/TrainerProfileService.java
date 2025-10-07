@@ -75,15 +75,16 @@ public class TrainerProfileService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        trainerProfileRepository.findByTrainerId(user.getId()).ifPresent(profile -> {
-            throw GlobalException.of(ErrorCode.CONFLICT);
-        });
+        trainerProfileRepository.findByTrainerId(user.getId())
+                .ifPresent(profile -> {
+                    throw GlobalException.of(ErrorCode.CONFLICT);
+                });
 
         TrainerProfile savedProfile = trainerProfileRepository.save(request.toEntity(user));
 
         if (request.certifications() != null && !request.certifications().isEmpty()) {
             List<Certification> certifications = request.certifications().stream()
-                    .map(certRequest -> certRequest.toEntity(savedProfile)) // TrainerCertificationRequest에 toEntity가 있다고 가정
+                    .map(cert -> cert.toEntity(savedProfile)) // TrainerCertificationRequest에 toEntity가 있다고 가정
                     .toList();
             certificationRepository.saveAll(certifications);
         }
@@ -114,7 +115,7 @@ public class TrainerProfileService {
         certificationRepository.deleteByTrainerProfileId(profile.getId());
         if (request.certifications() != null && !request.certifications().isEmpty()) {
             List<Certification> certifications = request.certifications().stream()
-                    .map(certRequest -> certRequest.toEntity(profile))
+                    .map(cert -> cert.toEntity(profile))
                     .toList();
             certificationRepository.saveAll(certifications);
         }
