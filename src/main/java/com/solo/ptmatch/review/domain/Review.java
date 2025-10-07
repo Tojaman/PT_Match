@@ -45,13 +45,14 @@ public class Review extends BaseEntity {
     @Column(nullable = false)
     private String content;
 
-    private Review(User author, TrainerProfile trainerProfile, int rating, String content) {
+    private Review(Matching matching, int rating, String content) {
+        this.matching = matching;
         this.rating = validateRating(rating);
         this.content = Objects.requireNonNull(content, "content must not be null");
     }
 
-    public static Review create(User author, TrainerProfile trainerProfile, int rating, String content) {
-        return new Review(author, trainerProfile, rating, content);
+    public static Review create(Matching matching, int rating, String content) {
+        return new Review(matching, rating, content);
     }
 
     public void updateContent(int rating, String content) {
