@@ -7,6 +7,7 @@ import com.solo.ptmatch.product.domain.ProductCategory;
 import com.solo.ptmatch.product.domain.ProductImage;
 import com.solo.ptmatch.product.infrastructure.ProductImageRepository;
 import com.solo.ptmatch.product.infrastructure.ProductRepository;
+import com.solo.ptmatch.product.presentation.request.ImageUpdateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductCreateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductSearchRequest;
 import com.solo.ptmatch.product.presentation.request.ProductUpdateRequest;
@@ -16,7 +17,6 @@ import com.solo.ptmatch.product.presentation.response.ProductDetailResponse;
 import com.solo.ptmatch.product.presentation.response.ProductSummaryResponse;
 import com.solo.ptmatch.product.presentation.response.ProductUpdateResponse;
 import com.solo.ptmatch.product.presentation.response.TrainerInfo;
-import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.user.domain.User;
@@ -31,11 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,9 +44,8 @@ public class ProductService {
     private final TrainerProfileRepository trainerProfileRepository;
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
-    private final ReviewRepository reviewRepository;
 
-    // 상품 등록
+    // 상품 등록 - 상품 목록으로 이동(이미지는 응답 데이터에 포함X)
     @Transactional
     public ProductCreateResponse createProduct(ProductCreateRequest request, String email) {
 
@@ -67,39 +63,6 @@ public class ProductService {
         return ProductCreateResponse.from(product);
     }
 
-    // 상품 목록 조회
-    @Transactional
-    public Page<ProductSummaryResponse> getProducts(ProductSearchRequest request) {
-
-        Sort sort = createSort(request.sort());
-        Pageable pageable = PageRequest.of(request.page(), request.size(), sort);
-
-        Page<Product> products = productRepository.searchByTitleAndCategoryAndPrice(
-                request.titleKeyword(),
-                ProductCategory.valueOf(request.category()),
-                BigDecimal.valueOf(request.minPrice()),
-                BigDecimal.valueOf(request.maxPrice()),
-                pageable
-        );
-
-        return products.map(ProductSummaryResponse::from);
-    }
-
-    // 상품 상세 조회
-    public ProductDetailResponse getProductDetail(Long productId) {
-
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
-        TrainerInfo trainerInfo = TrainerInfo.from(product.getTrainerProfile());
-
-        List<ImageInfo> productImages = productImageRepository.findByProductIdOrderByDisplayOrderAsc(product.getId())
-                .stream()
-                .map(ImageInfo::from)
-                .toList();
-
-        return ProductDetailResponse.from(product, trainerInfo, productImages);
-    }
-
     // 상품 수정
     @Transactional
     public ProductUpdateResponse updateProduct(Long productId, ProductUpdateRequest request) {
@@ -107,7 +70,7 @@ public class ProductService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 이미지 추가, 삭제 및 순서 재정렬
-        updateImage(request.images(), product);
+        updateImage(request, product);
 
         product.update(
                 request.title(),
@@ -117,7 +80,7 @@ public class ProductService {
                 request.sessionCount()
         );
 
-        List<ImageInfo> responseImages = productImageRepository.findByProductIdOrderByDisplayOrderAsc(product.getId()).stream()
+        List<ImageInfo> responseImages = productImageRepository.findAllByProductIdOrderByDisplayOrderAsc(product.getId()).stream()
                 .map(ImageInfo::from)
                 .toList();
 
@@ -140,6 +103,40 @@ public class ProductService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
 
         product.deactivate();
+    }
+
+    // 상품 목록 조회
+    @Transactional(readOnly = true)
+    public Page<ProductSummaryResponse> getProducts(ProductSearchRequest request) {
+
+        Sort sort = createSort(request.sort());
+        Pageable pageable = PageRequest.of(request.page(), request.size(), sort);
+
+        Page<Product> products = productRepository.searchByTitleAndCategoryAndPrice(
+                request.titleKeyword(),
+                ProductCategory.valueOf(request.category()),
+                BigDecimal.valueOf(request.minPrice()),
+                BigDecimal.valueOf(request.maxPrice()),
+                pageable
+        );
+
+        return products.map(ProductSummaryResponse::from);
+    }
+
+    // 상품 상세 조회
+    @Transactional(readOnly = true)
+    public ProductDetailResponse getProductDetail(Long productId) {
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
+
+        TrainerInfo trainerInfo = TrainerInfo.from(product.getTrainerProfile());
+        List<ImageInfo> productImages = productImageRepository.findAllByProductIdOrderByDisplayOrderAsc(product.getId())
+                .stream()
+                .map(ImageInfo::from)
+                .toList();
+
+        return ProductDetailResponse.from(product, trainerInfo, productImages);
     }
 
     private Sort createSort(String sortString) {
@@ -165,45 +162,31 @@ public class ProductService {
         return Sort.by(direction, property);
     }
 
-    public void updateImage(List<ImageInfo> requestedImages, Product product) {
-        if (requestedImages != null) {
-            List<ProductImage> currentImages = productImageRepository.findByProductIdOrderByDisplayOrderAsc(product.getId());
+    public void updateImage(ProductUpdateRequest request, Product product) {
+        // 1. 이미지 삭제
+        if (request.deletedImageIds() != null && !request.deletedImageIds().isEmpty()) {
+            productImageRepository.deleteAllById(request.deletedImageIds());
+        }
 
-            // 현재 존재하는 이미지 Map
-            Map<Long, ProductImage> currentImageMap = currentImages.stream()
+        // 2. 이미지 추가
+        if (request.newImages() != null && !request.newImages().isEmpty()) {
+            List<ProductImage> newImages = request.newImages().stream()
+                    .map(image -> ProductImage.create(product, image.imageUrl(), image.displayOrder()))
+                    .toList();
+            productImageRepository.saveAll(newImages);
+        }
+
+        // 3. 이미지 순서 업데이트
+        if (request.updatedImages() != null && !request.updatedImages().isEmpty()) {
+            Map<Long, ProductImage> currentImageMap = productImageRepository.findAllByProductIdOrderByDisplayOrderAsc(product.getId()).stream()
                     .collect(Collectors.toMap(ProductImage::getId, image -> image));
 
-            // 유지할 이미지 Set
-            Set<Long> requestedIds = requestedImages.stream()
-                    .map(ImageInfo::id)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-
-            // 유지할 이미지를 제외한 나머지 이미지 삭제
-            List<ProductImage> imagesToDelete = currentImages.stream()
-                    .filter(image -> !requestedIds.contains(image.getId()))
-                    .toList();
-            if (!imagesToDelete.isEmpty()) {
-                productImageRepository.deleteAll(imagesToDelete);
-            }
-
-            List<ProductImage> imagesToCreate = new ArrayList<>();
-
-            // 요청된 이미지 처리(업데이트 또는 생성)
-            for (int index = 0; index < requestedImages.size(); index++) {
-                ImageInfo imageInfo = requestedImages.get(index);
-
-                if (imageInfo.id() != null) { // 기존 이미지 업데이트
-                    ProductImage existingImage = currentImageMap.get(imageInfo.id());
-                    existingImage.updateDisplayOrder(imageInfo.displayOrder()); // Dirty Checking
-                } else { // 새로운 이미지 생성
-                    ProductImage newImage = ProductImage.create(product, imageInfo.imageUrl(), imageInfo.displayOrder());
-                    imagesToCreate.add(newImage);
+            // 3.1 이미지 순서 재정렬
+            for (ImageUpdateRequest imageUpdate : request.updatedImages()) {
+                ProductImage image = currentImageMap.get(imageUpdate.id());
+                if (image != null) {
+                    image.updateDisplayOrder(imageUpdate.displayOrder());
                 }
-            }
-            // 새로운 이미지 생성
-            if (!imagesToCreate.isEmpty()) {
-                productImageRepository.saveAll(imagesToCreate);
             }
         }
     }

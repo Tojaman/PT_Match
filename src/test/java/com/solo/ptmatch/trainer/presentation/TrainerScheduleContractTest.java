@@ -15,11 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solo.ptmatch.common.security.JwtTokenProvider;
 import com.solo.ptmatch.trainer.application.TrainerScheduleService;
-import com.solo.ptmatch.trainer.presentation.request.TrainerSchedule;
 import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleDeleteRequest;
-import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleListRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequest;
-import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequestItem;
 import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleListResponse;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -58,12 +55,12 @@ class TrainerScheduleContractTest {
         String email = "trainer@test.com";
         LocalDateTime start = LocalDateTime.of(2025, 1, 1, 9, 0);
         LocalDateTime end = start.plusHours(1);
-        TrainerScheduleListRequest requestPayload = new TrainerScheduleListRequest(
-                List.of(TrainerSchedule.of(start, end))
+        TrainerScheduleUpdateRequest requestPayload = new TrainerScheduleUpdateRequest(
+                List.of(new TrainerScheduleUpdateRequestItem(100L, start, end))
         );
 
-        TrainerScheduleListResponse serviceResponse = TrainerScheduleListResponse.from(
-                List.of(TrainerSchedule.of(start, end))
+        List<TrainerScheduleListResponse> serviceResponse = List.of(
+                new TrainerScheduleListResponse(1L, start, end)
         );
 
         given(trainerScheduleService.registerTrainerSchedule(eq(email), eq(requestPayload)))
@@ -79,8 +76,9 @@ class TrainerScheduleContractTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("success"))
-                .andExpect(jsonPath("$.data.shedules[0].startTime").value("2025-01-01T09:00:00"))
-                .andExpect(jsonPath("$.data.shedules[0].endTime").value("2025-01-01T10:00:00"));
+                .andExpect(jsonPath("$.data[0].scheduleId").value(1))
+                .andExpect(jsonPath("$.data[0].startTime").value("2025-01-01T09:00:00"))
+                .andExpect(jsonPath("$.data[0].endTime").value("2025-01-01T10:00:00"));
 
         then(trainerScheduleService).should().registerTrainerSchedule(eq(email), eq(requestPayload));
     }
@@ -97,8 +95,8 @@ class TrainerScheduleContractTest {
                 List.of(new TrainerScheduleUpdateRequestItem(100L, start, end))
         );
 
-        TrainerScheduleListResponse serviceResponse = TrainerScheduleListResponse.from(
-                List.of(TrainerSchedule.of(start, end))
+        List<TrainerScheduleListResponse> serviceResponse = List.of(
+                new TrainerScheduleListResponse(1L, start, end)
         );
 
         given(trainerScheduleService.updateTrainerSchedule(eq(email), eq(requestPayload)))
@@ -114,8 +112,9 @@ class TrainerScheduleContractTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("success"))
-                .andExpect(jsonPath("$.data.shedules[0].startTime").value("2025-01-02T10:00:00"))
-                .andExpect(jsonPath("$.data.shedules[0].endTime").value("2025-01-02T11:00:00"));
+                .andExpect(jsonPath("$.data[0].scheduleId").value(1))
+                .andExpect(jsonPath("$.data[0].startTime").value("2025-01-02T10:00:00"))
+                .andExpect(jsonPath("$.data[0].endTime").value("2025-01-02T11:00:00"));
 
         then(trainerScheduleService).should().updateTrainerSchedule(eq(email), eq(requestPayload));
     }
@@ -136,7 +135,7 @@ class TrainerScheduleContractTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.status").value(204))
+                .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("success"))
                 .andExpect(jsonPath("$.data").doesNotExist());
 
@@ -150,8 +149,8 @@ class TrainerScheduleContractTest {
         Long trainerId = 42L;
         LocalDateTime start = LocalDateTime.of(2025, 1, 5, 9, 0);
         LocalDateTime end = start.plusHours(1);
-        TrainerScheduleListResponse serviceResponse = TrainerScheduleListResponse.from(
-                List.of(TrainerSchedule.of(start, end))
+        List<TrainerScheduleListResponse> serviceResponse = List.of(
+                new TrainerScheduleListResponse(1L, start, end)
         );
 
         given(trainerScheduleService.getTrainerSchedules(trainerId)).willReturn(serviceResponse);
@@ -162,8 +161,9 @@ class TrainerScheduleContractTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("success"))
-                .andExpect(jsonPath("$.data.shedules[0].startTime").value("2025-01-05T09:00:00"))
-                .andExpect(jsonPath("$.data.shedules[0].endTime").value("2025-01-05T10:00:00"));
+                .andExpect(jsonPath("$.data[0].scheduleId").value(1))
+                .andExpect(jsonPath("$.data[0].startTime").value("2025-01-05T09:00:00"))
+                .andExpect(jsonPath("$.data[0].endTime").value("2025-01-05T10:00:00"));
 
         then(trainerScheduleService).should().getTrainerSchedules(trainerId);
     }

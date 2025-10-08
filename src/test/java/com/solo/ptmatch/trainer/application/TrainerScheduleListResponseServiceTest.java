@@ -3,7 +3,6 @@ package com.solo.ptmatch.trainer.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -11,16 +10,14 @@ import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
 import com.solo.ptmatch.matching.infrastructure.AvailableScheduleRepository;
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
+import com.solo.ptmatch.trainer.domain.ReservationStatus;
 import com.solo.ptmatch.trainer.domain.Specialty;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
-import com.solo.ptmatch.trainer.domain.ReservationStatus;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
-import com.solo.ptmatch.trainer.presentation.request.TrainerSchedule;
-import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleListRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleDeleteRequest;
-import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleListResponse;
+import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleCreateRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequest;
-import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequestItem;
+import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleListResponse;
 import com.solo.ptmatch.user.domain.Role;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
@@ -37,7 +34,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class TrainerScheduleServiceTest {
+class TrainerScheduleListResponseServiceTest {
 
     @InjectMocks
     private TrainerScheduleService trainerScheduleService;
@@ -71,16 +68,23 @@ class TrainerScheduleServiceTest {
 
         LocalDateTime start = LocalDateTime.of(2025, 1, 1, 9, 0);
         LocalDateTime end = start.plusHours(1);
-        TrainerScheduleListRequest request = new TrainerScheduleListRequest(
-                List.of(TrainerSchedule.of(start, end))
+        TrainerScheduleCreateRequest request = new TrainerScheduleCreateRequest(
+                List.of(new TrainerScheduleCreateRequest.ScheduleRequest(start, end))
         );
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(profile));
-        when(availableScheduleRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(trainerProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(profile));
+        when(availableScheduleRepository.saveAll(any())).thenAnswer(invocation -> {
+            List<AvailableSchedule> schedules = invocation.getArgument(0);
+            long id = 1L;
+            for (AvailableSchedule schedule : schedules) {
+                setField(schedule, "id", id++);
+            }
+            return schedules;
+        });
 
         // when
-        TrainerScheduleListResponse response = trainerScheduleService.registerTrainerSchedule(email, request);
+        List<TrainerScheduleListResponse> response = trainerScheduleService.registerTrainerSchedule(email, request);
 
         // then
         @SuppressWarnings("unchecked")
@@ -93,9 +97,9 @@ class TrainerScheduleServiceTest {
         assertThat(savedSchedules.get(0).getTrainerProfile()).isEqualTo(profile);
 
         assertThat(response).isNotNull();
-        assertThat(response.shedules()).hasSize(1);
-        assertThat(response.shedules().get(0).startTime()).isEqualTo(start);
-        assertThat(response.shedules().get(0).endTime()).isEqualTo(end);
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).startTime()).isEqualTo(start);
+        assertThat(response.get(0).endTime()).isEqualTo(end);
     }
 
     @DisplayName("등록 요청 시 로그인 이메일과 매칭되는 사용자가 없으면 예외를 던진다")
@@ -105,8 +109,8 @@ class TrainerScheduleServiceTest {
         String missingEmail = "missing@example.com";
         LocalDateTime start = LocalDateTime.of(2025, 1, 1, 9, 0);
         LocalDateTime end = start.plusHours(1);
-        TrainerScheduleListRequest request = new TrainerScheduleListRequest(
-                List.of(TrainerSchedule.of(start, end))
+        TrainerScheduleCreateRequest request = new TrainerScheduleCreateRequest(
+                List.of(new TrainerScheduleCreateRequest.ScheduleRequest(start, end))
         );
 
         when(userRepository.findByEmail(missingEmail)).thenReturn(Optional.empty());
@@ -147,19 +151,19 @@ class TrainerScheduleServiceTest {
         );
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(profile));
+        when(trainerProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(profile));
         when(availableScheduleRepository.findByIdAndTrainerProfileId(100L, profile.getId()))
                 .thenReturn(existingSchedule);
 
         // when
-        TrainerScheduleListResponse response = trainerScheduleService.updateTrainerSchedule(email, request);
+        List<TrainerScheduleListResponse> response = trainerScheduleService.updateTrainerSchedule(email, request);
 
         // then
         assertThat(existingSchedule.getStartTime()).isEqualTo(updatedStart);
         assertThat(existingSchedule.getEndTime()).isEqualTo(updatedEnd);
-        assertThat(response.shedules()).hasSize(1);
-        assertThat(response.shedules().get(0).startTime()).isEqualTo(updatedStart);
-        assertThat(response.shedules().get(0).endTime()).isEqualTo(updatedEnd);
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).startTime()).isEqualTo(updatedStart);
+        assertThat(response.get(0).endTime()).isEqualTo(updatedEnd);
     }
 
     @DisplayName("트레이너 스케줄 수정 시 존재하지 않는 슬롯이면 예외를 던진다")
@@ -187,7 +191,7 @@ class TrainerScheduleServiceTest {
         );
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(profile));
+        when(trainerProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(profile));
         when(availableScheduleRepository.findByIdAndTrainerProfileId(100L, profile.getId()))
                 .thenReturn(null); // 존재하지 않는 스케줄
 
@@ -226,7 +230,7 @@ class TrainerScheduleServiceTest {
         List<AvailableSchedule> schedules = List.of(schedule);
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(profile));
+        when(trainerProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(profile));
         when(availableScheduleRepository.findAllByIdInAndTrainerProfileId(request.scheduleIds(), profile.getId()))
                 .thenReturn(schedules);
 
@@ -258,7 +262,7 @@ class TrainerScheduleServiceTest {
         TrainerScheduleDeleteRequest request = new TrainerScheduleDeleteRequest(List.of(201L, 202L));
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(profile));
+        when(trainerProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(profile));
         when(availableScheduleRepository.findAllByIdInAndTrainerProfileId(request.scheduleIds(), profile.getId()))
                 .thenReturn(List.of());
 
@@ -297,7 +301,7 @@ class TrainerScheduleServiceTest {
         TrainerScheduleDeleteRequest request = new TrainerScheduleDeleteRequest(List.of(300L));
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(profile));
+        when(trainerProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(profile));
         when(availableScheduleRepository.findAllByIdInAndTrainerProfileId(request.scheduleIds(), profile.getId()))
                 .thenReturn(List.of(reservedSchedule));
 
@@ -335,12 +339,12 @@ class TrainerScheduleServiceTest {
                 .thenReturn(List.of(schedule));
 
         // when
-        TrainerScheduleListResponse response = trainerScheduleService.getTrainerSchedules(trainerId);
+        List<TrainerScheduleListResponse> response = trainerScheduleService.getTrainerSchedules(trainerId);
 
         // then
-        assertThat(response.shedules()).hasSize(1);
-        assertThat(response.shedules().get(0).startTime()).isEqualTo(start);
-        assertThat(response.shedules().get(0).endTime()).isEqualTo(end);
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).startTime()).isEqualTo(start);
+        assertThat(response.get(0).endTime()).isEqualTo(end);
     }
 
     @DisplayName("트레이너 스케줄 조회 시 프로필이 없으면 예외를 던진다")

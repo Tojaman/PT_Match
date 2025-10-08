@@ -30,6 +30,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -56,7 +57,7 @@ class TrainerContractTest {
     @DisplayName("트레이너 목록 조회 시 필터 파라미터를 적용해 응답한다")
     void getTrainersReturnsFilteredList() throws Exception {
         // given
-        List<TrainerSummaryResponse> serviceResult = List.of(
+        Page<TrainerSummaryResponse> serviceResult = List.of(
             new TrainerSummaryResponse(
                 1L,
                 "박전문",

@@ -89,12 +89,12 @@ class TrainerProfileServiceTest {
 
         // when
         // 4. 테스트 대상 메서드 호출
-        List<TrainerSummaryResponse> result = trainerProfileService.getTrainerSummaries(request);
+        Page<TrainerSummaryResponse> result = trainerProfileService.getTrainerSummaries(request);
 
         // then
         // 5. 결과 검증
         assertThat(result).hasSize(1);
-        TrainerSummaryResponse summary = result.get(0);
+        TrainerSummaryResponse summary = result.getContent().get(0);
         assertThat(summary.name()).isEqualTo("김전문");
         assertThat(summary.specialties()).isEqualTo(Specialty.DIET.name());
         assertThat(summary.gymAddress()).isEqualTo("서울");
@@ -135,7 +135,7 @@ class TrainerProfileServiceTest {
         List<Certification> certifications = List.of(certification);
 
         // 2. Mock Repository 설정
-        when(trainerProfileRepository.findByTrainerId(trainerId)).thenReturn(Optional.of(profile));
+        when(trainerProfileRepository.findByUserId(trainerId)).thenReturn(Optional.of(profile));
         when(certificationRepository.findAllByTrainerProfileId(profile.getId())).thenReturn(certifications);
 
         // when
@@ -151,7 +151,7 @@ class TrainerProfileServiceTest {
         assertThat(result.certifications().get(0).name()).isEqualTo("NSCA-CPT");
 
         // 4. Repository 메서드 호출 여부 검증
-        verify(trainerProfileRepository, times(1)).findByTrainerId(trainerId);
+        verify(trainerProfileRepository, times(1)).findByUserId(trainerId);
         verify(certificationRepository, times(1)).findAllByTrainerProfileId(profile.getId());
     }
 
@@ -160,7 +160,7 @@ class TrainerProfileServiceTest {
     void getTrainerDetail_ProfileNotFound() {
         // given
         long nonExistentTrainerId = 999L;
-        when(trainerProfileRepository.findByTrainerId(nonExistentTrainerId)).thenReturn(Optional.empty());
+        when(trainerProfileRepository.findByUserId(nonExistentTrainerId)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> trainerProfileService.getTrainerDetail(nonExistentTrainerId))
@@ -187,7 +187,7 @@ class TrainerProfileServiceTest {
         TrainerProfileUpsertResponse response = TrainerProfileUpsertResponse.from(profile);
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(any())).thenReturn(Optional.empty());
+        when(trainerProfileRepository.findByUserId(any())).thenReturn(Optional.empty());
         when(trainerProfileRepository.save(any(TrainerProfile.class))).thenReturn(profile);
 
         // when
@@ -198,7 +198,7 @@ class TrainerProfileServiceTest {
         assertThat(result.bio()).isEqualTo("새로운 자기소개");
 
         verify(userRepository, times(1)).findByEmail(email);
-        verify(trainerProfileRepository, times(1)).findByTrainerId(user.getId());
+        verify(trainerProfileRepository, times(1)).findByUserId(user.getId());
         verify(trainerProfileRepository, times(1)).save(any(TrainerProfile.class));
         verify(certificationRepository, times(1)).saveAll(any());
     }
@@ -233,7 +233,7 @@ class TrainerProfileServiceTest {
         );
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(mock(TrainerProfile.class)));
+        when(trainerProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(mock(TrainerProfile.class)));
 
         // when & then
         assertThatThrownBy(() -> trainerProfileService.registerTrainerProfile(email, request))
@@ -257,7 +257,7 @@ class TrainerProfileServiceTest {
         );
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.of(existingProfile));
+        when(trainerProfileRepository.findByUserId(user.getId())).thenReturn(Optional.of(existingProfile));
 
         // when
         trainerProfileService.updateTrainerProfile(email, request);
@@ -304,7 +304,7 @@ class TrainerProfileServiceTest {
         );
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(trainerProfileRepository.findByTrainerId(user.getId())).thenReturn(Optional.empty());
+        when(trainerProfileRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> trainerProfileService.updateTrainerProfile(email, request))

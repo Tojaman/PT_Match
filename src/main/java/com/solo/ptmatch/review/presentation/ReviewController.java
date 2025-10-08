@@ -56,12 +56,13 @@ public class ReviewController {
     @Operation(summary = "후기 삭제", description = "사용자가 작성한 후기를 삭제한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "후기 삭제 성공")
     @DeleteMapping("/reviews/{reviewId}")
-    public ResponseEntity<Void> deleteReview(
+    public ApiResponse<Void> deleteReview(
         @AuthenticationPrincipal(expression = "username") String email,
         @PathVariable Long reviewId
     ) {
         reviewService.deleteReview(email, reviewId);
-        return ResponseEntity.noContent().build();
+//        return ResponseEntity.noContent().build();
+        return ApiResponse.success();
     }
 
     @Operation(summary = "내 후기 목록", description = "사용자가 작성한 후기 목록을 조회한다")

@@ -34,6 +34,27 @@ public class ProductController {
         return ApiResponse.success(response);
     }
 
+    @Operation(summary = "PT 상품 수정", description = "기존 PT 상품 정보를 수정한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 수정 성공")
+    @PreAuthorize("hasRole('TRAINER')")
+    @PatchMapping("/{productId}")
+    public ApiResponse<ProductUpdateResponse> updateProduct(
+        @PathVariable Long productId,
+        @Valid @RequestBody ProductUpdateRequest request
+    ) {
+        ProductUpdateResponse response = productService.updateProduct(productId, request);
+        return ApiResponse.success(response);
+    }
+
+    @Operation(summary = "PT 상품 품절 처리", description = "기존 PT 상품을 품절 처리한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 품절 성공")
+    @PreAuthorize("hasRole('TRAINER')")
+    @PostMapping("/{productId}")
+    public ApiResponse<Void> deactivateProduct(@PathVariable Long productId) {
+        productService.deactivateProduct(productId);
+        return ApiResponse.success();
+    }
+
     @Operation(summary = "PT 상품 목록 조회", description = "정렬/필터 조건으로 상품 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
     @GetMapping
@@ -48,26 +69,5 @@ public class ProductController {
     public ApiResponse<ProductDetailResponse> getProduct(@PathVariable Long productId) {
         ProductDetailResponse response = productService.getProductDetail(productId);
         return ApiResponse.success(response);
-    }
-
-    @Operation(summary = "PT 상품 수정", description = "기존 PT 상품 정보를 수정한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 수정 성공")
-    @PreAuthorize("hasRole('TRAINER')")
-    @PatchMapping("/{productId}")
-    public ApiResponse<ProductUpdateResponse> updateProduct(
-        @PathVariable Long productId,
-        @Valid @RequestBody ProductUpdateRequest request
-    ) {
-        ProductUpdateResponse response = productService.updateProduct(productId, request);
-        return ApiResponse.success(response);
-    }
-
-    @Operation(summary = "PT 상품 삭제", description = "기존 PT 상품을 삭제한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 삭제 성공")
-    @PreAuthorize("hasRole('TRAINER')")
-    @PostMapping("/{productId}")
-    public ApiResponse<Void> deleteProduct(@PathVariable Long productId) {
-        productService.deactivateProduct(productId);
-        return ApiResponse.success();
     }
 }

@@ -327,7 +327,7 @@ class ProductServiceTest {
             ReflectionTestUtils.setField(reviewer, "id", 401L);
 
             when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-            when(productImageRepository.findByProductIdOrderByDisplayOrderAsc(productId))
+            when(productImageRepository.findAllByProductIdOrderByDisplayOrderAsc(productId))
                 .thenReturn(List.of(firstImage));
 
             // when
@@ -344,7 +344,7 @@ class ProductServiceTest {
             assertThat(response.images().get(0).displayOrder()).isZero();
 
             verify(productRepository).findById(productId);
-            verify(productImageRepository).findByProductIdOrderByDisplayOrderAsc(productId);
+            verify(productImageRepository).findAllByProductIdOrderByDisplayOrderAsc(productId);
         }
     }
 
@@ -394,7 +394,7 @@ class ProductServiceTest {
 
             // 상품과 이미지 목록을 조회하는 저장소 동작을 가짜로 구성한다
             when(productRepository.findById(productId)).thenReturn(Optional.of(product));
-            when(productImageRepository.findByProductIdOrderByDisplayOrderAsc(productId))
+            when(productImageRepository.findAllByProductIdOrderByDisplayOrderAsc(productId))
                 .thenAnswer(invocation -> {
                     // 저장소가 최초 조회 시 기존 데이터, 이후에는 변경된 데이터를 반환하도록 시뮬레이션
                     if (imageQueryCount.getAndIncrement() == 0) {
@@ -457,7 +457,7 @@ class ProductServiceTest {
             assertThat(capturedNewImage.getDisplayOrder()).isEqualTo(1);
             assertThat(capturedNewImage.getId()).isEqualTo(900L);
 
-            verify(productImageRepository, times(2)).findByProductIdOrderByDisplayOrderAsc(productId);
+            verify(productImageRepository, times(2)).findAllByProductIdOrderByDisplayOrderAsc(productId);
 
             // 응답 DTO에 변경된 정보와 이미지 목록이 반영되는지 확인한다
             assertThat(response.productId()).isEqualTo(productId);
