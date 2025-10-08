@@ -9,6 +9,6 @@ import java.util.List;
 public record TrainerScheduleUpdateRequest(
         @Schema(description = "수정할 스케줄 목록")
         @NotEmpty
-        List<TrainerScheduleUpdateRequestItem> schedules
+        List<TrainerScheduleRequest> schedules
 ) {
 }

@@ -7,11 +7,7 @@ import com.solo.ptmatch.trainer.domain.AvailableSchedule;
 import com.solo.ptmatch.trainer.domain.ReservationStatus;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
-import com.solo.ptmatch.trainer.presentation.request.TrainerSchedule;
-import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleDeleteRequest;
-import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleListRequest;
-import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequest;
-import com.solo.ptmatch.trainer.presentation.request.TrainerScheduleUpdateRequestItem;
+import com.solo.ptmatch.trainer.presentation.request.*;
 import com.solo.ptmatch.trainer.presentation.response.TrainerScheduleListResponse;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
@@ -31,14 +27,14 @@ public class TrainerScheduleService {
     private final AvailableScheduleRepository availableScheduleRepository;
 
     @Transactional
-    public TrainerScheduleListResponse registerTrainerSchedule(
+    public List<TrainerScheduleListResponse> registerTrainerSchedule(
             String email,
-            TrainerScheduleListRequest request
+            TrainerScheduleCreateRequest request
     ) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        TrainerProfile profile = trainerProfileRepository.findByTrainerId(user.getId())
+        TrainerProfile profile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         // 스케줄 저장
@@ -52,26 +48,25 @@ public class TrainerScheduleService {
         availableScheduleRepository.saveAll(availableSchedules);
 
         // 저장된 스케줄을 TrainerScheduleListResponse로 변환
-        List<TrainerSchedule> schedules = availableSchedules.stream()
-                .map(TrainerSchedule::from)
+        return availableSchedules.stream()
+                .map(TrainerScheduleListResponse::from)
                 .toList();
-        return TrainerScheduleListResponse.from(schedules);
     }
 
     @Transactional
-    public TrainerScheduleListResponse updateTrainerSchedule(
+    public List<TrainerScheduleListResponse> updateTrainerSchedule(
             String email,
             TrainerScheduleUpdateRequest request
     ) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        TrainerProfile profile = trainerProfileRepository.findByTrainerId(user.getId())
+        TrainerProfile profile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         // 업데이트 대상 스케줄 조회 및 업데이트
-        List<TrainerSchedule> updatedSchedules = new ArrayList<>();
-        for (TrainerScheduleUpdateRequestItem req : request.schedules()) {
+        List<TrainerScheduleListResponse> updatedSchedules = new ArrayList<>();
+        for (TrainerScheduleRequest req : request.schedules()) {
             AvailableSchedule schedule = availableScheduleRepository.findByIdAndTrainerProfileId(
                     req.scheduleId(),
                     profile.getId());
@@ -79,9 +74,9 @@ public class TrainerScheduleService {
                 throw GlobalException.of(ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND);
             }
             schedule.update(req.startTime(), req.endTime());
-            updatedSchedules.add(TrainerSchedule.from(schedule));
+            updatedSchedules.add(TrainerScheduleListResponse.from(schedule));
         }
-        return TrainerScheduleListResponse.from(updatedSchedules);
+        return updatedSchedules;
     }
 
     @Transactional
@@ -92,7 +87,7 @@ public class TrainerScheduleService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        TrainerProfile profile = trainerProfileRepository.findByTrainerId(user.getId())
+        TrainerProfile profile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         /*
@@ -116,7 +111,7 @@ public class TrainerScheduleService {
     }
 
     @Transactional(readOnly = true)
-    public TrainerScheduleListResponse getTrainerSchedules(Long trainerId) {
+    public List<TrainerScheduleListResponse> getTrainerSchedules(Long trainerId) {
 
         /*
         1. 트레이너 프로필로 스케줄 전체 조회
@@ -126,10 +121,8 @@ public class TrainerScheduleService {
             throw GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND);
         }
 
-        List<TrainerSchedule> schedules = availableScheduleRepository.findAllByTrainerProfileId(trainerId).stream()
-                .map(TrainerSchedule::from)
+        return availableScheduleRepository.findAllByTrainerProfileId(trainerId).stream()
+                .map(TrainerScheduleListResponse::from)
                 .toList();
-
-        return TrainerScheduleListResponse.from(schedules);
     }
 }
