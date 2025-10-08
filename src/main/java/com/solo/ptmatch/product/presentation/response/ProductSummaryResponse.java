@@ -10,14 +10,14 @@ public record ProductSummaryResponse(
     Long productId,
     @Schema(description = "상품명")
     String title,
-    @Schema(description = "총 가격 또는 대표 가격")
+    @Schema(description = "총 가격")
     BigDecimal totalPrice,
     @Schema(description = "트레이너 이름")
     String trainerName,
     @Schema(description = "카테고리")
     String category,
     @Schema(description = "좋아요 수")
-    Long likesCount
+    int likesCount
 ) {
 
     public static ProductSummaryResponse from(Product product) {
@@ -29,7 +29,7 @@ public record ProductSummaryResponse(
             totalPrice,
             product.getTrainerProfile().getUser().getName(),
             product.getCategory().name(),
-            (long) product.getLikesCount()
+            product.getLikesCount()
         );
     }
 }

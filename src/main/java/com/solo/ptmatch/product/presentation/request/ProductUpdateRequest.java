@@ -1,7 +1,6 @@
 package com.solo.ptmatch.product.presentation.request;
 
 import com.solo.ptmatch.product.domain.ProductCategory;
-import com.solo.ptmatch.product.presentation.response.ImageInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -33,7 +32,13 @@ public record ProductUpdateRequest(
     @Min(1)
     int sessionCount,
 
-    @Schema(description = "상품 이미지 목록")
-    List<ImageInfo> images
+    @Schema(description = "새로 추가할 이미지 목록")
+    List<ImageCreateRequest> newImages,
+
+    @Schema(description = "수정할 이미지 목록")
+    List<ImageUpdateRequest> updatedImages,
+
+    @Schema(description = "삭제할 이미지 ID 목록")
+    List<Long> deletedImageIds
 ) {
 }
