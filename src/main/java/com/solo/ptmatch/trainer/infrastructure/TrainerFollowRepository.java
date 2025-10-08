@@ -14,4 +14,6 @@ public interface TrainerFollowRepository extends JpaRepository<TrainerFollow, Lo
     // 팔로우중인 트레이너 리스트 조회
     @EntityGraph(attributePaths = "trainerProfile") // N+1 방지
     List<TrainerFollow> findAllByUserId(Long memberId);
+
+    long countByTrainerProfileId(Long trainerProfileId);
 }

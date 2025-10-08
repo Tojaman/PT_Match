@@ -13,6 +13,9 @@ import java.util.List;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +31,7 @@ public class TrainerFollowService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(trainerId)
+        TrainerProfile trainerProfile = trainerProfileRepository.findById(trainerId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         TrainerFollow trainerFollow = trainerFollowRepository.findByUserIdAndTrainerProfileId(user.getId(), trainerProfile.getId())
@@ -51,5 +54,16 @@ public class TrainerFollowService {
         return trainerFollowRepository.findAllByUserId(user.getId()).stream()
                 .map(follow -> FollowedTrainerSummaryResponse.from(follow.getTrainerProfile()))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public long getFollowedUserCount(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
+
+        return trainerFollowRepository.countByTrainerProfileId(trainerProfile.getId());
     }
 }

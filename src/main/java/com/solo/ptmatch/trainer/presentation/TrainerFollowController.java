@@ -9,11 +9,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -40,7 +36,16 @@ public class TrainerFollowController {
             @AuthenticationPrincipal(expression = "username") String loggedInEmail
     ) {
         List<FollowedTrainerSummaryResponse> response = trainerFollowService.getFollowedTrainers(loggedInEmail);
-        log.info("결과: {}", response);
         return ApiResponse.success(response);
+    }
+
+    @Operation(summary = "팔로워 수", description = "트레이너가 팔로워 수를 조회한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "팔로워 수 조회 성공")
+    @GetMapping("/me/followers/count")
+    public ApiResponse<Long> getFollowedUserCount(
+            @AuthenticationPrincipal(expression = "username") String loggedInEmail
+    ) {
+        long followedUserCount = trainerFollowService.getFollowedUserCount(loggedInEmail);
+        return ApiResponse.success(followedUserCount);
     }
 }
