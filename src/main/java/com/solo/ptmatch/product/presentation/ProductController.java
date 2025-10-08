@@ -62,11 +62,11 @@ public class ProductController {
         return ApiResponse.success(response);
     }
 
-    @Operation(summary = "PT 상품 삭제", description = "기존 PT 상품을 삭제한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 삭제 성공")
+    @Operation(summary = "PT 상품 품절 처리", description = "기존 PT 상품을 품절 처리한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 품절 성공")
     @PreAuthorize("hasRole('TRAINER')")
     @PostMapping("/{productId}")
-    public ApiResponse<Void> deleteProduct(@PathVariable Long productId) {
+    public ApiResponse<Void> deactivateProduct(@PathVariable Long productId) {
         productService.deactivateProduct(productId);
         return ApiResponse.success();
     }
