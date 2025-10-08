@@ -34,22 +34,6 @@ public class ProductController {
         return ApiResponse.success(response);
     }
 
-    @Operation(summary = "PT 상품 목록 조회", description = "정렬/필터 조건으로 상품 목록을 조회한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
-    @GetMapping
-    public ApiResponse<List<ProductSummaryResponse>> getProducts(@ModelAttribute ProductSearchRequest request) {
-        Page<ProductSummaryResponse> response = productService.getProducts(request);
-        return ApiResponse.success(response.getContent(), PageResponse.from(response));
-    }
-
-    @Operation(summary = "PT 상품 상세 조회", description = "단일 PT 상품의 상세 정보를 조회한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 상세 조회 성공")
-    @GetMapping("/{productId}")
-    public ApiResponse<ProductDetailResponse> getProduct(@PathVariable Long productId) {
-        ProductDetailResponse response = productService.getProductDetail(productId);
-        return ApiResponse.success(response);
-    }
-
     @Operation(summary = "PT 상품 수정", description = "기존 PT 상품 정보를 수정한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 수정 성공")
     @PreAuthorize("hasRole('TRAINER')")
@@ -69,5 +53,21 @@ public class ProductController {
     public ApiResponse<Void> deactivateProduct(@PathVariable Long productId) {
         productService.deactivateProduct(productId);
         return ApiResponse.success();
+    }
+
+    @Operation(summary = "PT 상품 목록 조회", description = "정렬/필터 조건으로 상품 목록을 조회한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
+    @GetMapping
+    public ApiResponse<List<ProductSummaryResponse>> getProducts(@ModelAttribute ProductSearchRequest request) {
+        Page<ProductSummaryResponse> response = productService.getProducts(request);
+        return ApiResponse.success(response.getContent(), PageResponse.from(response));
+    }
+
+    @Operation(summary = "PT 상품 상세 조회", description = "단일 PT 상품의 상세 정보를 조회한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 상세 조회 성공")
+    @GetMapping("/{productId}")
+    public ApiResponse<ProductDetailResponse> getProduct(@PathVariable Long productId) {
+        ProductDetailResponse response = productService.getProductDetail(productId);
+        return ApiResponse.success(response);
     }
 }
