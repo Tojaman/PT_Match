@@ -71,8 +71,8 @@ class TrainerFollowServiceTest {
     @Test
     void toggleFollow_createsFollowWhenNotExists() {
         when(userRepository.findByEmail(MEMBER_EMAIL)).thenReturn(Optional.of(member));
-        when(trainerProfileRepository.findByTrainerId(trainer.getId())).thenReturn(Optional.of(trainerProfile));
-        when(trainerFollowRepository.findByMemberIdAndTrainerProfileId(member.getId(), trainerProfile.getId()))
+        when(trainerProfileRepository.findByUserId(trainer.getId())).thenReturn(Optional.of(trainerProfile));
+        when(trainerFollowRepository.findByUserIdAndTrainerProfileId(member.getId(), trainerProfile.getId()))
             .thenReturn(Optional.empty());
         when(trainerFollowRepository.save(any(TrainerFollow.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
@@ -95,8 +95,8 @@ class TrainerFollowServiceTest {
         TrainerFollow existingFollow = TrainerFollow.create(member, trainerProfile);
 
         when(userRepository.findByEmail(MEMBER_EMAIL)).thenReturn(Optional.of(member));
-        when(trainerProfileRepository.findByTrainerId(trainer.getId())).thenReturn(Optional.of(trainerProfile));
-        when(trainerFollowRepository.findByMemberIdAndTrainerProfileId(member.getId(), trainerProfile.getId()))
+        when(trainerProfileRepository.findByUserId(trainer.getId())).thenReturn(Optional.of(trainerProfile));
+        when(trainerFollowRepository.findByUserIdAndTrainerProfileId(member.getId(), trainerProfile.getId()))
             .thenReturn(Optional.of(existingFollow));
 
         TrainerFollowToggleResponse response = trainerFollowService.toggleFollow(trainer.getId(), MEMBER_EMAIL);
@@ -114,7 +114,7 @@ class TrainerFollowServiceTest {
         TrainerFollow follow = TrainerFollow.create(member, trainerProfile);
 
         when(userRepository.findByEmail(MEMBER_EMAIL)).thenReturn(Optional.of(member));
-        when(trainerFollowRepository.findAllByMemberId(member.getId())).thenReturn(List.of(follow));
+        when(trainerFollowRepository.findAllByUserId(member.getId())).thenReturn(List.of(follow));
 
         List<FollowedTrainerSummaryResponse> result = trainerFollowService.getFollowedTrainers(MEMBER_EMAIL);
 

@@ -12,11 +12,9 @@ import com.solo.ptmatch.product.presentation.request.ProductSearchRequest;
 import com.solo.ptmatch.product.presentation.request.ProductUpdateRequest;
 import com.solo.ptmatch.product.presentation.response.ImageInfo;
 import com.solo.ptmatch.product.presentation.response.ProductCreateResponse;
-import com.solo.ptmatch.product.presentation.response.ProductDeleteResponse;
 import com.solo.ptmatch.product.presentation.response.ProductDetailResponse;
 import com.solo.ptmatch.product.presentation.response.ProductSummaryResponse;
 import com.solo.ptmatch.product.presentation.response.ProductUpdateResponse;
-import com.solo.ptmatch.product.presentation.response.ReviewInfo;
 import com.solo.ptmatch.product.presentation.response.TrainerInfo;
 import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
@@ -58,7 +56,7 @@ public class ProductService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        TrainerProfile trainerProfile = trainerProfileRepository.findByTrainerId(user.getId())
+        TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         Product product = productRepository.save(request.toEntity(trainerProfile));

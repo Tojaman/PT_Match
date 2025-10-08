@@ -16,7 +16,7 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
     @Query("""
         SELECT DISTINCT m FROM Matching m
         JOIN FETCH m.trainerProfile tp
-        JOIN FETCH tp.trainer
+        JOIN FETCH tp.user
         JOIN FETCH m.product
         WHERE m.user.id = :userId
     """)
@@ -36,7 +36,7 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
         JOIN FETCH m.user
         JOIN FETCH m.product
         JOIN FETCH m.trainerProfile tp
-        JOIN FETCH tp.trainer
+        JOIN FETCH tp.user
         LEFT JOIN FETCH m.schedules
         WHERE m.id = :matchingId
     """)
@@ -45,12 +45,12 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
     @Query("""
         SELECT m FROM Matching m
         JOIN FETCH m.trainerProfile tp
-        JOIN FETCH tp.trainer
+        JOIN FETCH tp.user
         LEFT JOIN FETCH m.schedules ms
         LEFT JOIN FETCH ms.availableSchedule
         WHERE m.id = :matchingId
     """)
-    Optional<Matching> findByIdWithTrainerAndSchedules(@Param("matchingId") Long matchingId);
+    Optional<Matching> findByIdWithUserAndSchedules(@Param("matchingId") Long matchingId);
 
     Optional<Matching> findByIdAndUserId(Long matchingId, Long userId);
 }

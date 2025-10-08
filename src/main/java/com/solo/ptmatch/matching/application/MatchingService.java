@@ -13,7 +13,6 @@ import com.solo.ptmatch.matching.presentation.request.MatchingRespondRequest;
 import com.solo.ptmatch.matching.presentation.response.MatchingDetailResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingReceivedSummaryResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingRequestCreateResponse;
-import com.solo.ptmatch.matching.presentation.response.MatchingRespondResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingScheduleSummary;
 import com.solo.ptmatch.matching.presentation.response.MatchingSentSummaryResponse;
 import java.util.List;
@@ -131,7 +130,7 @@ public class MatchingService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        TrainerProfile trainerProfile = trainerProfileRepository.findByTrainerId(user.getId())
+        TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         List<Matching> matchings = matchingRepository.findAllByTrainerProfileIdAndStatusWithProduct(trainerProfile.getId(), MatchingStatus.PENDING);
@@ -157,7 +156,7 @@ public class MatchingService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_NOT_FOUND));
 
         // 회원 or 트레이너의 매칭이 아닌 경우 예외처리
-        if (matching.getUser().getId() != user.getId() && matching.getTrainerProfile().getTrainer().getId() != user.getId()) {
+        if (matching.getUser().getId() != user.getId() && matching.getTrainerProfile().getUser().getId() != user.getId()) {
             throw GlobalException.of((ErrorCode.FORBIDDEN));
         }
 
@@ -172,11 +171,11 @@ public class MatchingService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
         // 2. 매칭 정보 조회 (스케줄 정보 포함)
-        Matching matching = matchingRepository.findByIdWithTrainerAndSchedules(matchingId)
+        Matching matching = matchingRepository.findByIdWithUserAndSchedules(matchingId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_NOT_FOUND));
 
         // 3. 인가(Authorization): 이 매칭이 현재 트레이너의 것인지 확인
-        if (!matching.getTrainerProfile().getTrainer().equals(trainerUser)) {
+        if (!matching.getTrainerProfile().getUser().equals(trainerUser)) {
             throw GlobalException.of(ErrorCode.FORBIDDEN);
         }
 

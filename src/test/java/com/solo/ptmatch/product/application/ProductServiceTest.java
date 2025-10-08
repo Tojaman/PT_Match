@@ -27,7 +27,6 @@ import com.solo.ptmatch.product.presentation.response.ProductCreateResponse;
 import com.solo.ptmatch.product.presentation.response.ProductDetailResponse;
 import com.solo.ptmatch.product.presentation.response.ProductSummaryResponse;
 import com.solo.ptmatch.product.presentation.response.ProductUpdateResponse;
-import com.solo.ptmatch.review.domain.Review;
 import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 import com.solo.ptmatch.trainer.domain.Specialty;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
@@ -131,7 +130,7 @@ class ProductServiceTest {
             ReflectionTestUtils.setField(savedProduct, "id", 301L);
 
             when(userRepository.findByEmail(TRAINER_EMAIL)).thenReturn(Optional.of(trainerUser));
-            when(trainerProfileRepository.findByTrainerId(trainerUser.getId())).thenReturn(Optional.of(trainerProfile));
+            when(trainerProfileRepository.findByUserId(trainerUser.getId())).thenReturn(Optional.of(trainerProfile));
             when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
 
             // when
@@ -179,7 +178,7 @@ class ProductServiceTest {
             // then
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
             verify(userRepository).findByEmail(TRAINER_EMAIL);
-            verify(trainerProfileRepository, times(0)).findByTrainerId(anyLong());
+            verify(trainerProfileRepository, times(0)).findByUserId(anyLong());
             verify(productRepository, times(0)).save(any());
         }
 
@@ -202,7 +201,7 @@ class ProductServiceTest {
             );
 
             when(userRepository.findByEmail(TRAINER_EMAIL)).thenReturn(Optional.of(trainerUser));
-            when(trainerProfileRepository.findByTrainerId(trainerUser.getId())).thenReturn(Optional.empty()); // 프로필 없음
+            when(trainerProfileRepository.findByUserId(trainerUser.getId())).thenReturn(Optional.empty()); // 프로필 없음
 
             // when
             GlobalException exception = assertThrows(GlobalException.class,
@@ -210,7 +209,7 @@ class ProductServiceTest {
 
             // then
             assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.TRAINER_PROFILE_NOT_FOUND);
-            verify(trainerProfileRepository).findByTrainerId(eq(trainerUser.getId()));
+            verify(trainerProfileRepository).findByUserId(eq(trainerUser.getId()));
             verify(productRepository, times(0)).save(any());
         }
     }

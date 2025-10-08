@@ -28,10 +28,10 @@ public class TrainerFollowService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        TrainerProfile trainerProfile = trainerProfileRepository.findByTrainerId(trainerId)
+        TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(trainerId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
-        TrainerFollow trainerFollow = trainerFollowRepository.findByMemberIdAndTrainerProfileId(user.getId(), trainerProfile.getId())
+        TrainerFollow trainerFollow = trainerFollowRepository.findByUserIdAndTrainerProfileId(user.getId(), trainerProfile.getId())
                 .orElse(null);
 
         if (trainerFollow == null) {
@@ -48,7 +48,7 @@ public class TrainerFollowService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        return trainerFollowRepository.findAllByMemberId(user.getId()).stream()
+        return trainerFollowRepository.findAllByUserId(user.getId()).stream()
                 .map(follow -> FollowedTrainerSummaryResponse.from(follow.getTrainerProfile()))
                 .toList();
     }

@@ -27,7 +27,7 @@ public record ProductSummaryResponse(
             product.getId(),
             product.getTitle(),
             totalPrice,
-            product.getTrainerProfile().getTrainer().getName(),
+            product.getTrainerProfile().getUser().getName(),
             product.getCategory().name(),
             (long) product.getLikesCount()
         );

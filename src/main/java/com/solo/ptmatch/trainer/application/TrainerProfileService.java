@@ -55,7 +55,7 @@ public class TrainerProfileService {
 
     @Transactional(readOnly = true)
     public TrainerDetailResponse getTrainerDetail(Long trainerId) {
-        TrainerProfile profile = trainerProfileRepository.findByTrainerId(trainerId)
+        TrainerProfile profile = trainerProfileRepository.findByUserId(trainerId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         // 트레이너 자격증 조회
@@ -75,7 +75,7 @@ public class TrainerProfileService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        trainerProfileRepository.findByTrainerId(user.getId())
+        trainerProfileRepository.findByUserId(user.getId())
                 .ifPresent(profile -> {
                     throw GlobalException.of(ErrorCode.CONFLICT);
                 });
@@ -100,7 +100,7 @@ public class TrainerProfileService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        TrainerProfile profile = trainerProfileRepository.findByTrainerId(user.getId())
+        TrainerProfile profile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         profile.updateProfile(
