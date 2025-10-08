@@ -1,5 +1,6 @@
 package com.solo.ptmatch.matching.presentation.response;
 
+import com.solo.ptmatch.matching.domain.Matching;
 import com.solo.ptmatch.matching.domain.MatchingStatus;
 import com.solo.ptmatch.matching.domain.MatchingUserInfo;
 import com.solo.ptmatch.matching.presentation.response.MatchingScheduleSummary;
@@ -19,6 +20,20 @@ public record MatchingRequestCreateResponse(
 
     MatchingUserInfo matchingUserInfo
 ) {
+    public static MatchingRequestCreateResponse from(
+            Matching matching
+    ) {
+        // 단순한 매핑 로직이므로 DTO 내부에 있어도 괜찮다 판단
+        List<MatchingScheduleSummary> scheduleSummaries = matching.getSchedules().stream()
+                .map(MatchingScheduleSummary::from)
+                .toList();
+        return new MatchingRequestCreateResponse(
+                matching.getId(),
+                matching.getMatchingStatus(),
+                scheduleSummaries,
+                matching.getMatchingUserInfo()
+        );
+    }
 
     public static MatchingRequestCreateResponse of(
             Long matchingId,

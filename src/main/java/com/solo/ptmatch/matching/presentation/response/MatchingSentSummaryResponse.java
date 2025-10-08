@@ -12,7 +12,7 @@ public record MatchingSentSummaryResponse(
     MatchingTrainerInfo matchingTrainerInfo,
     MatchingProductInfo matchingProductInfo
 ) {
-    public static MatchingSentSummaryResponse of(Matching matching) {
+    public static MatchingSentSummaryResponse from(Matching matching) {
         return new MatchingSentSummaryResponse(
             matching.getId(),
             matching.getMatchingStatus(),

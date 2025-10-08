@@ -1,7 +1,6 @@
 package com.solo.ptmatch.matching.presentation.response;
 
 import com.solo.ptmatch.matching.domain.Matching;
-import com.solo.ptmatch.matching.domain.MatchingStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
@@ -17,7 +16,7 @@ public record MatchingReceivedSummaryResponse(
     LocalDateTime createdAt
 ) {
 
-    public static MatchingReceivedSummaryResponse of(Matching matching) {
+    public static MatchingReceivedSummaryResponse from(Matching matching) {
         return new MatchingReceivedSummaryResponse(
                 matching.getId(),
                 matching.getProduct().getTitle(),

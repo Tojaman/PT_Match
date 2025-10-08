@@ -35,6 +35,19 @@ public class MatchingController {
         return ApiResponse.success(response);
     }
 
+    @Operation(summary = "매칭 신청 응답", description = "트레이너가 매칭 신청을 수락 또는 거절한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "매칭 응답 처리 성공")
+    @PreAuthorize("hasRole('TRAINER')")
+    @PatchMapping("/respond/{matchingId}")
+    public ApiResponse<Void> respondMatching(
+            @AuthenticationPrincipal(expression = "username") String email,
+            @PathVariable Long matchingId,
+            @Valid @RequestBody MatchingRespondRequest request
+    ) {
+        matchingService.respondMatching(matchingId, email, request);
+        return ApiResponse.success();
+    }
+
     @Operation(summary = "보낸 매칭 신청 목록", description = "사용자가 보낸 매칭 신청 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "보낸 매칭 신청 목록 조회 성공")
     @GetMapping("/sent")
@@ -65,18 +78,5 @@ public class MatchingController {
     ) {
         MatchingDetailResponse response = matchingService.getMatchingDetail(email, matchingId);
         return ApiResponse.success(response);
-    }
-
-    @Operation(summary = "매칭 신청 응답", description = "트레이너가 매칭 신청을 수락 또는 거절한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "매칭 응답 처리 성공")
-    @PreAuthorize("hasRole('TRAINER')")
-    @PatchMapping("/respond/{matchingId}")
-    public ApiResponse<Void> respondMatching(
-            @AuthenticationPrincipal(expression = "username") String email,
-            @PathVariable Long matchingId,
-            @Valid @RequestBody MatchingRespondRequest request
-    ) {
-        matchingService.respondMatching(matchingId, email, request);
-        return ApiResponse.success();
     }
 }

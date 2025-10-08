@@ -13,9 +13,9 @@ import com.solo.ptmatch.matching.presentation.request.MatchingRespondRequest;
 import com.solo.ptmatch.matching.presentation.response.MatchingDetailResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingReceivedSummaryResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingRequestCreateResponse;
-import com.solo.ptmatch.matching.presentation.response.MatchingScheduleSummary;
 import com.solo.ptmatch.matching.presentation.response.MatchingSentSummaryResponse;
 import java.util.List;
+import java.util.Objects;
 
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.product.infrastructure.ProductRepository;
@@ -52,23 +52,11 @@ public class MatchingService {
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
 
-        /*
-         1. findAllByIdIn(request.availableScheduleIds())으로 모든  스케줄 조회
-         2. 스케줄 순환
-         3. 예외 검증
-         4. Pending 변경 -> 더티체크 스케줄 업데이트
-         5. MatchingSchedules 객체 생성
-         6. Matching.addSchedule(MatchingSchedules 객체)
-         7. Matching.save() -> 매칭 저장, 매칭 스케줄 저장
-         */
-
-        MatchingUserInfo matchingUserInfo = MatchingUserInfo.of(
-                request.userInfo().name(),
-                request.userInfo().email(),
-                request.userInfo().phoneNumber());
-
+        // 1. 매칭 엔티티 생성
+        MatchingUserInfo matchingUserInfo = MatchingUserInfo.from(request.userInfo());
         Matching matching = Matching.create(user, trainerProfile, product, request.message(), matchingUserInfo);
 
+        // 2. 매칭 엔티티에 매칭 스케줄 추가(세션 횟수만큼)
         List<AvailableSchedule> schedules = availableScheduleRepository.findAllByIdIn(request.availableScheduleIds());
         for (AvailableSchedule schedule : schedules) {
             if (schedule == null) {
@@ -80,25 +68,41 @@ public class MatchingService {
             schedule.markAsPending();
             matching.addSchedule(MatchingSchedule.from(schedule));
         }
-
+        // 3. 최종 매칭 엔티티 저장
         Matching savedMatching = matchingRepository.save(matching);
 
-        List<MatchingScheduleSummary> scheduleSummaries = savedMatching.getSchedules().stream()
-                .map(schedule -> MatchingScheduleSummary.from(
-                        schedule.getId(),
-                        schedule.getAvailableSchedule().getId(),
-                        schedule.getStartTime(),
-                        schedule.getEndTime(),
-                        schedule.getSessionStatus()
-                ))
-                .toList();
+        return MatchingRequestCreateResponse.from(savedMatching);
+    }
 
-        return MatchingRequestCreateResponse.of(
-                savedMatching.getId(),
-                savedMatching.getMatchingStatus(),
-                scheduleSummaries,
-                matchingUserInfo
-        );
+    // 매칭 신청 응답 (수락/거절)
+    @Transactional
+    public void respondMatching(Long matchingId, String userEmail, MatchingRespondRequest request) {
+        // 1. 트레이너 정보 조회
+        User trainerUser = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        // 2. 매칭 정보 조회 (스케줄 정보 포함)
+        Matching matching = matchingRepository.findByIdWithUserAndSchedules(matchingId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_NOT_FOUND));
+
+        // 3. 인가(Authorization): 이 매칭이 현재 트레이너의 것인지 확인
+        if (!matching.getTrainerProfile().getUser().equals(trainerUser)) {
+            throw GlobalException.of(ErrorCode.FORBIDDEN);
+        }
+
+        // 4. 요청에 따라 상태 분기 처리(수락/거절) - 추후 알림 기능 추가 예정
+        switch (request.status()) {
+            case ACCEPTED -> {
+                matching.accept();
+                matching.getSchedules().forEach(schedule -> schedule.getAvailableSchedule().markAsConfirmed());
+                // TODO: 수락 알림 등 후속 처리
+            }
+            case REJECTED -> {
+                matching.reject();
+                matching.getSchedules().forEach(schedule -> schedule.getAvailableSchedule().markAsAvailable());
+                // TODO: 거절 알림 등 후속 처리
+            }
+        }
     }
 
     // 보낸 매칭 신청 목록 조회(매칭 스케줄은 별도 API 구성)
@@ -114,7 +118,7 @@ public class MatchingService {
 
         // 매칭 id, 매칭 상태, 상품 제목, 트레이너 이름 응답
         return matchings.stream()
-                .map(MatchingSentSummaryResponse::of)
+                .map(MatchingSentSummaryResponse::from)
                 .toList();
     }
 
@@ -138,7 +142,7 @@ public class MatchingService {
         log.info("트레이너 프로필 아이디: {}", trainerProfile.getId());
 
         return matchings.stream()
-                .map(MatchingReceivedSummaryResponse::of)
+                .map(MatchingReceivedSummaryResponse::from)
                 .toList();
     }
 
@@ -156,41 +160,10 @@ public class MatchingService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_NOT_FOUND));
 
         // 회원 or 트레이너의 매칭이 아닌 경우 예외처리
-        if (matching.getUser().getId() != user.getId() && matching.getTrainerProfile().getUser().getId() != user.getId()) {
+        if (!Objects.equals(matching.getUser().getId(), user.getId()) && !Objects.equals(matching.getTrainerProfile().getUser().getId(), user.getId())) {
             throw GlobalException.of((ErrorCode.FORBIDDEN));
         }
 
-        return MatchingDetailResponse.of(matching);
-    }
-
-    // 매칭 신청 응답 (수락/거절)
-    @Transactional
-    public void respondMatching(Long matchingId, String userEmail, MatchingRespondRequest request) {
-        // 1. 트레이너 정보 조회
-        User trainerUser = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
-
-        // 2. 매칭 정보 조회 (스케줄 정보 포함)
-        Matching matching = matchingRepository.findByIdWithUserAndSchedules(matchingId)
-                .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_NOT_FOUND));
-
-        // 3. 인가(Authorization): 이 매칭이 현재 트레이너의 것인지 확인
-        if (!matching.getTrainerProfile().getUser().equals(trainerUser)) {
-            throw GlobalException.of(ErrorCode.FORBIDDEN);
-        }
-
-        // 4. 요청에 따라 상태 분기 처리
-        switch (request.status()) {
-            case ACCEPTED -> {
-                matching.accept();
-                matching.getSchedules().forEach(schedule -> schedule.getAvailableSchedule().markAsConfirmed());
-                // TODO: 수락 알림 등 후속 처리
-            }
-            case REJECTED -> {
-                matching.reject();
-                matching.getSchedules().forEach(schedule -> schedule.getAvailableSchedule().markAsAvailable());
-                // TODO: 거절 알림 등 후속 처리
-            }
-        }
+        return MatchingDetailResponse.from(matching);
     }
 }

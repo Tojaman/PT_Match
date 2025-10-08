@@ -68,7 +68,7 @@ class MatchingControllerTest {
                 2000L,
                 MatchingStatus.PENDING,
                 List.of(
-                        MatchingScheduleSummary.from(3000L, 100L, start, end, SessionStatus.SCHEDULED)
+                        MatchingScheduleSummary.of(3000L, 100L, start, end, SessionStatus.SCHEDULED)
                 ),
                 MatchingUserInfo.of("변경된이름", "custom@example.com", "010-1234-5678")
         );
