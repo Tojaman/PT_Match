@@ -35,8 +35,8 @@ public class TrainerProfile  extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trainer_id", nullable = false)
-    private User trainer;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Lob
     @Column(nullable = false)
@@ -59,20 +59,20 @@ public class TrainerProfile  extends BaseEntity {
     private int followersCount;
 
     @Column(name = "review_count", nullable = false)
-    private long reviewCount;
+    private int reviewCount;
 
     @Column(name = "average_rating", nullable = false, precision = 4, scale = 2)
     private BigDecimal averageRating;
 
     private TrainerProfile(
-            User trainer,
+            User user,
             String bio,
             int careerYears,
             Specialty specialty,
             String gymAddress,
             String profileImageUrl
     ) {
-        this.trainer = trainer;
+        this.user = user;
         this.bio = bio;
         validateCareerYears(careerYears);
         this.careerYears = careerYears;
@@ -83,14 +83,14 @@ public class TrainerProfile  extends BaseEntity {
     }
 
     public static TrainerProfile create(
-            User trainer,
+            User user,
             String bio,
             int careerYears,
             Specialty specialty,
             String gymAddress,
             String profileImageUrl
     ) {
-        return new TrainerProfile(trainer, bio, careerYears, specialty, gymAddress, profileImageUrl);
+        return new TrainerProfile(user, bio, careerYears, specialty, gymAddress, profileImageUrl);
     }
 
     public void updateProfile(

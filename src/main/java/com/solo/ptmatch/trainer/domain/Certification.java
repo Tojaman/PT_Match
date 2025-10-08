@@ -54,14 +54,4 @@ public class Certification  extends BaseEntity {
     ) {
         return new Certification(trainerProfile, name, issuingOrganization, acquisitionDate);
     }
-
-    public void updateCertification(String name, String issuingOrganization, LocalDate acquisitionDate) {
-        this.name = name;
-        this.issuingOrganization = issuingOrganization;
-        this.acquisitionDate = acquisitionDate;
-    }
-
-    public boolean belongsToTrainer(TrainerProfile profile) {
-        return this.trainerProfile.equals(profile);
-    }
 }

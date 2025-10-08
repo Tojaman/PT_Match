@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, Long> {
 
-    Optional<TrainerProfile> findByTrainerId(Long trainerId);
+    Optional<TrainerProfile> findByUserId(Long trainerId);
 
     // 조건: 전문 분야 or 주소로 트레이너 검색
     // 정렬: 팔로워순/별점순 + 오름차순/내림차순(Pageable 객체 내부에 Sort 객체 포함) -> order by 쿼리 JPA가 동적으로 생성

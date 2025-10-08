@@ -11,6 +11,6 @@ public record MatchingTrainerInfo(
     String trainerName
 ) {
     public static MatchingTrainerInfo from(TrainerProfile trainerProfile) {
-        return new MatchingTrainerInfo(trainerProfile.getTrainer().getId(), trainerProfile.getTrainer().getName());
+        return new MatchingTrainerInfo(trainerProfile.getUser().getId(), trainerProfile.getUser().getName());
     }
 }

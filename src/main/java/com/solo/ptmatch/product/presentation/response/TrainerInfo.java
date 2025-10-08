@@ -16,7 +16,7 @@ public record TrainerInfo(
     public static TrainerInfo from(TrainerProfile trainerProfile) {
         return new TrainerInfo(
             trainerProfile.getId(),
-            trainerProfile.getTrainer().getName(),
+            trainerProfile.getUser().getName(),
             trainerProfile.getGymAddress()
         );
     }

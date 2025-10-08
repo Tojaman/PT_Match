@@ -31,37 +31,37 @@ public class TrainerFollow  extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private User member;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trainer_profile_id", nullable = false)
     private TrainerProfile trainerProfile;
 
-    private TrainerFollow(User member, TrainerProfile trainerProfile) {
-        this.member = member;
+    private TrainerFollow(User user, TrainerProfile trainerProfile) {
+        this.user = user;
         this.trainerProfile = trainerProfile;
-        validateDifferentAccounts(member, trainerProfile);
+        validateDifferentAccounts(user, trainerProfile);
     }
 
-    public static TrainerFollow create(User member, TrainerProfile trainerProfile) {
-        return new TrainerFollow(member, trainerProfile);
+    public static TrainerFollow create(User user, TrainerProfile trainerProfile) {
+        return new TrainerFollow(user, trainerProfile);
     }
 
-    public boolean isSameFollower(User member) {
-        return this.member.equals(member);
+    public boolean isSameFollower(User user) {
+        return this.user.equals(user);
     }
 
     public boolean isSameTrainer(TrainerProfile trainerProfile) {
         return this.trainerProfile.equals(trainerProfile);
     }
 
-    public boolean matches(User member, TrainerProfile trainerProfile) {
-        return isSameFollower(member) && isSameTrainer(trainerProfile);
+    public boolean matches(User user, TrainerProfile trainerProfile) {
+        return isSameFollower(user) && isSameTrainer(trainerProfile);
     }
 
-    private void validateDifferentAccounts(User member, TrainerProfile trainerProfile) {
-        if (trainerProfile.getTrainer().equals(member)) {
+    private void validateDifferentAccounts(User user, TrainerProfile trainerProfile) {
+        if (trainerProfile.getUser().equals(user)) {
             throw new IllegalArgumentException("trainer cannot follow themselves");
         }
     }

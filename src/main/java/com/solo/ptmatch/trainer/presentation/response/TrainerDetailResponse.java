@@ -36,7 +36,7 @@ public record TrainerDetailResponse(
     ) {
         return new TrainerDetailResponse(
                 profile.getId(),
-                profile.getTrainer().getName(),
+                profile.getUser().getName(),
                 profile.getBio(),
                 profile.getSpecialty().name(),
                 profile.getCareerYears(),
@@ -47,11 +47,4 @@ public record TrainerDetailResponse(
                 certifications
         );
     }
-
-    private static String joinSpecialties(Iterable<String> specialties) {
-        StringJoiner joiner = new StringJoiner(", ");
-        specialties.forEach(joiner::add);
-        return joiner.toString();
-    }
-
 }

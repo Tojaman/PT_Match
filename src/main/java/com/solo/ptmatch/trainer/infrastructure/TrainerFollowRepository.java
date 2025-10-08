@@ -9,9 +9,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TrainerFollowRepository extends JpaRepository<TrainerFollow, Long> {
 
     // 팔로우 토글(Insert or Delete)
-    Optional<TrainerFollow> findByMemberIdAndTrainerProfileId(Long memberId, Long trainerProfileId);
+    Optional<TrainerFollow> findByUserIdAndTrainerProfileId(Long memberId, Long trainerProfileId);
 
     // 팔로우중인 트레이너 리스트 조회
     @EntityGraph(attributePaths = "trainerProfile") // N+1 방지
-    List<TrainerFollow> findAllByMemberId(Long memberId);
+    List<TrainerFollow> findAllByUserId(Long memberId);
+
+    long countByTrainerProfileId(Long trainerProfileId);
 }
