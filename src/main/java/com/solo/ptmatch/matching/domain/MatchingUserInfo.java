@@ -1,5 +1,6 @@
 package com.solo.ptmatch.matching.domain;
 
+import com.solo.ptmatch.matching.presentation.request.UserInfo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
@@ -27,5 +28,13 @@ public class MatchingUserInfo {
     }
     public static MatchingUserInfo of(String name, String email, String phone) {
         return new MatchingUserInfo(name, email, phone);
+    }
+
+    public static MatchingUserInfo from(UserInfo userInfo) {
+        return new MatchingUserInfo(
+                userInfo.name(),
+                userInfo.email(),
+                userInfo.phoneNumber()
+        );
     }
 }

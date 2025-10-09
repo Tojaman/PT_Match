@@ -1,5 +1,6 @@
 package com.solo.ptmatch.matching.presentation.response;
 
+import com.solo.ptmatch.matching.domain.MatchingSchedule;
 import com.solo.ptmatch.matching.domain.SessionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -21,7 +22,17 @@ public record MatchingScheduleSummary(
         @Schema(description = "세션 상태", example = "SCHEDULED")
         SessionStatus sessionStatus
 ) {
-    public static MatchingScheduleSummary from(
+    public static MatchingScheduleSummary from(MatchingSchedule matchingSchedule) {
+        return new MatchingScheduleSummary(
+                matchingSchedule.getId(),
+                matchingSchedule.getAvailableSchedule().getId(),
+                matchingSchedule.getAvailableSchedule().getStartTime(),
+                matchingSchedule.getAvailableSchedule().getEndTime(),
+                matchingSchedule.getSessionStatus()
+        );
+    }
+
+    public static MatchingScheduleSummary of(
             Long matchingScheduleId,
             Long availableScheduleId,
             LocalDateTime startTime,

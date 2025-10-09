@@ -2,16 +2,8 @@ package com.solo.ptmatch.matching.domain;
 
 import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.AccessLevel;
@@ -37,6 +29,7 @@ public class MatchingSchedule extends BaseEntity {
     @JoinColumn(name = "available_schedule_id", nullable = false, unique = true)
     private AvailableSchedule availableSchedule;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "session_status", nullable = false)
     private SessionStatus sessionStatus;
 

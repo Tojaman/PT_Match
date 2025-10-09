@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(
         name = "trainer_follows",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "trainer_profile_id"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "trainer_profile_id"})
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TrainerFollow  extends BaseEntity {

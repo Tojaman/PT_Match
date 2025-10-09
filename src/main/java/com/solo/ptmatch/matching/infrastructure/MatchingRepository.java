@@ -2,6 +2,8 @@ package com.solo.ptmatch.matching.infrastructure;
 
 import com.solo.ptmatch.matching.domain.Matching;
 import com.solo.ptmatch.matching.domain.MatchingStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,10 +27,14 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
     @Query("""
         SELECT m FROM Matching m
         JOIN FETCH m.product
-        WHERE m.matchingStatus = :matchingStatus
-        AND m.trainerProfile.id = :trainerProfileId
+        WHERE m.trainerProfile.id = :trainerProfileId
+        AND (:status IS NULL OR m.matchingStatus IN :status)
     """)
-    List<Matching> findAllByTrainerProfileIdAndStatusWithProduct(@Param("trainerProfileId") Long trainerProfileId, @Param("matchingStatus") MatchingStatus matchingStatus);
+    Page<Matching> findAllByTrainerProfileIdAndStatusWithProduct(
+            @Param("trainerProfileId") Long trainerProfileId,
+            @Param("status") List<MatchingStatus> status,
+            Pageable pageable // Sort 포함(order by 포함)
+    );
 
 
     @Query("""
