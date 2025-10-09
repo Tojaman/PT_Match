@@ -27,6 +27,8 @@ import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -124,7 +126,7 @@ public class MatchingService {
 
     // 받은 매칭 신청(PENDING) 목록 조회(트레이너)
     @Transactional(readOnly = true)
-    public List<MatchingReceivedSummaryResponse> getReceivedMatchings(String userEmail) {
+    public Page<MatchingReceivedSummaryResponse> getReceivedMatchings(String userEmail, List<MatchingStatus> status, Pageable pageable) {
         /* 세부 내용은 별개 API 구현
         1. 유저id(트레이너)로 매칭 리스트 조회
         2. 매칭 상태가 PENDING인 매칭 리스트 조회
@@ -137,13 +139,9 @@ public class MatchingService {
         TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
-        List<Matching> matchings = matchingRepository.findAllByTrainerProfileIdAndStatusWithProduct(trainerProfile.getId(), MatchingStatus.PENDING);
-        log.info("매칭 리스트: {}", matchings.stream().toList());
-        log.info("트레이너 프로필 아이디: {}", trainerProfile.getId());
+        Page<Matching> matchings = matchingRepository.findAllByTrainerProfileIdAndStatusWithProduct(trainerProfile.getId(), status, pageable);
 
-        return matchings.stream()
-                .map(MatchingReceivedSummaryResponse::from)
-                .toList();
+        return matchings.map(MatchingReceivedSummaryResponse::from);
     }
 
     // 매칭 상세 조회
