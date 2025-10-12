@@ -46,3 +46,4 @@ GEMINI.md
 /.gradle-home
 wsl.bat
 .obsidian/
+application-db.yml

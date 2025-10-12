@@ -1,8 +1,7 @@
 spring:
+    profiles:
+        include: db
     datasource:
-        url: jdbc:mysql://tojaman.mooo.com:3306/ptmatch?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-        username: tojaman
-        password: "4886"
         driver-class-name: com.mysql.cj.jdbc.Driver
     jpa:
         hibernate:
@@ -22,7 +21,6 @@ security:
     jwt:
         # Base64 인코딩된 32바이트 이상의 문자열이어야 함
         # 운영 환경에서는 반드시 환경 변수나 외부 설정으로 이 값을 재정의해야 함
-        secret: ZEVWRUxPUE1FTlQtU1BSSU5HLUJPT1QtUFRNQVRDSC1KV1QtU0VDUkVULUtFWQ==
         # 액세스 토큰 만료 시간 (단위: 밀리초). 기본값: 3600000 (1시간)
         access-token-validity-ms: 3600000
 
