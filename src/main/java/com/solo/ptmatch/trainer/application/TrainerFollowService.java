@@ -39,9 +39,11 @@ public class TrainerFollowService {
 
         if (trainerFollow == null) {
             trainerFollowRepository.save(TrainerFollow.create(user, trainerProfile));
+            trainerProfile.increaseFollowrs();
             return new TrainerFollowToggleResponse(true, "팔로우 되었습니다.");
         } else {
             trainerFollowRepository.delete(trainerFollow);
+            trainerProfile.decreaseFollowrs();
             return new TrainerFollowToggleResponse(false, "팔로우가 취소되었습니다.");
         }
     }
@@ -64,6 +66,6 @@ public class TrainerFollowService {
         TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
-        return trainerFollowRepository.countByTrainerProfileId(trainerProfile.getId());
+        return trainerProfile.getFollowersCount();
     }
 }
