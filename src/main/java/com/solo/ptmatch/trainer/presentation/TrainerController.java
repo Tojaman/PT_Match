@@ -12,7 +12,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +31,9 @@ public class TrainerController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "목록 조회 성공")
     @GetMapping
     public ApiResponse<List<TrainerSummaryResponse>> getTrainers(
-            @Valid @ModelAttribute TrainerSearchRequest trainerSearchRequest) {
-        Page<TrainerSummaryResponse> response = trainerProfileService.getTrainerSummaries(trainerSearchRequest);
+            @Valid @ModelAttribute TrainerSearchRequest trainerSearchRequest,
+            @ParameterObject @PageableDefault(size = 10, sort = "averageRating", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<TrainerSummaryResponse> response = trainerProfileService.getTrainerSummaries(trainerSearchRequest, pageable);
         return ApiResponse.success(response.getContent(), PageResponse.from(response));
     }
 
