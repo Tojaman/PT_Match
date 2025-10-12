@@ -59,7 +59,7 @@ public class MatchingService {
         Matching matching = Matching.create(user, trainerProfile, product, request.message(), matchingUserInfo);
 
         // 2. 매칭 엔티티에 매칭 스케줄 추가(세션 횟수만큼)
-        List<AvailableSchedule> schedules = availableScheduleRepository.findAllByIdIn(request.availableScheduleIds());
+        List<AvailableSchedule> schedules = availableScheduleRepository.findAllByIdInWithLock(request.availableScheduleIds()); // 공유 락 획득
         for (AvailableSchedule schedule : schedules) {
             if (schedule == null) {
                 throw GlobalException.of(ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND);
@@ -67,12 +67,11 @@ public class MatchingService {
             if (schedule.getReservationStatus() != ReservationStatus.AVAILABLE) {
                 throw GlobalException.of(ErrorCode.SCHEDULE_ALREADY_RESERVED);
             }
-            schedule.markAsPending();
+            schedule.markAsPending(); // 베타 락 승격
             matching.addSchedule(MatchingSchedule.from(schedule));
         }
         // 3. 최종 매칭 엔티티 저장
         Matching savedMatching = matchingRepository.save(matching);
-
         return MatchingRequestCreateResponse.from(savedMatching);
     }
 

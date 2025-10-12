@@ -1,7 +1,10 @@
 package com.solo.ptmatch.matching.infrastructure;
 
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,7 +17,7 @@ public interface AvailableScheduleRepository extends JpaRepository<AvailableSche
 
     public List<AvailableSchedule> findAllByTrainerProfileId(Long trainerId);
 
-    public AvailableSchedule findByStartTimeAndEndTime(LocalDateTime startTime, LocalDateTime endTime);
-
-    public List<AvailableSchedule> findAllByIdIn(List<Long> id);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM AvailableSchedule s WHERE s.id IN :ids")
+    public List<AvailableSchedule> findAllByIdInWithLock(List<Long> ids);
 }
