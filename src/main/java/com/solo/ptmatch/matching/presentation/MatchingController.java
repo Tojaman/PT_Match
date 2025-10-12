@@ -26,14 +26,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/matching")
+@RequestMapping("/api/matchings")
 public class MatchingController {
 
     private final MatchingService matchingService;
 
     @Operation(summary = "PT 매칭 신청", description = "사용자가 PT 매칭을 신청한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "매칭 신청 성공")
-    @PostMapping("/request")
+    @PostMapping
     public ApiResponse<MatchingRequestCreateResponse> requestMatching(
         @AuthenticationPrincipal(expression = "username") String email,
         @Valid @RequestBody MatchingRequestCreateRequest request
@@ -45,7 +45,7 @@ public class MatchingController {
     @Operation(summary = "매칭 신청 응답", description = "트레이너가 매칭 신청을 수락 또는 거절한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "매칭 응답 처리 성공")
     @PreAuthorize("hasRole('TRAINER')")
-    @PatchMapping("/respond/{matchingId}")
+    @PatchMapping("/{matchingId}")
     public ApiResponse<Void> respondMatching(
             @AuthenticationPrincipal(expression = "username") String email,
             @PathVariable Long matchingId,
