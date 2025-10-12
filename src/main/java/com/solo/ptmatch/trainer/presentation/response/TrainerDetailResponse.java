@@ -1,10 +1,10 @@
 package com.solo.ptmatch.trainer.presentation.response;
 
+import com.solo.ptmatch.trainer.domain.Specialty;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.StringJoiner;
 
 @Schema(description = "트레이너 상세 응답")
 public record TrainerDetailResponse(
@@ -14,8 +14,8 @@ public record TrainerDetailResponse(
     String name,
     @Schema(description = "자기소개")
     String bio,
-    @Schema(description = "전문 분야", example = "다이어트, 근력강화")
-    String specialties,
+    @Schema(description = "전문 분야 목록", example = "[\"DIET\", \"STRENGTH_CONDITIONING\"]")
+    List<Specialty> specialties,
     @Schema(description = "경력 년수", example = "10")
     int careerYears,
     @Schema(description = "활동 지점")
@@ -38,7 +38,9 @@ public record TrainerDetailResponse(
                 profile.getId(),
                 profile.getUser().getName(),
                 profile.getBio(),
-                profile.getSpecialty().name(),
+                profile.getSpecialties().stream()
+                        .sorted()
+                        .toList(),
                 profile.getCareerYears(),
                 profile.getGymAddress(),
                 profile.getProfileImageUrl(),
