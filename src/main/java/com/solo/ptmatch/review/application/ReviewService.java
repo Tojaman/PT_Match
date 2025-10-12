@@ -33,7 +33,7 @@ public class ReviewService {
         1. 사용자 조회
         2. 매칭 조회 (WHERE user.id = user_id)
         3. 리뷰 작성된지 검증(리뷰는 한 개만 작성 가능)
-        4. Review.save(Review.create())
+        4. Review.save(Review.create()) and 매칭된 트레이너의 리뷰 개수 +1
          */
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
@@ -46,6 +46,7 @@ public class ReviewService {
         }
 
         Review review = Review.create(matching, request.rating(), request.content());
+        matching.getTrainerProfile().increaseReviewCount();
         reviewRepository.save(review);
 
         return ReviewCreateResponse.of(review.getId());
