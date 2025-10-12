@@ -7,7 +7,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.HashSet;
 import java.util.List;
 
 @Schema(description = "트레이너 프로필 등록 요청")
@@ -20,9 +22,10 @@ public record TrainerProfileUpsertRequest(
     @Min(0)
     int careerYears,
 
-    @Schema(description = "전문 분야", example = "DIET")
+    @Schema(description = "전문 분야 목록", example = "[\"DIET\", \"REHABILITATION\"]")
     @NotNull
-    Specialty specialties,
+    @NotEmpty
+    List<Specialty> specialties,
 
     @Schema(description = "활동 지점", example = "서울 강남구 ...")
     @NotBlank
@@ -43,7 +46,7 @@ public record TrainerProfileUpsertRequest(
             trainer,
             bio,
             careerYears,
-            specialties,
+            new HashSet<>(specialties),
             gymAddress,
             profileImageUrl
         );

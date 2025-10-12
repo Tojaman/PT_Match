@@ -2,24 +2,17 @@ package com.solo.ptmatch.trainer.domain;
 
 import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.user.domain.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
@@ -45,9 +38,14 @@ public class TrainerProfile  extends BaseEntity {
     @Column(name = "career_years", nullable = false)
     private int careerYears;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "trainer_profile_specialties",
+            joinColumns = @JoinColumn(name = "trainer_profile_id")
+    )
     @Enumerated(EnumType.STRING)
     @Column(name = "specialty", nullable = false, length = 30)
-    private Specialty specialty;
+    private Set<Specialty> specialties = new HashSet<>();
 
     @Column(name = "gym_address", nullable = false)
     private String gymAddress;
@@ -68,7 +66,7 @@ public class TrainerProfile  extends BaseEntity {
             User user,
             String bio,
             int careerYears,
-            Specialty specialty,
+            Set<Specialty> specialties,
             String gymAddress,
             String profileImageUrl
     ) {
@@ -76,7 +74,7 @@ public class TrainerProfile  extends BaseEntity {
         this.bio = bio;
         validateCareerYears(careerYears);
         this.careerYears = careerYears;
-        this.specialty = specialty;
+        this.specialties = new HashSet<>(specialties);
         this.gymAddress = gymAddress;
         this.profileImageUrl = profileImageUrl;
         this.averageRating = DEFAULT_RATING;
@@ -86,26 +84,39 @@ public class TrainerProfile  extends BaseEntity {
             User user,
             String bio,
             int careerYears,
-            Specialty specialty,
+            Set<Specialty> specialties,
             String gymAddress,
             String profileImageUrl
     ) {
-        return new TrainerProfile(user, bio, careerYears, specialty, gymAddress, profileImageUrl);
+        return new TrainerProfile(user, bio, careerYears, specialties, gymAddress, profileImageUrl);
     }
 
     public void updateProfile(
             String bio,
             int careerYears,
-            Specialty specialty,
+            Set<Specialty> specialties,
             String gymAddress,
             String profileImageUrl
     ) {
         this.bio = bio;
         validateCareerYears(careerYears);
         this.careerYears = careerYears;
-        this.specialty = Objects.requireNonNull(specialty, "specialty must not be null");
+        replaceSpecialties(specialties);
         this.gymAddress = gymAddress;
         this.profileImageUrl = profileImageUrl;
+    }
+
+    public void replaceSpecialties(Set<Specialty> specialties) {
+        this.specialties.clear();
+        this.specialties.addAll(specialties);
+    }
+
+    public void addSpecialty(Specialty specialty) {
+        this.specialties.add(specialty);
+    }
+
+    public void removeSpecialty(Specialty specialty) {
+        this.specialties.remove(specialty);
     }
 
     public void increaseFollowrs() {

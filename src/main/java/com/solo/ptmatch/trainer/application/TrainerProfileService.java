@@ -15,11 +15,14 @@ import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 
+import java.util.HashSet;
 import java.util.List;
 
+import com.solo.ptmatch.common.aop.LogExecutionTime;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +30,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class TrainerProfileService {
@@ -36,26 +40,24 @@ public class TrainerProfileService {
     private final CertificationRepository certificationRepository;
     private final ReviewRepository reviewRepository;
 
+    @LogExecutionTime
     @Transactional(readOnly = true)
-    public Page<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request) {
-        Sort sort = createSort(request.sort());
-        Pageable pageable = PageRequest.of(request.page(), request.size(), sort);
-
-        Specialty specialty = request.specialty() != null ? Specialty.fromDescription(request.specialty()) : null;
+    public Page<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request, Pageable pageable) {
 
         Page<TrainerProfile> trainerPage = trainerProfileRepository.searchBySpecialtyAndGymAddress(
-                specialty,
+                request.specialty(),
                 request.region(),
                 pageable
         );
 
+        // N+1 문제 발생 -> Select User N개 쿼리 발생
         // Page 인터페이스에 map() 메서드 정의되어 있음(페이지 정보는 그대로 복사하고, 내용물(`List`)에만 변환 함수를 적용하여, 새로운 `Page` 객체를 반환)
         return trainerPage.map(TrainerSummaryResponse::from);
     }
 
     @Transactional(readOnly = true)
     public TrainerDetailResponse getTrainerDetail(Long trainerId) {
-        TrainerProfile profile = trainerProfileRepository.findByUserId(trainerId)
+        TrainerProfile profile = trainerProfileRepository.findById(trainerId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         // 트레이너 자격증 조회
@@ -106,7 +108,7 @@ public class TrainerProfileService {
         profile.updateProfile(
                 request.bio(),
                 request.careerYears(),
-                request.specialties(),
+                new HashSet<>(request.specialties()),
                 request.gymAddress(),
                 request.profileImageUrl()
         );
