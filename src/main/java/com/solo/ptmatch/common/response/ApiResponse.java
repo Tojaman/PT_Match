@@ -1,59 +1,36 @@
 package com.solo.ptmatch.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.Objects;
-import org.springframework.http.HttpStatus;
+import lombok.Getter;
 
+import java.util.Objects;
+
+
+@Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
     private static final String DEFAULT_SUCCESS_MESSAGE = "success";
 
-    private final int status;
     private final String message;
     private final T data;
     private final PageResponse pageResponse;
 
-    private ApiResponse(int status, String message, T data, PageResponse pageResponse) {
-        this.status = status;
+    private ApiResponse(String message, T data, PageResponse pageResponse) {
         this.message = message;
         this.data = data;
         this.pageResponse = pageResponse;
     }
 
     public static <T> ApiResponse<T> success() {
-        return new ApiResponse<>(HttpStatus.NO_CONTENT.value(), DEFAULT_SUCCESS_MESSAGE, null, null);
+        return new ApiResponse<>(DEFAULT_SUCCESS_MESSAGE, null, null);
     }
 
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(HttpStatus.OK.value(), DEFAULT_SUCCESS_MESSAGE, data, null);
+        return new ApiResponse<>(DEFAULT_SUCCESS_MESSAGE, data, null);
     }
 
     public static <T> ApiResponse<T> success(T data, PageResponse pageResponse) {
-        return new ApiResponse<>(HttpStatus.OK.value(), DEFAULT_SUCCESS_MESSAGE, data, PageResponse.nullSafe(pageResponse));
-    }
-
-    public static <T> ApiResponse<T> of(HttpStatus status, String message, T data) {
-        return new ApiResponse<>(status.value(), Objects.requireNonNullElse(message, DEFAULT_SUCCESS_MESSAGE), data, null);
-    }
-
-    public static <T> ApiResponse<T> of(HttpStatus status, String message, T data, PageResponse pageResponse) {
-        return new ApiResponse<>(status.value(), Objects.requireNonNullElse(message, DEFAULT_SUCCESS_MESSAGE), data, PageResponse.nullSafe(pageResponse));
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public T getData() {
-        return data;
-    }
-
-    public PageResponse getPageResponse() {
-        return pageResponse;
+        return new ApiResponse<>(DEFAULT_SUCCESS_MESSAGE, data, PageResponse.nullSafe(pageResponse));
     }
 }
