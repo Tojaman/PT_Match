@@ -140,9 +140,7 @@ public class ProductService {
                 .map(ImageInfo::from)
                 .toList();
 
-        long likesCount = productLikeRepository.countByProduct(product);
-
-        return ProductDetailResponse.from(product, trainerInfo, productImages, likesCount);
+        return ProductDetailResponse.from(product, trainerInfo, productImages);
     }
 
     private Sort createSort(String sortString) {

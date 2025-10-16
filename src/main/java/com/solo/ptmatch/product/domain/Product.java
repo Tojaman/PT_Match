@@ -104,6 +104,17 @@ public class Product extends BaseEntity {
         this.sessionCount = sessionCount;
     }
 
+    public void increaseLike() {
+        likesCount += 1;
+    }
+
+    public void decreaseLike() {
+        if (likesCount == 0) {
+            return;
+        }
+        likesCount -= 1;
+    }
+
     public void deactivate() {
         this.saleStatus = ProductSaleStatus.INACTIVE;
     }
