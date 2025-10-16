@@ -1,11 +1,13 @@
 package com.solo.ptmatch.product.application;
 
+import com.solo.ptmatch.common.aop.LogExecutionTime;
 import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.product.domain.ProductCategory;
 import com.solo.ptmatch.product.domain.ProductImage;
 import com.solo.ptmatch.product.infrastructure.ProductImageRepository;
+import com.solo.ptmatch.product.infrastructure.ProductLikeRepository;
 import com.solo.ptmatch.product.infrastructure.ProductRepository;
 import com.solo.ptmatch.product.presentation.request.ImageUpdateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductCreateRequest;
@@ -44,6 +46,7 @@ public class ProductService {
     private final TrainerProfileRepository trainerProfileRepository;
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
+    private final ProductLikeRepository productLikeRepository;
 
     // 상품 등록 - 상품 목록으로 이동(이미지는 응답 데이터에 포함X)
     @Transactional
@@ -124,6 +127,7 @@ public class ProductService {
     }
 
     // 상품 상세 조회
+    @LogExecutionTime
     @Transactional(readOnly = true)
     public ProductDetailResponse getProductDetail(Long productId) {
 
@@ -136,7 +140,9 @@ public class ProductService {
                 .map(ImageInfo::from)
                 .toList();
 
-        return ProductDetailResponse.from(product, trainerInfo, productImages);
+        long likesCount = productLikeRepository.countByProduct(product);
+
+        return ProductDetailResponse.from(product, trainerInfo, productImages, likesCount);
     }
 
     private Sort createSort(String sortString) {

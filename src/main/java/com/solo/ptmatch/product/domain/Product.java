@@ -74,7 +74,7 @@ public class Product extends BaseEntity {
         this.description = description;
         this.category = category;
         this.pricePerSession = sanitizePrice(pricePerSession);
-        this.sessionCount = validateSessionCount(sessionCount);
+        this.sessionCount = sessionCount;
         this.likesCount = 0;
         this.saleStatus = ProductSaleStatus.ACTIVE;
     }
@@ -101,22 +101,11 @@ public class Product extends BaseEntity {
         this.description = description;
         this.category = category;
         this.pricePerSession = sanitizePrice(pricePerSession);
-        this.sessionCount = validateSessionCount(sessionCount);
+        this.sessionCount = sessionCount;
     }
 
     public void deactivate() {
         this.saleStatus = ProductSaleStatus.INACTIVE;
-    }
-
-    public void toggleLike(boolean liked) {
-        if (liked) {
-            likesCount += 1;
-            return;
-        }
-        if (likesCount == 0) {
-            return;
-        }
-        likesCount -= 1;
     }
 
     private BigDecimal sanitizePrice(BigDecimal price) {
@@ -125,12 +114,5 @@ public class Product extends BaseEntity {
             throw new IllegalArgumentException("price must not be negative");
         }
         return validated.setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private int validateSessionCount(int sessionCount) {
-        if (sessionCount <= 0) {
-            throw new IllegalArgumentException("sessionCount must be positive");
-        }
-        return sessionCount;
     }
 }

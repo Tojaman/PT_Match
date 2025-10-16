@@ -20,7 +20,8 @@ public enum ErrorCode {
     CANNOT_DELETE_RESERVED_SCHEDULE("예약된 스케줄은 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST),
     MATCHING_NOT_FOUND("매칭을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     REVIEW_ALREADY_EXISTS("이미 리뷰가 작성된 매칭입니다.", HttpStatus.CONFLICT),
-    REVIEW_NOT_FOUND("유저의 리뷰를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    REVIEW_NOT_FOUND("유저의 리뷰를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    SELF_PRODUCT_LIKE_NOT_ALLOWED("본인이 등록한 상품에는 좋아요를 누를 수 없습니다.", HttpStatus.BAD_REQUEST);
 
 
 

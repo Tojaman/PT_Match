@@ -21,22 +21,26 @@ public record ProductDetailResponse(
     int sessionCount,
     @Schema(description = "트레이너 정보")
     TrainerInfo trainerInfo,
+    @Schema(description = "좋아요 수")
+    long likesCount,
     @Schema(description = "상품 이미지 목록")
     List<ImageInfo> images
 ) {
 
     public static ProductDetailResponse from(Product product,
                                              TrainerInfo trainerInfo,
-                                             List<ImageInfo> imageInfos) {
+                                             List<ImageInfo> imageInfos,
+                                             long likesCount) {
         return new ProductDetailResponse(
-            product.getId(),
-            product.getTitle(),
-            product.getDescription(),
-            product.getCategory().name(),
-            product.getPricePerSession(),
-            product.getSessionCount(),
-            trainerInfo,
-            imageInfos
+                product.getId(),
+                product.getTitle(),
+                product.getDescription(),
+                product.getCategory().name(),
+                product.getPricePerSession(),
+                product.getSessionCount(),
+                trainerInfo,
+                likesCount,
+                imageInfos
         );
     }
 }

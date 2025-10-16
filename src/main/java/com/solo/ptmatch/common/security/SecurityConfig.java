@@ -48,6 +48,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/trainers/me", "/api/products/", "/api/products/{productId}").hasRole("TRAINER") // 트레이너 프로필 등록/수정은 TRAINER 역할만 가능
                 .requestMatchers(HttpMethod.PUT, "/api/products/{productId}").hasRole("TRAINER")
                 .requestMatchers(HttpMethod.DELETE, "/api/products/{productId}").hasRole("TRAINER")
+                .requestMatchers(HttpMethod.POST, "/api/products/*/like").hasRole("USER")
+                .requestMatchers(HttpMethod.GET, "/api/me/likes/products").hasRole("USER")
 
                 .anyRequest().authenticated() // 나머지 모든 요청은 인증 필요
             )
