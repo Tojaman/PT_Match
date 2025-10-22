@@ -1,5 +1,6 @@
 package com.solo.ptmatch.product.application;
 
+import com.solo.ptmatch.common.aop.LogExecutionTime;
 import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
 import com.solo.ptmatch.product.domain.Product;
@@ -11,12 +12,19 @@ import com.solo.ptmatch.product.presentation.response.ProductSummaryResponse;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class ProductLikeService {
 
@@ -24,6 +32,18 @@ public class ProductLikeService {
     private final ProductRepository productRepository;
     private final ProductLikeRepository productLikeRepository;
 
+    @LogExecutionTime
+    @Retryable(
+            retryFor = {
+                    ObjectOptimisticLockingFailureException.class
+            },
+            maxAttempts = 4,
+            backoff = @Backoff(
+                    delay = 100,
+                    multiplier = 1.5,
+                    random = true), // 재시도 간격 무작위성 추가(+- 50%) -> 재시도 시점 분산
+            listeners = "retryLoggingListener"
+    )
     @Transactional
     public ProductLikeToggleResponse toggleProductLike(Long productId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
@@ -40,13 +60,13 @@ public class ProductLikeService {
                 .orElse(null);
 
         if (productLike == null) {
+            changeProductLikeCount(product, 1);
             productLikeRepository.save(ProductLike.create(user, product));
-            product.increaseLike();
             return new ProductLikeToggleResponse(true);
         }
 
+        changeProductLikeCount(product, -1);
         productLikeRepository.delete(productLike);
-        product.decreaseLike();
         return new ProductLikeToggleResponse(false);
     }
 
@@ -57,5 +77,27 @@ public class ProductLikeService {
 
         return productLikeRepository.findAllByUserIdWithProduct(user.getId(), pageable)
                 .map(productLike -> ProductSummaryResponse.from(productLike.getProduct()));
+    }
+
+    private void changeProductLikeCount(Product product, int delta) {
+        int updatedRows = productRepository.updateLikeCountWithVersion(product.getId(), delta, product.getVersion());
+        if (updatedRows == 0) {
+            throw new ObjectOptimisticLockingFailureException(Product.class, product.getId());
+        }
+    }
+
+    @Recover
+    public ProductLikeToggleResponse recoverLikeToggle(
+            ObjectOptimisticLockingFailureException exception,
+            Long productId,
+            String userEmail
+    ) {
+        log.error(
+                "상품 좋아요 토글 재시도 최종 실패: productId={}, userEmail={}, 예외={}",
+                productId,
+                userEmail,
+                exception.getClass().getSimpleName()
+        );
+        throw GlobalException.of(ErrorCode.PRODUCT_LIKE_RETRY_FAILED);
     }
 }

@@ -110,10 +110,7 @@ public class ProductService {
 
     // 상품 목록 조회
     @Transactional(readOnly = true)
-    public Page<ProductSummaryResponse> getProducts(ProductSearchRequest request) {
-
-        Sort sort = createSort(request.sort());
-        Pageable pageable = PageRequest.of(request.page(), request.size(), sort);
+    public Page<ProductSummaryResponse> getProducts(ProductSearchRequest request, Pageable pageable) {
 
         Page<Product> products = productRepository.searchByTitleAndCategoryAndPrice(
                 request.titleKeyword(),
@@ -140,7 +137,7 @@ public class ProductService {
                 .map(ImageInfo::from)
                 .toList();
 
-        return ProductDetailResponse.from(product, trainerInfo, productImages);
+        return ProductDetailResponse.from(product, trainerInfo, productImages, product.getLikesCount());
     }
 
     private Sort createSort(String sortString) {

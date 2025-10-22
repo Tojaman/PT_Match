@@ -10,7 +10,11 @@ import com.solo.ptmatch.product.presentation.response.*;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -60,8 +64,10 @@ public class ProductController {
     @Operation(summary = "PT 상품 목록 조회", description = "정렬/필터 조건으로 상품 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상품 목록 조회 성공")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ProductSummaryResponse>>> getProducts(@ModelAttribute ProductSearchRequest request) {
-        Page<ProductSummaryResponse> response = productService.getProducts(request);
+    public ResponseEntity<ApiResponse<List<ProductSummaryResponse>>> getProducts(
+            @ModelAttribute ProductSearchRequest request,
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<ProductSummaryResponse> response = productService.getProducts(request, pageable);
         return ResponseEntity.ok(ApiResponse.success(response.getContent(), PageResponse.from(response)));
     }
 
