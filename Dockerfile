@@ -2,6 +2,7 @@ FROM gradle:8.7-jdk17-alpine AS builder
 WORKDIR /home/gradle/project
 COPY gradle gradle
 COPY gradlew settings.gradle build.gradle ./
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
 RUN ./gradlew --no-daemon dependencies
 COPY src src
 RUN ./gradlew --no-daemon clean bootJar
