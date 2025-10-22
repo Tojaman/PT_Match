@@ -2,11 +2,10 @@ package com.solo.ptmatch.product.infrastructure;
 
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.product.domain.ProductCategory;
-import com.solo.ptmatch.trainer.domain.Specialty;
-import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -24,11 +23,26 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
               and (:minPrice is null or p.pricePerSession >= :minPrice)
               and (:maxPrice is null or p.pricePerSession <= :maxPrice)
             """)
-    Page<Product>  searchByTitleAndCategoryAndPrice(
+    Page<Product> searchByTitleAndCategoryAndPrice(
             @Param("titleKeyword") String titleKeyword,
             @Param("category") ProductCategory category,
             @Param("minPrice") BigDecimal minPrice,
             @Param("maxPrice") BigDecimal maxPrice,
             Pageable pageable
+    );
+
+    @Modifying
+    @Query("""
+            update Product p
+            set p.likesCount = p.likesCount + :delta,
+                p.version = p.version + 1
+            where p.id = :productId
+              and p.version = :version
+              and (:delta >= 0 or p.likesCount > 0)
+            """)
+    int updateLikeCountWithVersion(
+            @Param("productId") Long productId,
+            @Param("delta") int delta,
+            @Param("version") long version
     );
 }

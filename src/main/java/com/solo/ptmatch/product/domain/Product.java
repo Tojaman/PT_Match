@@ -14,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import lombok.AccessLevel;
@@ -60,6 +61,10 @@ public class Product extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "sale_status", nullable = false)
     private ProductSaleStatus saleStatus;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     private Product(
             TrainerProfile trainerProfile,
