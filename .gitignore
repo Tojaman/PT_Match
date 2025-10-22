@@ -47,3 +47,4 @@ GEMINI.md
 wsl.bat
 .obsidian/
 application-db.yml
+.env
