@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  spring-app:
+    image: ptmatch:latest
+    container_name: ptmatch
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+     SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+     SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+     SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+#     SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+     SPRING_JWT_SECRET: ${SPRING_JWT_SECRET}
+    expose:
+      - "8080"
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # 로컬의 nginx 설정 파일을 컨테이너에 마운트
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      # 호스트(서버)에 있는 SSL 인증서 관련 폴더 전체를 컨테이너에 마운트
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # (선택) 호스트 Certbot 갱신을 위한 웹루트 폴더 공유
+      - /var/www/certbot:/var/www/certbot
+    healthcheck:
+      test: [ "CMD", "nginx", "-t" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - ptmatch
+
+volumes:
+  certbot-conf:
+  certbot-www:
