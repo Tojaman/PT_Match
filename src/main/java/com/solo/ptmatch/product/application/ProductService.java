@@ -3,6 +3,9 @@ package com.solo.ptmatch.product.application;
 import com.solo.ptmatch.common.aop.LogExecutionTime;
 import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
+import com.solo.ptmatch.common.storage.ObjectStorageService;
+import com.solo.ptmatch.common.storage.PresignedUpload;
+import com.solo.ptmatch.common.storage.PresignedUploadCommand;
 import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.product.domain.ProductCategory;
 import com.solo.ptmatch.product.domain.ProductImage;
@@ -10,10 +13,12 @@ import com.solo.ptmatch.product.infrastructure.ProductImageRepository;
 import com.solo.ptmatch.product.infrastructure.ProductLikeRepository;
 import com.solo.ptmatch.product.infrastructure.ProductRepository;
 import com.solo.ptmatch.product.presentation.request.ImageUpdateRequest;
+import com.solo.ptmatch.product.presentation.request.PresignedUrlRequest;
 import com.solo.ptmatch.product.presentation.request.ProductCreateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductSearchRequest;
 import com.solo.ptmatch.product.presentation.request.ProductUpdateRequest;
 import com.solo.ptmatch.product.presentation.response.ImageInfo;
+import com.solo.ptmatch.product.presentation.response.PresignedUrlResponse;
 import com.solo.ptmatch.product.presentation.response.ProductCreateResponse;
 import com.solo.ptmatch.product.presentation.response.ProductDetailResponse;
 import com.solo.ptmatch.product.presentation.response.ProductSummaryResponse;
@@ -47,6 +52,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
     private final ProductLikeRepository productLikeRepository;
+    private final ObjectStorageService objectStorageService;
 
     // 상품 등록 - 상품 목록으로 이동(이미지는 응답 데이터에 포함X)
     @Transactional
@@ -87,15 +93,22 @@ public class ProductService {
                 .map(ImageInfo::from)
                 .toList();
 
-        return new ProductUpdateResponse(
-                product.getId(),
-                product.getTitle(),
-                product.getDescription(),
-                product.getCategory().name(),
-                product.getPricePerSession(),
-                product.getSessionCount(),
-                responseImages
+        return ProductUpdateResponse.from(product, responseImages);
+    }
+
+    @Transactional(readOnly = true)
+    public PresignedUrlResponse issuePresignedUrl(PresignedUrlRequest request, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        PresignedUploadCommand command = new PresignedUploadCommand(
+                user.getId(),
+                request.fileName(),
+                request.contentType(),
+                "productImages"
         );
+        PresignedUpload upload = objectStorageService.issuePresignedUpload(command);
+        return PresignedUrlResponse.from(upload);
     }
 
     // 상품 품절 처리

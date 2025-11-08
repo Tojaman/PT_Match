@@ -14,3 +14,10 @@ spring:
 security:
     jwt:
         secret: ${SPRING_JWT_SECRET}
+
+minio:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    bucket: ${MINIO_BUCKET:ptmatch}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    presign-expiry: ${MINIO_PRESIGN_EXPIRY:15m}

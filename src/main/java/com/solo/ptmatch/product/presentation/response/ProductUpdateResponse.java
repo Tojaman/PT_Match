@@ -1,5 +1,6 @@
 package com.solo.ptmatch.product.presentation.response;
 
+import com.solo.ptmatch.product.domain.Product;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,4 +22,19 @@ public record ProductUpdateResponse(
     @Schema(description = "상품 이미지 목록")
     List<ImageInfo> images
 ) {
+
+    public static ProductUpdateResponse from(
+            Product product,
+            List<ImageInfo> images
+    ) {
+        return new ProductUpdateResponse(
+                product.getId(),
+                product.getTitle(),
+                product.getDescription(),
+                product.getCategory().name(),
+                product.getPricePerSession(),
+                product.getSessionCount(),
+                images
+        );
+    }
 }
