@@ -3,9 +3,11 @@ package com.solo.ptmatch.product.presentation;
 import com.solo.ptmatch.common.response.ApiResponse;
 import com.solo.ptmatch.common.response.PageResponse;
 import com.solo.ptmatch.product.application.ProductService;
+import com.solo.ptmatch.product.presentation.request.PresignedUrlRequest;
 import com.solo.ptmatch.product.presentation.request.ProductCreateRequest;
 import com.solo.ptmatch.product.presentation.request.ProductSearchRequest;
 import com.solo.ptmatch.product.presentation.request.ProductUpdateRequest;
+import com.solo.ptmatch.product.presentation.response.PresignedUrlResponse;
 import com.solo.ptmatch.product.presentation.response.*;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -49,6 +51,18 @@ public class ProductController {
         @Valid @RequestBody ProductUpdateRequest request
     ) {
         ProductUpdateResponse response = productService.updateProduct(productId, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "상품 이미지 업로드용 프리사인 URL 발급", description = "트레이너가 상품 이미지 업로드를 위한 프리사인 URL을 발급받는다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프리사인 URL 발급 성공")
+    @PreAuthorize("hasRole('TRAINER')")
+    @PostMapping("/images/presign")
+    public ResponseEntity<ApiResponse<PresignedUrlResponse>> issuePresignedUrl(
+            @AuthenticationPrincipal(expression = "username") String loggedInEmail,
+            @Valid @RequestBody PresignedUrlRequest request
+    ) {
+        PresignedUrlResponse response = productService.issuePresignedUrl(request, loggedInEmail);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
