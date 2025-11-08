@@ -28,7 +28,6 @@ import org.springframework.util.StringUtils;
 public class JwtTokenProvider {
 
     private static final String AUTHORITIES_KEY = "roles";
-    private static final String DEFAULT_SECRET = "ZmFrZS1zZWNyZXQta2V5LWZvci1kZXYtcGFzcy0xMjM0NTY=";
 
     private final SecretKey secretKey;
     private final long accessTokenValidityMillis;
@@ -38,8 +37,7 @@ public class JwtTokenProvider {
         @Value("${security.jwt.secret:}") String secret,
         @Value("${security.jwt.access-token-validity-ms:3600000}") long accessTokenValidityMillis
     ) {
-        String resolvedSecret = StringUtils.hasText(secret) ? secret : DEFAULT_SECRET;
-        byte[] keyBytes = decodeSecret(resolvedSecret);
+        byte[] keyBytes = decodeSecret(secret);
         if (keyBytes.length < 32) {
             throw new IllegalArgumentException("JWT secret must be at least 256 bits (32 bytes)");
         }

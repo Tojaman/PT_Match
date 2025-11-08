@@ -15,19 +15,4 @@ public record TrainerScheduleRequest(
         @NotNull
         LocalDateTime endTime
 ) {
-    public static TrainerScheduleListResponse of(Long scheduleId, LocalDateTime startTime, LocalDateTime endTime) {
-        return new TrainerScheduleListResponse(
-                scheduleId,
-                startTime,
-                endTime
-        );
-    }
-
-    public static TrainerScheduleListResponse from(AvailableSchedule availableSchedule) {
-        return new TrainerScheduleListResponse(
-                availableSchedule.getId(),
-                availableSchedule.getStartTime(),
-                availableSchedule.getEndTime()
-        );
-    }
 }
