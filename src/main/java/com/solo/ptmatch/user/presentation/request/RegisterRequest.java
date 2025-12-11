@@ -24,6 +24,11 @@ public record RegisterRequest(
     @Size(min = 2, max = 30)
     String name,
 
+    @Schema(description = "회원 전화번호", example = "01012345678")
+    @NotBlank
+    @Size(min = 10, max = 11)
+    String phoneNumber,
+
     @Schema(description = "사용자 역할", example = "USER", allowableValues = {"USER", "TRAINER"})
     @NotNull
     Role role

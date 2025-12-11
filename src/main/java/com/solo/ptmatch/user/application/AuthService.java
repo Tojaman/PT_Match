@@ -28,6 +28,7 @@ public class AuthService {
             registerRequest.email(),
             encodedPassword,
             registerRequest.name(),
+            registerRequest.phoneNumber(),
             registerRequest.role()
         );
 
