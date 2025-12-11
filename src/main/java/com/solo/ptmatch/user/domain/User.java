@@ -35,24 +35,29 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String phoneNumber;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
-    private User(String email, String password, String name, Role role) {
+    private User(String email, String password, String name, String phoneNumber, Role role) {
         this.email = email;
         this.password = password;
         this.name = name;
+        this.phoneNumber = phoneNumber;
         this.role = role;
     }
 
-    public static User create(String email, String encodedPassword, String name, Role role) {
-        return new User(email, encodedPassword, name, role);
+    public static User create(String email, String encodedPassword, String name, String phoneNumber, Role role) {
+        return new User(email, encodedPassword, name, phoneNumber, role);
     }
 
-    public void updateProfile(String newName, String newPassword) {
+    public void updateProfile(String newName, String newPassword, String newPhoneNumber) {
         this.name = newName;
         this.password = newPassword;
+        this.phoneNumber = newPhoneNumber;
     }
 
     public void changeRole(Role targetRole) {
