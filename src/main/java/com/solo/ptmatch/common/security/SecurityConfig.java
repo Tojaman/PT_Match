@@ -100,11 +100,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration
-                .setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173")); // 기존
-                                                                                                                        // 및
-                                                                                                                        // Vite
-                                                                                                                        // 허용
-                                                                                                                        // 도메인
+                .setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173"));
         configuration.addAllowedOriginPattern("*"); // 추가적으로 모든 도메인 허용
         configuration.setAllowedMethods(List.of("*")); // 모든 HTTP 메소드 허용
         configuration.setAllowedHeaders(List.of("*")); // 모든 HTTP 헤더 허용
