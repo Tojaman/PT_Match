@@ -74,9 +74,6 @@ public class MatchingController {
     public ResponseEntity<ApiResponse<List<MatchingReceivedSummaryResponse>>> getReceivedMatchings(
             @AuthenticationPrincipal(expression = "username") String email,
             @RequestParam(required = false) List<MatchingStatus> status,
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size
-//            @RequestParam(defaultValue = "updatedAt") String sort, // sort = "필드명,방향" or "필드명"
             @ParameterObject @PageableDefault(size = 10, sort = "updatedAt", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {

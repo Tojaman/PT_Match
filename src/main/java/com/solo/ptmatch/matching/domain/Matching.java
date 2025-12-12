@@ -32,10 +32,6 @@ public class Matching extends BaseEntity {
     @JoinColumn(name = "trainer_profile_id", nullable = false)
     private TrainerProfile trainerProfile;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
-
     @Lob
     private String message;
 
@@ -54,17 +50,16 @@ public class Matching extends BaseEntity {
         schedules.add(schedule);
     }
 
-    private Matching(User user, TrainerProfile trainerProfile, Product product, String message, MatchingUserInfo matchingUserInfo) {
+    private Matching(User user, TrainerProfile trainerProfile, String message, MatchingUserInfo matchingUserInfo) {
         this.user = user;
         this.trainerProfile = trainerProfile;
-        this.product = product;
         this.message = message;
         this.matchingStatus = MatchingStatus.PENDING;
         this.matchingUserInfo = matchingUserInfo;
     }
 
-    public static Matching create(User user, TrainerProfile trainerProfile, Product product, String message, MatchingUserInfo matchingUserInfo) {
-        return new Matching(user, trainerProfile, product, message, matchingUserInfo);
+    public static Matching create(User user, TrainerProfile trainerProfile, String message, MatchingUserInfo matchingUserInfo) {
+        return new Matching(user, trainerProfile, message, matchingUserInfo);
     }
 
     public void accept() {
