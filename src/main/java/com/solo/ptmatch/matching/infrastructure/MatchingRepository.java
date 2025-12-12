@@ -19,7 +19,7 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
         JOIN FETCH tp.user
         WHERE m.user.id = :userId
     """)
-    List<Matching> findAllByUserIdWithDetails(@Param("userId") Long userId);
+    Page<Matching> findAllByUserIdWithDetails(@Param("userId") Long userId, Pageable pageable);
 
     @Query("""
         SELECT m FROM Matching m

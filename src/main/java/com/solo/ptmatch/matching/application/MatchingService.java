@@ -103,30 +103,20 @@ public class MatchingService {
 
     // 보낸 매칭 신청 목록 조회(매칭 스케줄은 별도 API 구성)
     @Transactional(readOnly = true)
-    public List<MatchingSentSummaryResponse> getSentMatchings(String userEmail) {
+    public Page<MatchingSentSummaryResponse> getSentMatchings(String userEmail, Pageable pageable) {
 
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        // 신청한 매칭 목록 조회
         // N+1 -> fetch join (트레이너 프로필, 유저(트레이너))
-        List<Matching> matchings = matchingRepository.findAllByUserIdWithDetails(user.getId());
+        Page<Matching> matchings = matchingRepository.findAllByUserIdWithDetails(user.getId(), pageable);
 
-        // 매칭 id, 매칭 상태, 트레이너 이름 응답
-        return matchings.stream()
-                .map(MatchingSentSummaryResponse::from)
-                .toList();
+        return matchings.map(MatchingSentSummaryResponse::from);
     }
 
-    // 받은 매칭 신청(PENDING) 목록 조회(트레이너)
+    // 받은 매칭 신청 목록 조회(트레이너)
     @Transactional(readOnly = true)
     public Page<MatchingReceivedSummaryResponse> getReceivedMatchings(String userEmail, List<MatchingStatus> status, Pageable pageable) {
-        /* 세부 내용은 별개 API 구현
-        1. 유저id(트레이너)로 매칭 리스트 조회
-        2. 매칭 상태가 PENDING인 매칭 리스트 조회
-        3. 매칭 id, 신청일시, 상품 제목 응답
-         */
-
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
