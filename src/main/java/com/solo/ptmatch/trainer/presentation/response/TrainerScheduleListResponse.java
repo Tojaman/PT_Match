@@ -8,27 +8,29 @@ import java.time.LocalDateTime;
 
 public record TrainerScheduleListResponse(
 
-                Long scheduleId,
+        Long scheduleId,
 
-                @NotNull LocalDateTime startTime,
+        @NotNull
+        LocalDateTime startTime,
 
-                @NotNull @NotNull LocalDateTime endTime,
+        @NotNull
+        LocalDateTime endTime,
 
-                ReservationStatus reservationStatus) {
-        public static TrainerScheduleListResponse of(Long scheduleId, LocalDateTime startTime, LocalDateTime endTime,
-                        ReservationStatus reservationStatus) {
-                return new TrainerScheduleListResponse(
-                                scheduleId,
-                                startTime,
-                                endTime,
-                                reservationStatus);
-        }
+        ReservationStatus reservationStatus) {
 
-        public static TrainerScheduleListResponse from(AvailableSchedule availableSchedule) {
-                return new TrainerScheduleListResponse(
-                                availableSchedule.getId(),
-                                availableSchedule.getStartTime(),
-                                availableSchedule.getEndTime(),
-                                availableSchedule.getReservationStatus());
-        }
+    public static TrainerScheduleListResponse of(Long scheduleId, LocalDateTime startTime, LocalDateTime endTime, ReservationStatus reservationStatus) {
+        return new TrainerScheduleListResponse(
+                scheduleId,
+                startTime,
+                endTime,
+                reservationStatus);
+    }
+
+    public static TrainerScheduleListResponse from(AvailableSchedule availableSchedule) {
+        return new TrainerScheduleListResponse(
+                availableSchedule.getId(),
+                availableSchedule.getStartTime(),
+                availableSchedule.getEndTime(),
+                availableSchedule.getReservationStatus());
+    }
 }

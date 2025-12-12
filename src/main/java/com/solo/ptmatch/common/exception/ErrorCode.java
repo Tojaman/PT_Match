@@ -23,10 +23,8 @@ public enum ErrorCode {
     REVIEW_NOT_FOUND("유저의 리뷰를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     SELF_PRODUCT_LIKE_NOT_ALLOWED("본인이 등록한 상품에는 좋아요를 누를 수 없습니다.", HttpStatus.BAD_REQUEST),
     PRESIGNED_URL_GENERATION_FAILED("파일 업로드 URL을 생성할 수 없습니다.", HttpStatus.SERVICE_UNAVAILABLE),
-    PRODUCT_LIKE_RETRY_FAILED("좋아요 요청이 반복해서 실패했습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.SERVICE_UNAVAILABLE);
-
-
-
+    PRODUCT_LIKE_RETRY_FAILED("좋아요 요청이 반복해서 실패했습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.SERVICE_UNAVAILABLE),
+    SCHEDULE_DUPLICATED("해당 시간에 이미 등록된 스케줄이 존재합니다.", HttpStatus.CONFLICT);
 
     private final String message;
     private final HttpStatus status;
