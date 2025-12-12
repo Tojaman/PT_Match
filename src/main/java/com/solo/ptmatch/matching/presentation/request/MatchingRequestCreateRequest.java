@@ -10,9 +10,6 @@ import java.util.List;
 
 @Schema(description = "매칭 신청 요청")
 public record MatchingRequestCreateRequest(
-    @Schema(description = "신청할 상품 ID", example = "1")
-    @NotNull
-    Long productId,
 
     @Schema(description = "신청할 트레이너 프로필 ID", example = "1")
     @NotNull

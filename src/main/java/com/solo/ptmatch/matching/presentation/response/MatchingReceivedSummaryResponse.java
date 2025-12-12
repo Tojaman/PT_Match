@@ -9,9 +9,6 @@ public record MatchingReceivedSummaryResponse(
     @Schema(description = "매칭 ID", example = "1")
     Long matchingId,
 
-    @Schema(description = "상품 이름", example = "PT 10회 집중관리")
-    String productName,
-
     @Schema(description = "신청 일시", example = "2025-09-16T10:00:00")
     LocalDateTime createdAt
 ) {
@@ -19,7 +16,6 @@ public record MatchingReceivedSummaryResponse(
     public static MatchingReceivedSummaryResponse from(Matching matching) {
         return new MatchingReceivedSummaryResponse(
                 matching.getId(),
-                matching.getProduct().getTitle(),
                 matching.getCreatedAt()
         );
 

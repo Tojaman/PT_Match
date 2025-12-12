@@ -16,8 +16,6 @@ import com.solo.ptmatch.matching.presentation.response.MatchingRequestCreateResp
 import com.solo.ptmatch.matching.presentation.response.MatchingSentSummaryResponse;
 import java.util.List;
 import java.util.Objects;
-
-import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.product.infrastructure.ProductRepository;
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
 import com.solo.ptmatch.trainer.domain.ReservationStatus;
@@ -40,7 +38,6 @@ public class MatchingService {
     private final UserRepository userRepository;
     private final AvailableScheduleRepository availableScheduleRepository;
     private final MatchingRepository matchingRepository;
-    private final ProductRepository productRepository;
     private final TrainerProfileRepository trainerProfileRepository;
 
     // PT 신청
@@ -51,12 +48,10 @@ public class MatchingService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
         TrainerProfile trainerProfile = trainerProfileRepository.findById(request.trainerProfileId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
-        Product product = productRepository.findById(request.productId())
-                .orElseThrow(() -> GlobalException.of(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 1. 매칭 엔티티 생성
         MatchingUserInfo matchingUserInfo = MatchingUserInfo.from(request.userInfo());
-        Matching matching = Matching.create(user, trainerProfile, product, request.message(), matchingUserInfo);
+        Matching matching = Matching.create(user, trainerProfile, request.message(), matchingUserInfo);
 
         // 2. 매칭 엔티티에 매칭 스케줄 추가(세션 횟수만큼)
         List<AvailableSchedule> schedules = availableScheduleRepository.findAllByIdInWithLock(request.availableScheduleIds()); // 공유 락 획득
@@ -114,10 +109,10 @@ public class MatchingService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
         // 신청한 매칭 목록 조회
-        // N+1 -> fetch join (트레이너 프로필, 유저(트레이너), 상품)
+        // N+1 -> fetch join (트레이너 프로필, 유저(트레이너))
         List<Matching> matchings = matchingRepository.findAllByUserIdWithDetails(user.getId());
 
-        // 매칭 id, 매칭 상태, 상품 제목, 트레이너 이름 응답
+        // 매칭 id, 매칭 상태, 트레이너 이름 응답
         return matchings.stream()
                 .map(MatchingSentSummaryResponse::from)
                 .toList();
@@ -138,7 +133,7 @@ public class MatchingService {
         TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
-        Page<Matching> matchings = matchingRepository.findAllByTrainerProfileIdAndStatusWithProduct(trainerProfile.getId(), status, pageable);
+        Page<Matching> matchings = matchingRepository.findAllByTrainerProfileIdAndStatus(trainerProfile.getId(), status, pageable);
 
         return matchings.map(MatchingReceivedSummaryResponse::from);
     }
