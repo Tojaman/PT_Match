@@ -22,8 +22,8 @@ public record TrainerSummaryResponse(
     String gymAddress,
     @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
     String profileImageUrl,
-    @Schema(description = "팔로워 수", example = "50")
-    int followerCount,
+    @Schema(description = "좋아요 수", example = "50")
+    int likeCount,
     @Schema(description = "리뷰 수", example = "120")
     int reviewCount
 ) {
@@ -39,7 +39,7 @@ public record TrainerSummaryResponse(
                 trainer.getAverageRating(),
                 trainer.getGymAddress(),
                 trainer.getProfileImageUrl(),
-                trainer.getFollowersCount(),
+                trainer.getLikesCount(),
                 trainer.getReviewCount()
         );
     }
