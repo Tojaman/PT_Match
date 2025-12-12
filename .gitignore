@@ -40,6 +40,9 @@ out/
 /specs
 /.codex
 /.specify
+/k6
+/hq-tools
+/nginx
 /scripts
 AGENTS.md
 GEMINI.md
@@ -48,3 +51,4 @@ wsl.bat
 .obsidian/
 application-db.yml
 .env
+hq

@@ -14,4 +14,5 @@ minio:
     bucket: ${MINIO_BUCKET}
     access-key: ${MINIO_ACCESS_KEY}
     secret-key: ${MINIO_SECRET_KEY}
-    presign-expiry: ${MINIO_PRESIGN_EXPIRY:15m}
+    presign-expiry: ${MINIO_PRESIGN_EXPIRY}
+    public-url: ${MINIO_PUBLIC_URL}
