@@ -18,16 +18,13 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(
-        name = "trainer_follows",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "trainer_profile_id"})
-)
+@Table(name = "trainer_likes", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "trainer_profile_id" }))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TrainerFollow  extends BaseEntity {
+public class TrainerLike extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "trainer_follow_id")
+    @Column(name = "trainer_like_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -38,14 +35,14 @@ public class TrainerFollow  extends BaseEntity {
     @JoinColumn(name = "trainer_profile_id", nullable = false)
     private TrainerProfile trainerProfile;
 
-    private TrainerFollow(User user, TrainerProfile trainerProfile) {
+    private TrainerLike(User user, TrainerProfile trainerProfile) {
         this.user = user;
         this.trainerProfile = trainerProfile;
         validateDifferentAccounts(user, trainerProfile);
     }
 
-    public static TrainerFollow create(User user, TrainerProfile trainerProfile) {
-        return new TrainerFollow(user, trainerProfile);
+    public static TrainerLike create(User user, TrainerProfile trainerProfile) {
+        return new TrainerLike(user, trainerProfile);
     }
 
     public boolean isSameFollower(User user) {
