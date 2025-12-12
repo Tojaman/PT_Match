@@ -8,17 +8,15 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.Set;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter
 @Table(name = "trainer_profiles")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TrainerProfile  extends BaseEntity {
+public class TrainerProfile extends BaseEntity {
 
     private static final BigDecimal DEFAULT_RATING = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
@@ -38,23 +36,20 @@ public class TrainerProfile  extends BaseEntity {
     @Column(name = "career_years", nullable = false)
     private int careerYears;
 
+    @Column(name = "gym_address", nullable = false)
+    private String gymAddress;
+
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-            name = "trainer_profile_specialties",
-            joinColumns = @JoinColumn(name = "trainer_profile_id")
-    )
+    @CollectionTable(name = "trainer_profile_specialties", joinColumns = @JoinColumn(name = "trainer_profile_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "specialty", nullable = false, length = 30)
     private Set<Specialty> specialties = new HashSet<>();
 
-    @Column(name = "gym_address", nullable = false)
-    private String gymAddress;
-
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
-    @Column(name = "followers_count", nullable = false)
-    private int followersCount;
+    @Column(name = "likes_count", nullable = false)
+    private int likesCount;
 
     @Column(name = "review_count", nullable = false)
     private int reviewCount;
@@ -68,8 +63,7 @@ public class TrainerProfile  extends BaseEntity {
             int careerYears,
             Set<Specialty> specialties,
             String gymAddress,
-            String profileImageUrl
-    ) {
+            String profileImageUrl) {
         this.user = user;
         this.bio = bio;
         validateCareerYears(careerYears);
@@ -86,8 +80,7 @@ public class TrainerProfile  extends BaseEntity {
             int careerYears,
             Set<Specialty> specialties,
             String gymAddress,
-            String profileImageUrl
-    ) {
+            String profileImageUrl) {
         return new TrainerProfile(user, bio, careerYears, specialties, gymAddress, profileImageUrl);
     }
 
@@ -96,8 +89,7 @@ public class TrainerProfile  extends BaseEntity {
             int careerYears,
             Set<Specialty> specialties,
             String gymAddress,
-            String profileImageUrl
-    ) {
+            String profileImageUrl) {
         this.bio = bio;
         validateCareerYears(careerYears);
         this.careerYears = careerYears;
@@ -111,39 +103,26 @@ public class TrainerProfile  extends BaseEntity {
         this.specialties.addAll(specialties);
     }
 
-    public void addSpecialty(Specialty specialty) {
-        this.specialties.add(specialty);
+    public void increaseLikes() {
+        this.likesCount += 1;
     }
 
-    public void removeSpecialty(Specialty specialty) {
-        this.specialties.remove(specialty);
-    }
-
-    public void increaseFollowrs() {
-        this.followersCount += 1;
-    }
-
-    public void decreaseFollowrs() {
-        if (followersCount == 0) {
+    public void decreaseLikes() {
+        if (likesCount == 0) {
             return;
         }
-        this.followersCount -= 1;
+        this.likesCount -= 1;
     }
 
     public void increaseReviewCount() {
         this.reviewCount += 1;
     }
 
-    public  void decreaseReviewCount() {
+    public void decreaseReviewCount() {
         if (reviewCount == 0) {
             return;
         }
         this.reviewCount -= 1;
-    }
-
-    public void recalculateAverageRating(BigDecimal newAverage) {
-        BigDecimal sanitizedAverage = newAverage;
-        this.averageRating = sanitizedAverage.setScale(2, RoundingMode.HALF_UP);
     }
 
     private void validateCareerYears(int careerYears) {
