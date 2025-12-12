@@ -40,22 +40,6 @@ public class TrainerScheduleController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
-    @Operation(summary = "트레이너 스케줄 수정", description = "트레이너 자신의 스케줄을 수정한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "스케줄 수정 성공")
-    @PreAuthorize("hasRole('TRAINER')")
-    @PatchMapping
-    public ResponseEntity<ApiResponse<List<TrainerScheduleListResponse>>> updateTrainerSchedule(
-            @AuthenticationPrincipal(expression = "username") String loggedInEmail,
-            @Valid @RequestBody TrainerScheduleUpdateRequest trainerScheduleUpdateRequest
-    ) {
-
-        List<TrainerScheduleListResponse> response = trainerScheduleService.updateTrainerSchedule(
-                loggedInEmail,
-                trainerScheduleUpdateRequest
-        );
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
     @Operation(summary = "트레이너 스케줄 삭제", description = "트레이너 자신의 스케줄을 삭제한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "스케줄 삭제 성공")
     @PreAuthorize("hasRole('TRAINER')")
