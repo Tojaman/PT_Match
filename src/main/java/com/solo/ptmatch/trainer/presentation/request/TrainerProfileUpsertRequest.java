@@ -31,9 +31,15 @@ public record TrainerProfileUpsertRequest(
     @NotBlank
     String gymAddress,
 
-    @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
-    @NotBlank
-    String profileImageUrl,
+    @Schema(description = "트레이너 이미지 목록")
+    @NotNull
+    @NotEmpty
+    List<TrainerImageRequest> trainerImages,
+
+    @Schema(description = "지점 이미지 목록")
+    @NotNull
+    @NotEmpty
+    List<GymImageRequest> gymImages,
 
     @Schema(description = "자격증 목록")
     @NotNull
@@ -41,14 +47,13 @@ public record TrainerProfileUpsertRequest(
     List<TrainerCertificationRequest> certifications
 ) {
 
-    public TrainerProfile toEntity(User trainer) {
+    public TrainerProfile toEntity(User user) {
         return TrainerProfile.create(
-            trainer,
+            user,
             bio,
             careerYears,
             new HashSet<>(specialties),
             gymAddress,
-            profileImageUrl
-        );
+            trainerImages.get(0).imageUrl());
     }
 }
