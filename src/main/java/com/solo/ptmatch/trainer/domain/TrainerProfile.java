@@ -125,6 +125,31 @@ public class TrainerProfile extends BaseEntity {
         this.reviewCount -= 1;
     }
 
+    public void addReviewRating(int rating) {
+        BigDecimal totalRating = this.averageRating.multiply(BigDecimal.valueOf(this.reviewCount))
+                .add(BigDecimal.valueOf(rating));
+        this.reviewCount++;
+        this.averageRating = totalRating.divide(BigDecimal.valueOf(this.reviewCount), 2, RoundingMode.HALF_UP);
+    }
+
+    public void updateReviewRating(int oldRating, int newRating) {
+        BigDecimal totalRating = this.averageRating.multiply(BigDecimal.valueOf(this.reviewCount));
+        totalRating = totalRating.subtract(BigDecimal.valueOf(oldRating)).add(BigDecimal.valueOf(newRating));
+        this.averageRating = totalRating.divide(BigDecimal.valueOf(this.reviewCount), 2, RoundingMode.HALF_UP);
+    }
+
+    public void deleteReviewRating(int rating) {
+        if (this.reviewCount <= 1) {
+            this.reviewCount = 0;
+            this.averageRating = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+            return;
+        }
+        BigDecimal totalRating = this.averageRating.multiply(BigDecimal.valueOf(this.reviewCount));
+        totalRating = totalRating.subtract(BigDecimal.valueOf(rating));
+        this.reviewCount--;
+        this.averageRating = totalRating.divide(BigDecimal.valueOf(this.reviewCount), 2, RoundingMode.HALF_UP);
+    }
+
     private void validateCareerYears(int careerYears) {
         if (careerYears < 0) {
             throw new IllegalArgumentException("careerYears must not be negative");

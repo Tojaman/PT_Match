@@ -2,9 +2,6 @@ package com.solo.ptmatch.review.domain;
 
 import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.matching.domain.Matching;
-import com.solo.ptmatch.product.domain.Product;
-import com.solo.ptmatch.trainer.domain.TrainerProfile;
-import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
