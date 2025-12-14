@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import jakarta.servlet.http.Cookie;
 
 @Component
 @RequiredArgsConstructor
@@ -42,21 +43,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request)); // 요청 주체(어디서/어떻게 요청했는가?) 저장
                 }
                 /*
-                SecurityContext에 인증 정보 등록
-                추후 인가할 때 SecurityContext에서 사용자 정보 추출 가능(username, role, jwt)
-                */
+                 * SecurityContext에 인증 정보 등록
+                 * 추후 인가할 때 SecurityContext에서 사용자 정보 추출 가능(username, role, jwt)
+                 */
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
         filterChain.doFilter(request, response);
     }
 
-    // 헤더에서 토큰 추출 -> "Bearer "빼고 토큰만 추출
+    // 쿠키에서 토큰 추출
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+
+        if (request.getCookies() != null) {
+            return Arrays.stream(request.getCookies())
+                    .filter(c -> "accessToken".equals(c.getName()))
+                    .findFirst()
+                    .map(Cookie::getValue)
+                    .orElse(null);
+        }
+
         return null;
     }
 

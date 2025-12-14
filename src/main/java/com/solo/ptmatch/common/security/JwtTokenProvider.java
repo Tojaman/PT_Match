@@ -31,35 +31,47 @@ public class JwtTokenProvider {
 
     private final SecretKey secretKey;
     private final long accessTokenValidityMillis;
+    private final long refreshTokenValidityMillis;
 
     // JWT 시크릿 키와 토큰 유효기간을 설정하는 생성자
     public JwtTokenProvider(
-        @Value("${security.jwt.secret:}") String secret,
-        @Value("${security.jwt.access-token-validity-ms:3600000}") long accessTokenValidityMillis
-    ) {
+            @Value("${security.jwt.secret:}") String secret,
+            @Value("${security.jwt.access-token-validity-ms:3600000}") long accessTokenValidityMillis,
+            @Value("${security.jwt.refresh-token-validity-ms:1209600000}") long refreshTokenValidityMillis) {
         byte[] keyBytes = decodeSecret(secret);
         if (keyBytes.length < 32) {
             throw new IllegalArgumentException("JWT secret must be at least 256 bits (32 bytes)");
         }
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenValidityMillis = accessTokenValidityMillis;
+        this.refreshTokenValidityMillis = refreshTokenValidityMillis;
     }
 
     public String generateAccessToken(String subject, Collection<? extends GrantedAuthority> authorities) {
+        return generateToken(subject, authorities, accessTokenValidityMillis);
+    }
+
+    public String generateRefreshToken(String subject, Collection<? extends GrantedAuthority> authorities) {
+        return generateToken(subject, authorities, refreshTokenValidityMillis);
+    }
+
+    private String generateToken(String subject, Collection<? extends GrantedAuthority> authorities,
+            long validityMillis) {
         Instant now = Instant.now();
-        Instant expiry = now.plusMillis(accessTokenValidityMillis);
-        List<String> roles = authorities == null ? List.of() : authorities.stream()
-            .filter(Objects::nonNull)
-            .map(GrantedAuthority::getAuthority)
-            .collect(Collectors.toList());
+        Instant expiry = now.plusMillis(validityMillis);
+        List<String> roles = authorities == null ? List.of()
+                : authorities.stream()
+                        .filter(Objects::nonNull)
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toList());
 
         return Jwts.builder()
-            .setSubject(subject)
-            .claim(AUTHORITIES_KEY, roles)
-            .setIssuedAt(Date.from(now))
-            .setExpiration(Date.from(expiry))
-            .signWith(secretKey)
-            .compact();
+                .setSubject(subject)
+                .claim(AUTHORITIES_KEY, roles)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(expiry))
+                .signWith(secretKey)
+                .compact();
     }
 
     // JWT를 복호화하여 Spring Security의 Authentication 객체 생성
@@ -67,9 +79,9 @@ public class JwtTokenProvider {
         Claims claims = parseClaims(token);
         List<SimpleGrantedAuthority> authorities = extractAuthorities(claims);
         UserDetails principal = User.withUsername(claims.getSubject())
-            .password("") // JWT 기반 인증에선 비밀번호 불필요
-            .authorities(authorities)
-            .build();
+                .password("") // JWT 기반 인증에선 비밀번호 불필요
+                .authorities(authorities)
+                .build();
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
@@ -91,9 +103,9 @@ public class JwtTokenProvider {
     // 토큰을 파싱하여 서명을 검증하고 Jws<Claims> 객체 반환(만료 시간도 검증)
     private Jws<Claims> parse(String token) {
         return Jwts.parserBuilder()
-            .setSigningKey(secretKey)
-            .build()
-            .parseClaimsJws(token);
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token);
     }
 
     // 토큰의 본문(payload)에 해당하는 Claims를 반환
@@ -106,11 +118,11 @@ public class JwtTokenProvider {
         Object rawAuthorities = claims.get(AUTHORITIES_KEY);
         if (rawAuthorities instanceof Collection<?> collection) {
             return collection.stream()
-                .filter(Objects::nonNull)
-                .map(Object::toString)
-                .filter(StringUtils::hasText)
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
+                    .filter(Objects::nonNull)
+                    .map(Object::toString)
+                    .filter(StringUtils::hasText)
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
         }
         return List.of();
     }

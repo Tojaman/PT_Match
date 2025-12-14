@@ -14,4 +14,12 @@ public record RegisterResponse(
     @Schema(description = "회원 역할", example = "USER")
     Role role
 ) {
+
+    public static RegisterResponse from(com.solo.ptmatch.user.domain.User user) {
+        return new RegisterResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getRole());
+    }
 }
