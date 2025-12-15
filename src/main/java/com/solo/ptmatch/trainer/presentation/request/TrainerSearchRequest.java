@@ -8,7 +8,7 @@ public record TrainerSearchRequest(
     @Schema(description = "전문 분야 필터", example = "BODYBUILDING")
     Specialty specialty,
 
-    @Schema(description = "지역 필터", example = "서울")
-    String region
+    @Schema(description = "검색어 (트레이너 이름, 소개글 등)", example = "홍길동")
+    String keyword
 ) {
 }
