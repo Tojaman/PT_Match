@@ -34,6 +34,16 @@ public class ProgramController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @Operation(summary = "프로그램 목록 조회", description = "트레이너의 프로그램 목록을 조회한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
+    @GetMapping("/{trainerId}")
+    public ResponseEntity<ApiResponse<java.util.List<TrainerProgramResponse>>> getMyPrograms(
+            @PathVariable Long trainerId) {
+
+        java.util.List<TrainerProgramResponse> response = programService.getPrograms(trainerId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @Operation(summary = "프로그램 등록", description = "트레이너 자신의 프로그램을 등록한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로그램 등록 성공")
     @PostMapping

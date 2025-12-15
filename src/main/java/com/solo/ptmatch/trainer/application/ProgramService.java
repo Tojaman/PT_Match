@@ -39,6 +39,13 @@ public class ProgramService {
                 .toList();
     }
 
+    public List<TrainerProgramResponse> getPrograms(Long trainerId) {
+        List<Program> programs = programRepository.findAllByTrainerProfileId(trainerId);
+        return programs.stream()
+                .map(TrainerProgramResponse::from)
+                .toList();
+    }
+
     @Transactional
     public TrainerProgramResponse registerProgram(String email, TrainerProgramUpsertRequest trainerProgramRequest) {
 
