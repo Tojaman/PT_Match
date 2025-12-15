@@ -122,7 +122,8 @@ public class TrainerProfileService {
                 request.careerYears(),
                 new HashSet<>(request.specialties()),
                 request.gymAddress(),
-                request.trainerImages().get(0).imageUrl()); // 첫 번째 이미지 썸네일로 설정
+                request.trainerImages().get(0).imageUrl(), // 첫 번째 이미지 썸네일로 설정
+                request.pricePerSession());
 
         // 프로필 수정 시 기존 자격증 삭제 후 재등록
         certificationRepository.deleteByTrainerProfileId(profile.getId());

@@ -18,7 +18,7 @@ public record TrainerCertificationResponse(
     public static TrainerCertificationResponse from(Certification certification) {
         return new TrainerCertificationResponse(
                 certification.getId(),
-                certification.getName(),
+                certification.getName() != null ? certification.getName() : "",
                 certification.getIssuingOrganization(),
                 certification.getAcquisitionDate()
         );
