@@ -34,4 +34,15 @@ public class Program extends BaseEntity {
 
     @Column(name = "content", nullable = false)
     private String content;
+
+    public Program(TrainerProfile trainerProfile, String title, String content) {
+        this.trainerProfile = trainerProfile;
+        this.title = title;
+        this.content = content;
+    }
+
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
 }

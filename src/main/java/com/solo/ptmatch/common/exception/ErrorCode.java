@@ -27,7 +27,8 @@ public enum ErrorCode {
     SCHEDULE_DUPLICATED("해당 시간에 이미 등록된 스케줄이 존재합니다.", HttpStatus.CONFLICT),
     INVALID_TOKEN("유효하지 않은 토큰입니다.", HttpStatus.UNAUTHORIZED),
     REFRESH_TOKEN_NOT_FOUND("리프레시 토큰을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    PASSWORD_NOT_MATCH("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
+    PASSWORD_NOT_MATCH("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
+    PROGRAM_NOT_FOUND("프로그램을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
     private final String message;
     private final HttpStatus status;
