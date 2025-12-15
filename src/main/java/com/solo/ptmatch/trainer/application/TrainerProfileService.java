@@ -49,7 +49,7 @@ public class TrainerProfileService {
 
         Page<TrainerProfile> trainerPage = trainerProfileRepository.searchBySpecialtyAndGymAddress(
                 request.specialty(),
-                request.region(),
+                request.keyword(),
                 pageable);
 
         return trainerPage.map(TrainerSummaryResponse::from);
