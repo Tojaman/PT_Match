@@ -16,6 +16,7 @@ public record TrainerProfileUpsertResponse(
     @Schema(description = "전문 분야 목록") List<Specialty> specialties,
     @Schema(description = "활동 지점") String gymAddress,
     @Schema(description = "프로필 이미지 URL") String profileImageUrl,
+    @Schema(description = "회당 가격") Integer pricePerSession,
     @Schema(description = "트레이너 이미지 목록") List<TrainerImageResponse> trainerImages,
     @Schema(description = "지점 이미지 목록") List<GymImageResponse> gymImages,
     @Schema(description = "자격증 목록") List<TrainerCertificationResponse> certifications) {
@@ -32,6 +33,7 @@ public record TrainerProfileUpsertResponse(
             savedProfile.getSpecialties().stream().sorted().toList(),
             savedProfile.getGymAddress(),
             savedProfile.getProfileImageUrl(),
+            savedProfile.getPricePerSession(),
             trainerImages.stream().map(TrainerImageResponse::from).toList(),
             gymImages.stream().map(GymImageResponse::from).toList(),
             certifications.stream().map(TrainerCertificationResponse::from).toList());

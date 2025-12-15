@@ -25,7 +25,9 @@ public record TrainerSummaryResponse(
     @Schema(description = "좋아요 수", example = "50")
     int likeCount,
     @Schema(description = "리뷰 수", example = "120")
-    int reviewCount
+    int reviewCount,
+    @Schema(description = "회당 가격", example = "50000")
+    Integer pricePerSession
 ) {
 
     public static TrainerSummaryResponse from(TrainerProfile trainer) {
@@ -40,7 +42,7 @@ public record TrainerSummaryResponse(
                 trainer.getGymAddress(),
                 trainer.getProfileImageUrl(),
                 trainer.getLikesCount(),
-                trainer.getReviewCount()
-        );
+                trainer.getReviewCount(),
+                trainer.getPricePerSession());
     }
 }

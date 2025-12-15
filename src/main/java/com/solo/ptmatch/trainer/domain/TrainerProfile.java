@@ -57,13 +57,17 @@ public class TrainerProfile extends BaseEntity {
     @Column(name = "average_rating", nullable = false, precision = 4, scale = 2)
     private BigDecimal averageRating;
 
+    @Column(name = "price_per_session")
+    private Integer pricePerSession;
+
     private TrainerProfile(
             User user,
             String bio,
             int careerYears,
             Set<Specialty> specialties,
             String gymAddress,
-            String profileImageUrl) {
+            String profileImageUrl,
+            Integer pricePerSession) {
         this.user = user;
         this.bio = bio;
         validateCareerYears(careerYears);
@@ -71,6 +75,7 @@ public class TrainerProfile extends BaseEntity {
         this.specialties = new HashSet<>(specialties);
         this.gymAddress = gymAddress;
         this.profileImageUrl = profileImageUrl;
+        this.pricePerSession = pricePerSession;
         this.averageRating = DEFAULT_RATING;
     }
 
@@ -80,8 +85,9 @@ public class TrainerProfile extends BaseEntity {
             int careerYears,
             Set<Specialty> specialties,
             String gymAddress,
-            String profileImageUrl) {
-        return new TrainerProfile(user, bio, careerYears, specialties, gymAddress, profileImageUrl);
+            String profileImageUrl,
+            Integer pricePerSession) {
+        return new TrainerProfile(user, bio, careerYears, specialties, gymAddress, profileImageUrl, pricePerSession);
     }
 
     public void updateProfile(
@@ -89,13 +95,15 @@ public class TrainerProfile extends BaseEntity {
             int careerYears,
             Set<Specialty> specialties,
             String gymAddress,
-            String profileImageUrl) {
+            String profileImageUrl,
+            Integer pricePerSession) {
         this.bio = bio;
         validateCareerYears(careerYears);
         this.careerYears = careerYears;
         replaceSpecialties(specialties);
         this.gymAddress = gymAddress;
         this.profileImageUrl = profileImageUrl;
+        this.pricePerSession = pricePerSession;
     }
 
     public void replaceSpecialties(Set<Specialty> specialties) {

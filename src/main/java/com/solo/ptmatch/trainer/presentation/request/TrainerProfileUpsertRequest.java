@@ -44,16 +44,20 @@ public record TrainerProfileUpsertRequest(
     @Schema(description = "자격증 목록")
     @NotNull
     @Valid
-    List<TrainerCertificationRequest> certifications
-) {
+    List<TrainerCertificationRequest> certifications,
+
+    @Schema(description = "회당 가격 (단위: 원)", example = "50000")
+    @Min(0)
+    Integer pricePerSession) {
 
     public TrainerProfile toEntity(User user) {
         return TrainerProfile.create(
-            user,
-            bio,
-            careerYears,
-            new HashSet<>(specialties),
-            gymAddress,
-            trainerImages.get(0).imageUrl());
+                user,
+                bio,
+                careerYears,
+                new HashSet<>(specialties),
+                gymAddress,
+                trainerImages.get(0).imageUrl(),
+                pricePerSession);
     }
 }

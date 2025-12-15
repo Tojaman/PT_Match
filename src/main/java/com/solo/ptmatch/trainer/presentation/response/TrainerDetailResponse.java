@@ -21,32 +21,34 @@ public record TrainerDetailResponse(
         @Schema(description = "좋아요/팔로우 수") int likesCount,
         @Schema(description = "리뷰 수", example = "120") int reviewCount,
         @Schema(description = "평균 평점") BigDecimal averageRating,
+        @Schema(description = "회당 가격") Integer pricePerSession,
         @Schema(description = "트레이너 이미지 목록") List<TrainerImageResponse> trainerImages,
         @Schema(description = "지점 이미지 목록") List<GymImageResponse> gymImages,
         @Schema(description = "자격증 목록") List<TrainerCertificationResponse> certifications
 
 ) {
 
-    public static TrainerDetailResponse from(
+        public static TrainerDetailResponse from(
             TrainerProfile profile,
             List<TrainerImage> trainerImages,
             List<GymImage> gymImages,
             List<Certification> certifications) {
         return new TrainerDetailResponse(
             profile.getId(),
-            profile.getUser().getName(),
+            profile.getUser().getName() != null ? profile.getUser().getName() : "이름 없음",
             profile.getBio(),
             profile.getSpecialties().stream()
-                    .sorted()
-                    .toList(),
+                            .sorted()
+                            .toList(),
             profile.getCareerYears(),
             profile.getGymAddress(),
             profile.getProfileImageUrl(),
             profile.getLikesCount(),
             profile.getReviewCount(),
             profile.getAverageRating(),
+            profile.getPricePerSession(),
             trainerImages.stream().map(TrainerImageResponse::from).toList(),
             gymImages.stream().map(GymImageResponse::from).toList(),
             certifications.stream().map(TrainerCertificationResponse::from).toList());
-    }
+}
 }
