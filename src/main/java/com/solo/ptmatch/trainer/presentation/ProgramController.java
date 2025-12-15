@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -22,6 +23,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/programs")
 public class ProgramController {
     private final ProgramService programService;
+
+    @Operation(summary = "내 프로그램 목록 조회", description = "트레이너 자신의 프로그램 목록을 조회한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<java.util.List<TrainerProgramResponse>>> getMyPrograms(
+            @AuthenticationPrincipal(expression = "username") String email) {
+
+        java.util.List<TrainerProgramResponse> response = programService.getMyPrograms(email);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 
     @Operation(summary = "프로그램 등록", description = "트레이너 자신의 프로그램을 등록한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로그램 등록 성공")

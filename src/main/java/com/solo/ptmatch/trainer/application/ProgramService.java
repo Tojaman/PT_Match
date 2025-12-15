@@ -1,5 +1,6 @@
 package com.solo.ptmatch.trainer.application;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,20 @@ public class ProgramService {
     private final UserRepository userRepository;
     private final TrainerProfileRepository trainerProfileRepository;
     private final ProgramRepository programRepository;
+
+    public List<TrainerProgramResponse> getMyPrograms(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
+
+        List<Program> programs = programRepository.findAllByTrainerProfileId(trainerProfile.getId());
+        return programs.stream()
+                .map(TrainerProgramResponse::from)
+                .toList();
+    }
 
     @Transactional
     public TrainerProgramResponse registerProgram(String email, TrainerProgramUpsertRequest trainerProgramRequest) {
