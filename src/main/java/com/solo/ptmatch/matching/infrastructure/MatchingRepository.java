@@ -40,8 +40,9 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
         JOIN FETCH tp.user
         JOIN FETCH m.schedules
         WHERE m.id = :matchingId
+        AND (m.user.id = :userId OR tp.user.id = :userId)
     """)
-    Optional<Matching> findByIdWithDetails(@Param("matchingId") Long matchingId);
+    Optional<Matching> findByIdWithDetails(@Param("matchingId") Long matchingId, @Param("userId") Long userId);
 
     @Query("""
         SELECT m FROM Matching m

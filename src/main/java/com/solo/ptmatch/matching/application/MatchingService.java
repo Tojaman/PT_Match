@@ -15,8 +15,6 @@ import com.solo.ptmatch.matching.presentation.response.MatchingReceivedSummaryRe
 import com.solo.ptmatch.matching.presentation.response.MatchingRequestCreateResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingSentSummaryResponse;
 import java.util.List;
-import java.util.Objects;
-import com.solo.ptmatch.product.infrastructure.ProductRepository;
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
 import com.solo.ptmatch.trainer.domain.ReservationStatus;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
@@ -138,13 +136,8 @@ public class MatchingService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        Matching matching = matchingRepository.findByIdWithDetails(matchingId)
+        Matching matching = matchingRepository.findByIdWithDetails(matchingId, user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_NOT_FOUND));
-
-        // 회원 or 트레이너의 매칭이 아닌 경우 예외처리
-        if (!Objects.equals(matching.getUser().getId(), user.getId()) && !Objects.equals(matching.getTrainerProfile().getUser().getId(), user.getId())) {
-            throw GlobalException.of((ErrorCode.FORBIDDEN));
-        }
 
         return MatchingDetailResponse.from(matching);
     }
