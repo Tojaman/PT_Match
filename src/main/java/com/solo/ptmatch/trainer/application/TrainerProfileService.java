@@ -67,6 +67,17 @@ public class TrainerProfileService {
         return TrainerDetailResponse.from(profile, trainerImages, gymImages, certifications);
     }
 
+    @Transactional(readOnly = true)
+    public Long getTrainerId(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        TrainerProfile profile = trainerProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
+
+        return profile.getId();
+    }
+
     @Transactional
     public TrainerProfileUpsertResponse registerTrainerProfile(String email, TrainerProfileUpsertRequest request) {
 

@@ -11,6 +11,8 @@ import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/trainers")
@@ -36,8 +39,21 @@ public class TrainerController {
     public ResponseEntity<ApiResponse<List<TrainerSummaryResponse>>> getTrainers(
             @Valid @ModelAttribute TrainerSearchRequest trainerSearchRequest,
             @ParameterObject @PageableDefault(size = 10, sort = "averageRating", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<TrainerSummaryResponse> response = trainerProfileService.getTrainerSummaries(trainerSearchRequest, pageable);
+        Page<TrainerSummaryResponse> response = trainerProfileService.getTrainerSummaries(trainerSearchRequest,
+                pageable);
         return ResponseEntity.ok(ApiResponse.success(response.getContent(), PageResponse.from(response)));
+    }
+
+    @Operation(summary = "내 트레이너 프로필 조회", description = "트레이너 자신의 상세 정보를 조회한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상세 조회 성공")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<TrainerDetailResponse>> getMyTrainer(
+            @AuthenticationPrincipal(expression = "username") String loggedInEmail) {
+        
+        log.info("유저 이메일: {}", loggedInEmail);
+        Long trainerId = trainerProfileService.getTrainerId(loggedInEmail);
+        TrainerDetailResponse response = trainerProfileService.getTrainerDetail(trainerId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @Operation(summary = "트레이너 상세 조회", description = "특정 트레이너의 상세 정보를 조회한다")
@@ -54,13 +70,11 @@ public class TrainerController {
     @PostMapping("/me")
     public ResponseEntity<ApiResponse<TrainerProfileUpsertResponse>> register(
             @AuthenticationPrincipal(expression = "username") String loggedInEmail,
-            @Valid @RequestBody TrainerProfileUpsertRequest trainerProfileRegisterRequest
-    ) {
+            @Valid @RequestBody TrainerProfileUpsertRequest trainerProfileRegisterRequest) {
 
         TrainerProfileUpsertResponse response = trainerProfileService.registerTrainerProfile(
                 loggedInEmail,
-                trainerProfileRegisterRequest
-        );
+                trainerProfileRegisterRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
@@ -69,13 +83,11 @@ public class TrainerController {
     @PutMapping("/me")
     public ResponseEntity<ApiResponse<TrainerProfileUpsertResponse>> update(
             @AuthenticationPrincipal(expression = "username") String loggedInEmail,
-            @Valid @RequestBody TrainerProfileUpsertRequest trainerProfileRegisterRequest
-    ) {
+            @Valid @RequestBody TrainerProfileUpsertRequest trainerProfileRegisterRequest) {
 
         TrainerProfileUpsertResponse response = trainerProfileService.updateTrainerProfile(
                 loggedInEmail,
-                trainerProfileRegisterRequest
-        );
+                trainerProfileRegisterRequest);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
