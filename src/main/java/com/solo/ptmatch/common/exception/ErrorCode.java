@@ -26,7 +26,8 @@ public enum ErrorCode {
     PRODUCT_LIKE_RETRY_FAILED("좋아요 요청이 반복해서 실패했습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.SERVICE_UNAVAILABLE),
     SCHEDULE_DUPLICATED("해당 시간에 이미 등록된 스케줄이 존재합니다.", HttpStatus.CONFLICT),
     INVALID_TOKEN("유효하지 않은 토큰입니다.", HttpStatus.UNAUTHORIZED),
-    REFRESH_TOKEN_NOT_FOUND("리프레시 토큰을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    REFRESH_TOKEN_NOT_FOUND("리프레시 토큰을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    PASSWORD_NOT_MATCH("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
 
     private final String message;
     private final HttpStatus status;

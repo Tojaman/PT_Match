@@ -1,18 +1,22 @@
 package com.solo.ptmatch.user.presentation.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-@Getter
-@NoArgsConstructor
-public class UserUpdateRequest {
+public record UserUpdateRequest (
 
-    @Size(min = 2, max = 20, message = "이름은 2자 이상 20자 이하이어야 합니다.")
-    private String name;
+    @Schema(description = "이름", example = "김헬스")
+    String name,
 
-    @Size(min = 8, message = "비밀번호는 8자 이상이어야 합니다.")
-    private String password;
+    @Schema(description = "기존 비밀번호", example = "password123")
+    String password,
 
-    private String phoneNumber;
+    // @Size(min = 8, message = "비밀번호는 8자 이상이어야 합니다.")
+    @Schema(description = "새 비밀번호", example = "newPassword123")
+    String newPassword,
+
+    @Schema(description = "연락처", example = "01012345678")
+    String phoneNumber
+) {
+
 }
