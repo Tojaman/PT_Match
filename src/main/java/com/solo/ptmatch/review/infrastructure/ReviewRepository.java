@@ -14,7 +14,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("""
             SELECT r
             FROM Review r
-            JOIN r.matching m
+            JOIN FETCH r.matching m
+            JOIN FETCH m.trainerProfile t
+            JOIN FETCH t.user
             WHERE m.user.id = :userId
             """)
     Page<Review> findUserReviews(Long userId, Pageable pageable);
@@ -31,4 +33,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     boolean existsByMatching(Matching matching);
 
     Optional<Review> findByIdAndMatchingUserId(Long reviewId, Long userId);
+
+    Optional<Review> findByMatchingId(Long matchingId);
 }

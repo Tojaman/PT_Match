@@ -9,11 +9,12 @@ import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 import com.solo.ptmatch.review.presentation.request.ReviewCreateRequest;
 import com.solo.ptmatch.review.presentation.request.ReviewUpdateRequest;
 import com.solo.ptmatch.review.presentation.response.*;
+import com.solo.ptmatch.trainer.domain.TrainerProfile;
+import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,19 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final MatchingRepository matchingRepository;
     private final ReviewRepository reviewRepository;
+    private final TrainerProfileRepository trainerProfileRepository;
+
+    @Transactional(readOnly = true)
+    public Page<TrainerReviewSummaryResponse> getMyTrainerReviews(String userEmail, Pageable pageable) {
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
+
+        return getTrainerReviews(trainerProfile.getId(), pageable);
+    }
 
     @Transactional(readOnly = true)
     public Page<MyReviewSummaryResponse> getMyReviews(String userEmail, Pageable pageable) {

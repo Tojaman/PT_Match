@@ -31,18 +31,17 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/reviews")
 public class ReviewController {
 
     private final ReviewService reviewService;
 
     @Operation(summary = "내 후기 목록", description = "사용자가 작성한 후기 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 후기 목록 조회 성공")
-    @GetMapping("/me/reviews")
+    @GetMapping("/me")
     public ResponseEntity<ApiResponse<List<MyReviewSummaryResponse>>> getMyReviews(
             @AuthenticationPrincipal(expression = "username") String email,
-            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<MyReviewSummaryResponse> reviewPage = reviewService.getMyReviews(email, pageable);
 
@@ -52,13 +51,27 @@ public class ReviewController {
         return ResponseEntity.ok(ApiResponse.success(reviews, pageResponse));
     }
 
+    @Operation(summary = "트레이너 내 후기 목록", description = "트레이너가 자신에게 작성된 후기 목록을 조회한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "트레이너 내 후기 목록 조회 성공")
+    @GetMapping("/trainers/me")
+    public ResponseEntity<ApiResponse<List<TrainerReviewSummaryResponse>>> getMyTrainerReviews(
+            @AuthenticationPrincipal(expression = "username") String email,
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Page<TrainerReviewSummaryResponse> response = reviewService.getMyTrainerReviews(email, pageable);
+
+        PageResponse pageResponse = PageResponse.from(response);
+        List<TrainerReviewSummaryResponse> reviews = response.getContent();
+
+        return ResponseEntity.ok(ApiResponse.success(reviews, pageResponse));
+    }
+
     @Operation(summary = "트레이너 후기 목록", description = "트레이너의 후기 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "트레이너 후기 목록 조회 성공")
-    @GetMapping("/trainers/{trainerId}/reviews")
+    @GetMapping("/trainers/{trainerId}")
     public ResponseEntity<ApiResponse<List<TrainerReviewSummaryResponse>>> getTrainerReviews(
             @PathVariable Long trainerId,
-            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<TrainerReviewSummaryResponse> response = reviewService.getTrainerReviews(trainerId, pageable);
 
@@ -70,7 +83,7 @@ public class ReviewController {
 
     @Operation(summary = "후기 작성", description = "사용자가 매칭에 대한 후기를 작성한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "후기 작성 성공")
-    @PostMapping("/reviews")
+    @PostMapping
     public ResponseEntity<ApiResponse<ReviewCreateResponse>> createReview(
             @AuthenticationPrincipal(expression = "username") String email,
             @Valid @RequestBody ReviewCreateRequest request) {
@@ -81,7 +94,7 @@ public class ReviewController {
 
     @Operation(summary = "후기 수정", description = "사용자가 작성한 후기를 수정한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "후기 수정 성공")
-    @PatchMapping("/reviews/{reviewId}")
+    @PatchMapping("/{reviewId}")
     public ResponseEntity<ApiResponse<ReviewUpdateResponse>> updateReview(
             @AuthenticationPrincipal(expression = "username") String email,
             @PathVariable Long reviewId,
@@ -93,7 +106,7 @@ public class ReviewController {
 
     @Operation(summary = "후기 삭제", description = "사용자가 작성한 후기를 삭제한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "후기 삭제 성공")
-    @DeleteMapping("/reviews/{reviewId}")
+    @DeleteMapping("/{reviewId}")
     public ResponseEntity<Void> deleteReview(
             @AuthenticationPrincipal(expression = "username") String email,
             @PathVariable Long reviewId) {
