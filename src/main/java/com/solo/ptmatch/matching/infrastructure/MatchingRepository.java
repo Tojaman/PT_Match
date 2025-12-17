@@ -58,4 +58,20 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
     Optional<Matching> findByIdWithUserAndSchedules(@Param("matchingId") Long matchingId);
 
     Optional<Matching> findByIdAndUserId(Long matchingId, Long userId);
+
+    // 트레이너의 대기 중인 매칭 요청 수
+    @Query("""
+        SELECT COUNT(m) FROM Matching m
+        WHERE m.trainerProfile.id = :trainerProfileId
+        AND m.matchingStatus = 'PENDING'
+    """)
+    int countPendingRequestsByTrainerProfileId(@Param("trainerProfileId") Long trainerProfileId);
+
+    // 트레이너의 활성 회원 수 (ACCEPTED 상태의 고유 회원 수)
+    @Query("""
+        SELECT COUNT(DISTINCT m.user.id) FROM Matching m
+        WHERE m.trainerProfile.id = :trainerProfileId
+        AND m.matchingStatus = 'ACCEPTED'
+    """)
+    int countActiveMembersByTrainerProfileId(@Param("trainerProfileId") Long trainerProfileId);
 }
