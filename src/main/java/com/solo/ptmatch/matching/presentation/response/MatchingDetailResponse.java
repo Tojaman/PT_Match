@@ -9,18 +9,21 @@ import java.util.List;
 public record MatchingDetailResponse(
     Long matchingId,
     String message,
+    String status,
     MatchingUserInfo applicantInfo,
-    List<MatchingScheduleInfo> schedules
-) {
-    public static MatchingDetailResponse from(Matching matching) {
+    MatchingTrainerInfo trainerInfo,
+    List<MatchingScheduleInfo> schedules,
+    ReviewInfo reviewInfo) {
+    public static MatchingDetailResponse from(Matching matching, ReviewInfo reviewInfo) {
         return new MatchingDetailResponse(
             matching.getId(),
             matching.getMessage(),
+            matching.getMatchingStatus().name(),
             MatchingUserInfo.from(matching.getMatchingUserInfo()),
+            MatchingTrainerInfo.from(matching.getTrainerProfile()),
             matching.getSchedules().stream()
-                .map(MatchingScheduleInfo::from)
-                .toList()
-        );
+                    .map(MatchingScheduleInfo::from)
+                    .toList(),
+            reviewInfo);
     }
 }
-
