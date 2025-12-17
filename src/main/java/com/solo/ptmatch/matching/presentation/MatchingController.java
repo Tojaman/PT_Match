@@ -10,6 +10,7 @@ import com.solo.ptmatch.matching.presentation.response.MatchingDetailResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingReceivedSummaryResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingRequestCreateResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingRespondResponse;
+import com.solo.ptmatch.matching.presentation.response.MatchingScheduleDetailResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingSentSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -89,9 +90,17 @@ public class MatchingController {
     @GetMapping("/{matchingId}")
     public ResponseEntity<ApiResponse<MatchingDetailResponse>> getMatchingDetail(
             @AuthenticationPrincipal(expression = "username") String email,
-            @PathVariable("matchingId") Long matchingId
-    ) {
+            @PathVariable("matchingId") Long matchingId) {
         MatchingDetailResponse response = matchingService.getMatchingDetail(email, matchingId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "내 전체 스케줄 조회", description = "사용자의 전체 스케줄을 조회한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "스케줄 조회 성공")
+    @GetMapping("/schedules/me")
+    public ResponseEntity<ApiResponse<List<MatchingScheduleDetailResponse>>> getMyAllSchedules(
+            @AuthenticationPrincipal(expression = "username") String email) {
+        List<MatchingScheduleDetailResponse> response = matchingService.getMyAllSchedules(email);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
