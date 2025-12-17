@@ -8,11 +8,13 @@ import com.solo.ptmatch.matching.domain.MatchingStatus;
 import com.solo.ptmatch.matching.domain.MatchingUserInfo;
 import com.solo.ptmatch.matching.infrastructure.AvailableScheduleRepository;
 import com.solo.ptmatch.matching.infrastructure.MatchingRepository;
+import com.solo.ptmatch.matching.infrastructure.MatchingScheduleRepository;
 import com.solo.ptmatch.matching.presentation.request.MatchingRequestCreateRequest;
 import com.solo.ptmatch.matching.presentation.request.MatchingRespondRequest;
 import com.solo.ptmatch.matching.presentation.response.MatchingDetailResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingReceivedSummaryResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingRequestCreateResponse;
+import com.solo.ptmatch.matching.presentation.response.MatchingScheduleDetailResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingSentSummaryResponse;
 import com.solo.ptmatch.matching.presentation.response.ReviewInfo;
 
@@ -41,6 +43,7 @@ public class MatchingService {
     private final MatchingRepository matchingRepository;
     private final TrainerProfileRepository trainerProfileRepository;
     private final ReviewRepository reviewRepository;
+    private final MatchingScheduleRepository matchingScheduleRepository;
 
     // PT 신청
     @Transactional
@@ -149,5 +152,18 @@ public class MatchingService {
                 .orElse(null);
 
         return MatchingDetailResponse.from(matching, reviewInfo);
+    }
+
+    // 내 전체 스케줄 조회
+    @Transactional(readOnly = true)
+    public List<MatchingScheduleDetailResponse> getMyAllSchedules(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        List<MatchingSchedule> schedules = matchingScheduleRepository.findAllByUserIdWithDetails(user.getId());
+
+        return schedules.stream()
+                .map(MatchingScheduleDetailResponse::from)
+                .toList();
     }
 }
