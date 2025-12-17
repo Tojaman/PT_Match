@@ -16,14 +16,25 @@ public record MyReviewSummaryResponse(
     String content,
 
     @Schema(description = "작성 일시", example = "2025-09-10T14:00:00")
-    LocalDateTime createdAt
+    LocalDateTime createdAt,
+
+    @Schema(description = "매칭 ID", example = "10")
+    Long matchingId,
+
+    @Schema(description = "트레이너 ID", example = "5")
+    Long trainerId,
+
+    @Schema(description = "트레이너 이름", example = "김트레이너")
+    String trainerName
 ) {
     public static MyReviewSummaryResponse from(Review review) {
         return new MyReviewSummaryResponse(
                 review.getId(),
                 review.getRating(),
                 review.getContent(),
-                review.getCreatedAt()
-        );
+                review.getCreatedAt(),
+                review.getMatching().getId(),
+                review.getMatching().getTrainerProfile().getId(),
+                review.getMatching().getTrainerProfile().getUser().getName());
     }
 }

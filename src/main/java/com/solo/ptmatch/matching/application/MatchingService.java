@@ -14,6 +14,8 @@ import com.solo.ptmatch.matching.presentation.response.MatchingDetailResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingReceivedSummaryResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingRequestCreateResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingSentSummaryResponse;
+import com.solo.ptmatch.matching.presentation.response.ReviewInfo;
+
 import java.util.List;
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
 import com.solo.ptmatch.trainer.domain.ReservationStatus;
@@ -27,6 +29,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -37,6 +40,7 @@ public class MatchingService {
     private final AvailableScheduleRepository availableScheduleRepository;
     private final MatchingRepository matchingRepository;
     private final TrainerProfileRepository trainerProfileRepository;
+    private final ReviewRepository reviewRepository;
 
     // PT 신청
     @Transactional
@@ -101,13 +105,13 @@ public class MatchingService {
 
     // 보낸 매칭 신청 목록 조회(매칭 스케줄은 별도 API 구성)
     @Transactional(readOnly = true)
-    public Page<MatchingSentSummaryResponse> getSentMatchings(String userEmail, Pageable pageable) {
+    public Page<MatchingSentSummaryResponse> getSentMatchings(String userEmail, List<MatchingStatus> status, Pageable pageable) {
 
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
         // N+1 -> fetch join (트레이너 프로필, 유저(트레이너))
-        Page<Matching> matchings = matchingRepository.findAllByUserIdWithDetails(user.getId(), pageable);
+        Page<Matching> matchings = matchingRepository.findAllByUserIdWithDetails(user.getId(), status, pageable);
 
         return matchings.map(MatchingSentSummaryResponse::from);
     }
@@ -139,6 +143,11 @@ public class MatchingService {
         Matching matching = matchingRepository.findByIdWithDetails(matchingId, user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_NOT_FOUND));
 
-        return MatchingDetailResponse.from(matching);
+        ReviewInfo reviewInfo = reviewRepository
+                .findByMatchingId(matchingId)
+                .map(ReviewInfo::from)
+                .orElse(null);
+
+        return MatchingDetailResponse.from(matching, reviewInfo);
     }
 }

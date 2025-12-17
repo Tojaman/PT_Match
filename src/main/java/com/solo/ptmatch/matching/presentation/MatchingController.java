@@ -35,9 +35,10 @@ public class MatchingController {
 
     @Operation(summary = "PT 매칭 신청", description = "사용자가 PT 매칭을 신청한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "매칭 신청 성공")
+    @PreAuthorize("hasRole('USER')")
     @PostMapping
     public ResponseEntity<ApiResponse<MatchingRequestCreateResponse>> requestMatching(
-        @AuthenticationPrincipal(expression = "username") String email,
+            @AuthenticationPrincipal(expression = "username") String email,
         @Valid @RequestBody MatchingRequestCreateRequest request
     ) {
         MatchingRequestCreateResponse response = matchingService.requestMatching(email, request);
@@ -62,10 +63,10 @@ public class MatchingController {
     @GetMapping("/sent")
     public ResponseEntity<ApiResponse<List<MatchingSentSummaryResponse>>> getSentMatchings(
             @AuthenticationPrincipal(expression = "username") String email,
-            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
-            Pageable pageable
+            @RequestParam(required = false) List<MatchingStatus> status,
+            @ParameterObject @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<MatchingSentSummaryResponse> response = matchingService.getSentMatchings(email, pageable);
+        Page<MatchingSentSummaryResponse> response = matchingService.getSentMatchings(email, status, pageable);
         return ResponseEntity.ok(ApiResponse.success(response.getContent(), PageResponse.from(response)));
     }
 

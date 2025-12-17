@@ -18,8 +18,12 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
         JOIN FETCH m.trainerProfile tp
         JOIN FETCH tp.user
         WHERE m.user.id = :userId
+        AND (:status IS NULL OR m.matchingStatus IN :status)
     """)
-    Page<Matching> findAllByUserIdWithDetails(@Param("userId") Long userId, Pageable pageable);
+    Page<Matching> findAllByUserIdWithDetails(
+            @Param("userId") Long userId,
+            @Param("status") List<MatchingStatus> status,
+            Pageable pageable);
 
     @Query("""
         SELECT m FROM Matching m
@@ -31,7 +35,6 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             @Param("status") List<MatchingStatus> status,
             Pageable pageable // Sort 포함(order by 포함)
     );
-
 
     @Query("""
         SELECT m FROM Matching m
