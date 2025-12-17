@@ -13,6 +13,8 @@ public record MatchingScheduleDetailResponse(
         @Schema(description = "매칭 ID", example = "10") Long matchingId,
 
         @Schema(description = "트레이너 이름", example = "김트레이너") String trainerName,
+        
+        @Schema(description = "회원 이름", example = "이회원") String userName,
 
         @Schema(description = "활동 지점", example = "강남점") String gymName,
 
@@ -26,6 +28,7 @@ public record MatchingScheduleDetailResponse(
                 schedule.getId(),
                 schedule.getMatching().getId(),
                 schedule.getMatching().getTrainerProfile().getUser().getName(),
+                schedule.getMatching().getUser().getName(),
                 schedule.getMatching().getTrainerProfile().getGymAddress(),
                 schedule.getStartTime(),
                 schedule.getEndTime(),

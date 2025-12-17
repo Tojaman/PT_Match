@@ -103,4 +103,14 @@ public class MatchingController {
         List<MatchingScheduleDetailResponse> response = matchingService.getMyAllSchedules(email);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @Operation(summary = "트레이너 전체 스케줄 조회", description = "트레이너의 전체 매칭 스케줄을 조회한다(대시보드용)")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "스케줄 조회 성공")
+    @PreAuthorize("hasRole('TRAINER')")
+    @GetMapping("/schedules/trainer")
+    public ResponseEntity<ApiResponse<List<MatchingScheduleDetailResponse>>> getTrainerSchedules(
+            @AuthenticationPrincipal(expression = "username") String email) {
+        List<MatchingScheduleDetailResponse> response = matchingService.getTrainerDashboardSchedules(email);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }
