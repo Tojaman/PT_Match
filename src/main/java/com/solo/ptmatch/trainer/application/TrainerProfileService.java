@@ -2,6 +2,11 @@ package com.solo.ptmatch.trainer.application;
 
 import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
+import com.solo.ptmatch.common.storage.ObjectStorageService;
+import com.solo.ptmatch.common.storage.PresignedUpload;
+import com.solo.ptmatch.common.storage.PresignedUploadCommand;
+import com.solo.ptmatch.product.presentation.request.PresignedUrlRequest;
+import com.solo.ptmatch.product.presentation.response.PresignedUrlResponse;
 import com.solo.ptmatch.trainer.domain.Certification;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.domain.TrainerImage;
@@ -43,6 +48,7 @@ public class TrainerProfileService {
     private final CertificationRepository certificationRepository;
     private final TrainerImageRepository trainerImageRepository;
     private final GymImageRepository gymImageRepository;
+    private final ObjectStorageService objectStorageService;
 
     @Transactional(readOnly = true)
     public Page<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request, Pageable pageable) {
@@ -140,6 +146,21 @@ public class TrainerProfileService {
         List<GymImage> gymImages = updateGymImages(profile, request.gymImages());
 
         return TrainerProfileUpsertResponse.from(profile, trainerImages, gymImages, certifications);
+    }
+
+    @Transactional(readOnly = true)
+    public PresignedUrlResponse issuePresignedUrl(PresignedUrlRequest request, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        PresignedUploadCommand command = new PresignedUploadCommand(
+                user.getId(),
+                request.fileName(),
+                request.contentType(),
+                "productImages"
+        );
+        PresignedUpload upload = objectStorageService.issuePresignedUpload(command);
+        return PresignedUrlResponse.from(upload);
     }
 
     private List<TrainerImage> updateTrainerImages(TrainerProfile profile, List<TrainerImageRequest> imageRequests) {

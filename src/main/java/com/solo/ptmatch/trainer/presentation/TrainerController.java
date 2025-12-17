@@ -2,6 +2,8 @@ package com.solo.ptmatch.trainer.presentation;
 
 import com.solo.ptmatch.common.response.ApiResponse;
 import com.solo.ptmatch.common.response.PageResponse;
+import com.solo.ptmatch.product.presentation.request.PresignedUrlRequest;
+import com.solo.ptmatch.product.presentation.response.PresignedUrlResponse;
 import com.solo.ptmatch.trainer.application.TrainerProfileService;
 import com.solo.ptmatch.trainer.presentation.request.TrainerProfileUpsertRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
@@ -20,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -88,6 +91,18 @@ public class TrainerController {
         TrainerProfileUpsertResponse response = trainerProfileService.updateTrainerProfile(
                 loggedInEmail,
                 trainerProfileRegisterRequest);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "트레이너 프로필 이미지 업로드용 프리사인 URL 발급", description = "트레이너가 프로필 이미지 업로드를 위한 프리사인 URL을 발급받는다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프리사인 URL 발급 성공")
+    @PreAuthorize("hasRole('TRAINER')")
+    @PostMapping("/images/presign")
+    public ResponseEntity<ApiResponse<PresignedUrlResponse>> issuePresignedUrl(
+            @AuthenticationPrincipal(expression = "username") String loggedInEmail,
+            @Valid @RequestBody PresignedUrlRequest request
+    ) {
+        PresignedUrlResponse response = trainerProfileService.issuePresignedUrl(request, loggedInEmail);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
