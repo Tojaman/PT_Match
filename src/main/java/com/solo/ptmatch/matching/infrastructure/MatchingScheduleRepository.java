@@ -26,7 +26,7 @@ public interface MatchingScheduleRepository extends JpaRepository<MatchingSchedu
                     JOIN FETCH m.user
                     JOIN FETCH m.trainerProfile t
                     JOIN FETCH t.user
-                    WHERE m.trainerProfile.id = :trainerProfileId
+                    WHERE m.trainerProfile.id = :trainerProfileId AND m.matchingStatus = 'ACCEPTED'
                     ORDER BY ms.startTime ASC
                     """)
     List<MatchingSchedule> findAllByTrainerProfileIdWithDetails(@Param("trainerProfileId") Long trainerProfileId);
