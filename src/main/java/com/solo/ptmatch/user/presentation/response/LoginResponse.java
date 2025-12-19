@@ -9,12 +9,14 @@ public record LoginResponse(
         Long userId,
         String email,
         String name,
-        Role role) {
+        Role role,
+        Long trainerId) {
     public static LoginResponse from(AuthResult authResult) {
         return new LoginResponse(
                 authResult.userId(),
                 authResult.email(),
                 authResult.name(),
-                authResult.role());
+                authResult.role(),
+                authResult.trainerId());
     }
 }

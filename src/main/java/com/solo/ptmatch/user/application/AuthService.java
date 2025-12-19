@@ -11,6 +11,9 @@ import com.solo.ptmatch.user.presentation.request.LoginRequest;
 import com.solo.ptmatch.user.presentation.request.RegisterRequest;
 import com.solo.ptmatch.common.security.JwtTokenProvider;
 import com.solo.ptmatch.user.presentation.response.RegisterResponse;
+import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
+import com.solo.ptmatch.trainer.domain.TrainerProfile;
+import com.solo.ptmatch.user.domain.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +33,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final TrainerProfileRepository trainerProfileRepository;
 
     @Transactional
     public RegisterResponse register(RegisterRequest registerRequest) {
@@ -66,7 +70,14 @@ public class AuthService {
 
         refreshTokenRepository.save(RefreshToken.of(user.getEmail(), refreshToken));
 
-        return AuthResult.from(user, accessToken, refreshToken);
+        Long trainerId = null;
+        if (user.getRole() == Role.TRAINER) {
+            trainerId = trainerProfileRepository.findByUserId(user.getId())
+                    .map(TrainerProfile::getId)
+                    .orElse(null);
+        }
+
+        return AuthResult.from(user, accessToken, refreshToken, trainerId);
     }
 
     @Transactional
