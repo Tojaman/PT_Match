@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.http.Cookie;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -33,8 +36,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     };
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
+        log.info("요청 수신 [{} {}]", request.getMethod(), request.getRequestURI());
         String token = resolveToken(request);
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
             Authentication authentication = jwtTokenProvider.getAuthentication(token); // 인증 정보 생성(Principal(UserDetails 객체), Credentials(Jwt 문자열), Authorities(role|권한) 포함)
@@ -48,6 +53,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                  */
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
+        }
+        else {
+            log.info("토큰 인증 정보 없음");
         }
         filterChain.doFilter(request, response);
     }
