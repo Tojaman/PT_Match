@@ -85,11 +85,4 @@ public class TrainerScheduleService {
                 .map(TrainerScheduleListResponse::from)
                 .toList();
     }
-
-    @Transactional(readOnly = true)
-    public List<TrainerScheduleListResponse> getAvailableSchedules(Long trainerId) {
-        return availableScheduleRepository.findAllByTrainerProfileIdAndReservationStatus(trainerId, ReservationStatus.AVAILABLE).stream()
-                .map(TrainerScheduleListResponse::from)
-                .toList();
-    }
 }
