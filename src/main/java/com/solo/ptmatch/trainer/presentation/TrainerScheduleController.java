@@ -61,14 +61,4 @@ public class TrainerScheduleController {
         List<TrainerScheduleListResponse> response = trainerScheduleService.getTrainerSchedules(trainerId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-
-    @Operation(summary = "예약 가능한 트레이너 스케줄 조회", description = "트레이너의 예약 가능한 스케줄을 조회한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "스케줄 조회 성공")
-    @GetMapping("/{trainerId}/available")
-    public ResponseEntity<ApiResponse<List<TrainerScheduleListResponse>>> getAvailableSchedules(
-            @PathVariable Long trainerId
-    ) {
-        List<TrainerScheduleListResponse> response = trainerScheduleService.getAvailableSchedules(trainerId);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
 }
