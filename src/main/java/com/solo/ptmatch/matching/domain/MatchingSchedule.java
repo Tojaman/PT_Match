@@ -40,9 +40,9 @@ public class MatchingSchedule extends BaseEntity {
     private LocalDateTime endTime;
 
     private MatchingSchedule(AvailableSchedule availableSchedule,
-                             LocalDateTime startTime,
-                             LocalDateTime endTime,
-                             SessionStatus sessionStatus) {
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            SessionStatus sessionStatus) {
         this.availableSchedule = availableSchedule;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -54,15 +54,14 @@ public class MatchingSchedule extends BaseEntity {
                 availableSchedule,
                 availableSchedule.getStartTime(),
                 availableSchedule.getEndTime(),
-                SessionStatus.SCHEDULED
-        );
+                SessionStatus.SCHEDULED);
     }
 
     void assignMatching(Matching matching) {
         this.matching = matching;
     }
 
-    void complete() {
+    public void complete() {
         this.sessionStatus = SessionStatus.COMPLETED;
     }
 }

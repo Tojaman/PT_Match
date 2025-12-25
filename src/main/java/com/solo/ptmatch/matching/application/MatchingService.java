@@ -170,17 +170,40 @@ public class MatchingService {
     // 트레이너 대시보드용 전체 스케줄 조회
     @Transactional(readOnly = true)
     public List<MatchingScheduleDetailResponse> getTrainerDashboardSchedules(String userEmail) {
-            User user = userRepository.findByEmail(userEmail)
-                            .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-            TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
-                            .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
+        TrainerProfile trainerProfile = trainerProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
-            List<MatchingSchedule> schedules = matchingScheduleRepository
-                            .findAllByTrainerProfileIdWithDetails(trainerProfile.getId());
+        List<MatchingSchedule> schedules = matchingScheduleRepository
+                .findAllByTrainerProfileIdWithDetails(trainerProfile.getId());
 
-            return schedules.stream()
-                            .map(MatchingScheduleDetailResponse::from)
-                            .toList();
+        return schedules.stream()
+                .map(MatchingScheduleDetailResponse::from)
+                .toList();
+    }
+
+    // 매칭 스케줄 완료 처리
+    @Transactional
+    public void completeSchedule(Long scheduleId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        MatchingSchedule schedule = matchingScheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_SCHEDULE_NOT_FOUND));
+
+        Matching matching = schedule.getMatching();
+
+        if (!matching.getTrainerProfile().getUser().getId().equals(user.getId())) {
+            throw GlobalException.of(ErrorCode.FORBIDDEN);
+        }
+
+        schedule.complete();
+
+        matching.completeSession();
+        if (matching.getRemainingSessions() <= 0) {
+            matching.complete();
+        }
     }
 }
