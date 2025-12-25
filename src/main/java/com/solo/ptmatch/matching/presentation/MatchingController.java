@@ -113,4 +113,15 @@ public class MatchingController {
         List<MatchingScheduleDetailResponse> response = matchingService.getTrainerDashboardSchedules(email);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @Operation(summary = "매칭 스케줄 완료", description = "트레이너가 매칭 스케줄을 완료 처리한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "스케줄 완료 처리 성공")
+    @PreAuthorize("hasRole('TRAINER')")
+    @PatchMapping("/schedules/{scheduleId}/complete")
+    public ResponseEntity<Void> completeSchedule(
+            @AuthenticationPrincipal(expression = "username") String email,
+            @PathVariable Long scheduleId) {
+        matchingService.completeSchedule(scheduleId, email);
+        return ResponseEntity.noContent().build();
+    }
 }
