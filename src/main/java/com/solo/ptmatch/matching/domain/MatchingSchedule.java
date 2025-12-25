@@ -61,4 +61,8 @@ public class MatchingSchedule extends BaseEntity {
     void assignMatching(Matching matching) {
         this.matching = matching;
     }
+
+    void complete() {
+        this.sessionStatus = SessionStatus.COMPLETED;
+    }
 }

@@ -45,6 +45,9 @@ public class Matching extends BaseEntity {
     @OneToMany(mappedBy = "matching", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<MatchingSchedule> schedules = new ArrayList<>();
 
+    @Column(name = "remaining_sessions") 
+    private int remainingSessions;  // 잔여 횟수
+
     public void addSchedule(MatchingSchedule schedule) {
         schedule.assignMatching(this);
         schedules.add(schedule);
@@ -73,6 +76,12 @@ public class Matching extends BaseEntity {
 
     public void complete() {
         this.matchingStatus = MatchingStatus.COMPLETED;
+    }
+
+    public void completeSession() {
+        if (remainingSessions > 0) {
+            remainingSessions--;
+        }
     }
 
     public boolean canCreateReservation() {

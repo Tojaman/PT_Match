@@ -5,13 +5,11 @@ import com.solo.ptmatch.common.response.PageResponse;
 import com.solo.ptmatch.product.presentation.request.PresignedUrlRequest;
 import com.solo.ptmatch.product.presentation.response.PresignedUrlResponse;
 import com.solo.ptmatch.trainer.application.TrainerProfileService;
-import com.solo.ptmatch.trainer.application.TrainerDashboardService;
 import com.solo.ptmatch.trainer.presentation.request.TrainerProfileUpsertRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
 import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerDashboardStatsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +35,6 @@ import java.util.List;
 public class TrainerController {
 
     private final TrainerProfileService trainerProfileService;
-    private final TrainerDashboardService trainerDashboardService;
 
     @Operation(summary = "트레이너 목록 조회", description = "필터 및 정렬 조건으로 트레이너 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "목록 조회 성공")
@@ -68,16 +65,6 @@ public class TrainerController {
     public ResponseEntity<ApiResponse<TrainerDetailResponse>> getTrainer(
             @PathVariable Long trainerId) {
         TrainerDetailResponse response = trainerProfileService.getTrainerDetail(trainerId);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @Operation(summary = "트레이너 대시보드 통계 조회", description = "트레이너의 대시보드 통계 정보를 조회한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "통계 조회 성공")
-    @PreAuthorize("hasRole('TRAINER')")
-    @GetMapping("/dashboard/stats")
-    public ResponseEntity<ApiResponse<TrainerDashboardStatsResponse>> getDashboardStats(
-            @AuthenticationPrincipal(expression = "username") String loggedInEmail) {
-        TrainerDashboardStatsResponse response = trainerDashboardService.getDashboardStats(loggedInEmail);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
