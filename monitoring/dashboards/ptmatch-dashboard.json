@@ -1,0 +1,239 @@
+{
+    "editable": true,
+    "graphTooltip": 1,
+    "panels": [
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "title": "Section 1: 실시간 서비스 상태 (Overview)",
+            "type": "row"
+        },
+        {
+            "title": "서버 상태",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 0,
+                "y": 1
+            },
+            "targets": [
+                {
+                    "expr": "up{job=\"spring-boot\"}",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "mappings": [
+                        {
+                            "options": {
+                                "0": {
+                                    "color": "red",
+                                    "text": "DOWN"
+                                },
+                                "1": {
+                                    "color": "green",
+                                    "text": "UP (정상)"
+                                }
+                            },
+                            "type": "value"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "title": "최근 1시간 에러 발생량",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 6,
+                "x": 6,
+                "y": 1
+            },
+            "targets": [
+                {
+                    "expr": "sum(count_over_time({app=\"ptmatch\", level=\"ERROR\"}[1h]))",
+                    "datasource": "Loki",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "fixedColor": "red",
+                        "mode": "fixed"
+                    },
+                    "unit": "건"
+                }
+            }
+        },
+        {
+            "title": "평균 응답 속도 (Latency)",
+            "type": "stat",
+            "gridPos": {
+                "h": 4,
+                "w": 12,
+                "x": 12,
+                "y": 1
+            },
+            "targets": [
+                {
+                    "expr": "avg(http_server_requests_seconds_sum / http_server_requests_seconds_count)",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s",
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "orange",
+                                "value": 0.5
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 5
+            },
+            "title": "Section 2: API 요청 리스트 & 상세 추적 (Request List & Trace)",
+            "type": "row"
+        },
+        {
+            "title": "[필수3] 최근 API 트랜잭션 (Tempo Traces)",
+            "type": "table",
+            "gridPos": {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 6
+            },
+            "datasource": "Tempo",
+            "targets": [
+                {
+                    "query": "{ resource.service.name=\"ptmatch\" && name !~ \".*prometheus.*\" }",
+                    "queryType": "traceql",
+                    "refId": "A",
+                    "limit": 20
+                }
+            ],
+            "fieldConfig": {
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "traceID"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 250
+                            },
+                            {
+                                "id": "links",
+                                "value": [
+                                    {
+                                        "title": "🔍 상세 분석",
+                                        "url": "/explore?orgId=1&left={\"datasource\":\"Tempo\",\"queries\":[{\"query\":\"${__value.raw}\",\"queryType\":\"traceql\"}]}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "duration"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "ns"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            },
+            "title": "Section 3: 실시간 로그 모니터링 (Logs)",
+            "type": "row"
+        },
+        {
+            "title": "[필수2] 실시간 에러 로그 (Filtered)",
+            "type": "logs",
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 0,
+                "y": 17
+            },
+            "datasource": "Loki",
+            "targets": [
+                {
+                    "expr": "{app=\"ptmatch\"} | json | level=\"ERROR\" | line_format \"{{.message}} {{.logger_name}}\"",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "title": "[필수1] 전체 애플리케이션 로그",
+            "type": "logs",
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 12,
+                "y": 17
+            },
+            "datasource": "Loki",
+            "targets": [
+                {
+                    "expr": "{app=\"ptmatch\"} | json | line_format \"{{.message}} {{.logger_name}}\"",
+                    "refId": "A"
+                }
+            ]
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 38,
+    "style": "dark",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "title": "LGTM 모니터링"
+}
