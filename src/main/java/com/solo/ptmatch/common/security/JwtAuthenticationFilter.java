@@ -39,7 +39,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        log.info("요청 수신 [{} {}]", request.getMethod(), request.getRequestURI());
         String token = resolveToken(request);
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
             Authentication authentication = jwtTokenProvider.getAuthentication(token); // 인증 정보 생성(Principal(UserDetails 객체), Credentials(Jwt 문자열), Authorities(role|권한) 포함)
