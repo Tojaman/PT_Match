@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc: # 사용X
+        endpoint: 0.0.0.0:4317
+      http: # 사용O
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins: ["*"]
+
+processors:
+  batch:
+
+exporters:
+  # prometheus:
+  #   endpoint: "0.0.0.0:8889" # 안씀(추후 사용 예정)
+  otlp/tempo:
+    endpoint: "tempo:4317"
+    tls:
+      insecure: true
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/tempo, debug]
+    # metrics: # 안씀(추후 사용 예정)
+    #   receivers: [otlp]
+    #   processors: [batch]
+    #   exporters: [prometheus, debug]
