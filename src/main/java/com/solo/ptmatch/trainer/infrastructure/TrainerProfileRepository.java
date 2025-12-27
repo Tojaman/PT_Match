@@ -8,37 +8,20 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, Long> {
 
-  Optional<TrainerProfile> findByUserId(Long trainerId);
+    Optional<TrainerProfile> findByUserId(Long trainerId);
 
-  // 정렬: 팔로워순/별점순 + 오름차순/내림차순(Pageable 객체 내부에 Sort 객체 포함) -> order by 쿼리 JPA가 동적으로 생성
-  // specialty가 null인 경우 inner join을 하면 specialty가 없는 트레이너는 결과에서 제외되어 조회가 되지 않는다.
-  // 따라서 left outer join을 사용해야 한다.
-  @Query(value = """
-      select distinct tp
-      from TrainerProfile tp
-      left join tp.specialties s
-      left join tp.user u
-      where (:specialty is null or s = :specialty)
-        and (:keyword is null
-            or u.name like concat('%', :keyword, '%')
-            or tp.gymAddress like concat('%', :keyword, '%'))
-      """, countQuery = """
-      select count(distinct tp)
-      from TrainerProfile tp
-      left join tp.specialties s
-      left join tp.user u
-      where (:specialty is null or s = :specialty)
-        and (:keyword is null
-            or u.name like concat('%', :keyword, '%')
-            or tp.gymAddress like concat('%', :keyword, '%'))
-      """)
-  Page<TrainerProfile> searchBySpecialtyAndGymAddress(
-      @Param("specialty") Specialty specialty,
-      @Param("keyword") String keyword,
-      Pageable pageable);
+    // 헬스장 이름 정확 매칭
+    Page<TrainerProfile> findByGymName(String gymName, Pageable pageable);
+
+    // Bounding Box 반경 검색
+    Page<TrainerProfile> findByGymLatitudeBetweenAndGymLongitudeBetween(
+        double minLat, double maxLat,
+        double minLng, double maxLng,
+        Pageable pageable);
+
+    // 위치 자동완성용 헬스장 이름 prefix 검색
+    List<TrainerProfile> findByGymNameStartingWithOrderByGymName(String gymNamePrefix);
 }

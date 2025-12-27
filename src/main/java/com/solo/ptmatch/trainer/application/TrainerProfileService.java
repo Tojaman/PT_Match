@@ -5,6 +5,8 @@ import com.solo.ptmatch.common.exception.GlobalException;
 import com.solo.ptmatch.common.storage.ObjectStorageService;
 import com.solo.ptmatch.common.storage.PresignedUpload;
 import com.solo.ptmatch.common.storage.PresignedUploadCommand;
+import com.solo.ptmatch.common.util.CoordinateBounds;
+import com.solo.ptmatch.location.domain.LocationType;
 import com.solo.ptmatch.product.presentation.request.PresignedUrlRequest;
 import com.solo.ptmatch.product.presentation.response.PresignedUrlResponse;
 import com.solo.ptmatch.trainer.domain.Certification;
@@ -52,11 +54,20 @@ public class TrainerProfileService {
 
     @Transactional(readOnly = true)
     public Page<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request, Pageable pageable) {
+        Page<TrainerProfile> trainerPage;
 
-        Page<TrainerProfile> trainerPage = trainerProfileRepository.searchBySpecialtyAndGymAddress(
-                request.specialty(),
-                request.keyword(),
-                pageable);
+        if (request.locationType() == LocationType.GYM) {
+            // 헬스장 이름 정확 매칭
+            trainerPage = trainerProfileRepository.findByGymName(request.gymName(), pageable);
+        } else {
+            // SUBWAY, ADDRESS → Bounding Box 반경 검색
+            double radiusKm = request.radiusKm() != null ? request.radiusKm() : 3.0;
+            CoordinateBounds bounds = CoordinateBounds.of(request.latitude(), request.longitude(), radiusKm);
+            trainerPage = trainerProfileRepository.findByGymLatitudeBetweenAndGymLongitudeBetween(
+                    bounds.minLat(), bounds.maxLat(),
+                    bounds.minLng(), bounds.maxLng(),
+                    pageable);
+        }
 
         return trainerPage.map(TrainerSummaryResponse::from);
     }
@@ -160,8 +171,7 @@ public class TrainerProfileService {
                 user.getId(),
                 request.fileName(),
                 request.contentType(),
-                "productImages"
-        );
+                "productImages");
         PresignedUpload upload = objectStorageService.issuePresignedUpload(command);
         return PresignedUrlResponse.from(upload);
     }
