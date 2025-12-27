@@ -27,9 +27,21 @@ public record TrainerProfileUpsertRequest(
     @NotEmpty
     List<Specialty> specialties,
 
+    @Schema(description = "지점 이름", example = "강남역")
+    @NotBlank
+    String gymName,
+
     @Schema(description = "활동 지점", example = "서울 강남구 ...")
     @NotBlank
     String gymAddress,
+
+    @Schema(description = "지점 위도", example = "37.5116")
+    @NotNull
+    double gymLatitude,
+
+    @Schema(description = "지점 경도", example = "127.0667")
+    @NotNull
+    double gymLongitude,
 
     @Schema(description = "트레이너 이미지 목록")
     @NotNull
@@ -56,7 +68,10 @@ public record TrainerProfileUpsertRequest(
                 bio,
                 careerYears,
                 new HashSet<>(specialties),
+                gymName,
                 gymAddress,
+                gymLatitude,
+                gymLongitude,
                 trainerImages.get(0).imageUrl(),
                 pricePerSession);
     }
