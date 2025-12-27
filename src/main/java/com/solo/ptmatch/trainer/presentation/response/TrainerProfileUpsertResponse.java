@@ -10,16 +10,17 @@ import java.util.List;
 
 @Schema(description = "트레이너 프로필 등록/수정 응답")
 public record TrainerProfileUpsertResponse(
-    @Schema(description = "프로필 ID", example = "1") Long profileId,
-    @Schema(description = "자기소개") String bio,
-    @Schema(description = "경력 년수") int careerYears,
-    @Schema(description = "전문 분야 목록") List<Specialty> specialties,
-    @Schema(description = "활동 지점") String gymAddress,
-    @Schema(description = "프로필 이미지 URL") String profileImageUrl,
-    @Schema(description = "회당 가격") Integer pricePerSession,
-    @Schema(description = "트레이너 이미지 목록") List<TrainerImageResponse> trainerImages,
-    @Schema(description = "지점 이미지 목록") List<GymImageResponse> gymImages,
-    @Schema(description = "자격증 목록") List<TrainerCertificationResponse> certifications) {
+        @Schema(description = "프로필 ID", example = "1") Long profileId,
+        @Schema(description = "자기소개") String bio,
+        @Schema(description = "경력 년수") int careerYears,
+        @Schema(description = "전문 분야 목록") List<Specialty> specialties,
+        @Schema(description = "지점명") String gymName,
+        @Schema(description = "활동 지점") String gymAddress,
+        @Schema(description = "프로필 이미지 URL") String profileImageUrl,
+        @Schema(description = "회당 가격") Integer pricePerSession,
+        @Schema(description = "트레이너 이미지 목록") List<TrainerImageResponse> trainerImages,
+        @Schema(description = "지점 이미지 목록") List<GymImageResponse> gymImages,
+        @Schema(description = "자격증 목록") List<TrainerCertificationResponse> certifications) {
 
     public static TrainerProfileUpsertResponse from(
             TrainerProfile savedProfile,
@@ -27,15 +28,16 @@ public record TrainerProfileUpsertResponse(
             List<GymImage> gymImages,
             List<Certification> certifications) {
         return new TrainerProfileUpsertResponse(
-            savedProfile.getId(),
-            savedProfile.getBio(),
-            savedProfile.getCareerYears(),
-            savedProfile.getSpecialties().stream().sorted().toList(),
-            savedProfile.getGymAddress(),
-            savedProfile.getProfileImageUrl(),
-            savedProfile.getPricePerSession(),
-            trainerImages.stream().map(TrainerImageResponse::from).toList(),
-            gymImages.stream().map(GymImageResponse::from).toList(),
-            certifications.stream().map(TrainerCertificationResponse::from).toList());
+                savedProfile.getId(),
+                savedProfile.getBio(),
+                savedProfile.getCareerYears(),
+                savedProfile.getSpecialties().stream().sorted().toList(),
+                savedProfile.getGymName(),
+                savedProfile.getGymAddress(),
+                savedProfile.getProfileImageUrl(),
+                savedProfile.getPricePerSession(),
+                trainerImages.stream().map(TrainerImageResponse::from).toList(),
+                gymImages.stream().map(GymImageResponse::from).toList(),
+                certifications.stream().map(TrainerCertificationResponse::from).toList());
     }
 }

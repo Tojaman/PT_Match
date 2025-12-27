@@ -16,7 +16,10 @@ public record TrainerDetailResponse(
         @Schema(description = "자기소개") String bio,
         @Schema(description = "전문 분야 목록", example = "[\"DIET\", \"STRENGTH_CONDITIONING\"]") List<Specialty> specialties,
         @Schema(description = "경력 년수", example = "10") int careerYears,
+        @Schema(description = "지점명") String gymName,
         @Schema(description = "활동 지점") String gymAddress,
+        @Schema(description = "지점 위도") double gymLatitude,
+        @Schema(description = "지점 경도") double gymLongitude,
         @Schema(description = "프로필 이미지 URL") String profileImageUrl,
         @Schema(description = "좋아요/팔로우 수") int likesCount,
         @Schema(description = "리뷰 수", example = "120") int reviewCount,
@@ -28,27 +31,30 @@ public record TrainerDetailResponse(
 
 ) {
 
-        public static TrainerDetailResponse from(
+    public static TrainerDetailResponse from(
             TrainerProfile profile,
             List<TrainerImage> trainerImages,
             List<GymImage> gymImages,
             List<Certification> certifications) {
         return new TrainerDetailResponse(
-            profile.getId(),
-            profile.getUser().getName() != null ? profile.getUser().getName() : "이름 없음",
-            profile.getBio(),
-            profile.getSpecialties().stream()
-                            .sorted()
-                            .toList(),
-            profile.getCareerYears(),
-            profile.getGymAddress(),
-            profile.getProfileImageUrl(),
-            profile.getLikesCount(),
-            profile.getReviewCount(),
-            profile.getAverageRating(),
-            profile.getPricePerSession(),
-            trainerImages.stream().map(TrainerImageResponse::from).toList(),
-            gymImages.stream().map(GymImageResponse::from).toList(),
-            certifications.stream().map(TrainerCertificationResponse::from).toList());
-}
+                profile.getId(),
+                profile.getUser().getName() != null ? profile.getUser().getName() : "이름 없음",
+                profile.getBio(),
+                profile.getSpecialties().stream()
+                        .sorted()
+                        .toList(),
+                profile.getCareerYears(),
+                profile.getGymName(),
+                profile.getGymAddress(),
+                profile.getGymLatitude(),
+                profile.getGymLongitude(),
+                profile.getProfileImageUrl(),
+                profile.getLikesCount(),
+                profile.getReviewCount(),
+                profile.getAverageRating(),
+                profile.getPricePerSession(),
+                trainerImages.stream().map(TrainerImageResponse::from).toList(),
+                gymImages.stream().map(GymImageResponse::from).toList(),
+                certifications.stream().map(TrainerCertificationResponse::from).toList());
+    }
 }

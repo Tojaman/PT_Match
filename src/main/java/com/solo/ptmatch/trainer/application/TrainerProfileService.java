@@ -127,7 +127,10 @@ public class TrainerProfileService {
                 request.bio(),
                 request.careerYears(),
                 new HashSet<>(request.specialties()),
+                request.gymName(),
                 request.gymAddress(),
+                request.gymLatitude(),
+                request.gymLongitude(),
                 request.trainerImages().get(0).imageUrl(), // 첫 번째 이미지 썸네일로 설정
                 request.pricePerSession());
 

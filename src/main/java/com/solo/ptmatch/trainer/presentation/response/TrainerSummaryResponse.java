@@ -20,6 +20,10 @@ public record TrainerSummaryResponse(
     BigDecimal averageRating,
     @Schema(description = "활동 지점", example = "피트니스 센터")
     String gymAddress,
+    @Schema(description = "지점 위도")
+    double gymLatitude,
+    @Schema(description = "지점 경도")
+    double gymLongitude,
     @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
     String profileImageUrl,
     @Schema(description = "좋아요 수", example = "50")
@@ -40,6 +44,8 @@ public record TrainerSummaryResponse(
                 trainer.getCareerYears(),
                 trainer.getAverageRating(),
                 trainer.getGymAddress(),
+                trainer.getGymLatitude(),
+                trainer.getGymLongitude(),
                 trainer.getProfileImageUrl(),
                 trainer.getLikesCount(),
                 trainer.getReviewCount(),

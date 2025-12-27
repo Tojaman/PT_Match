@@ -36,8 +36,16 @@ public class TrainerProfile extends BaseEntity {
     @Column(name = "career_years", nullable = false)
     private int careerYears;
 
+    private String gymName;
+
     @Column(name = "gym_address", nullable = false)
     private String gymAddress;
+
+    @Column(name = "gym_latitude", nullable = false)
+    private double gymLatitude;
+
+    @Column(name = "gym_longitude", nullable = false)
+    private double gymLongitude;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "trainer_profile_specialties", joinColumns = @JoinColumn(name = "trainer_profile_id"))
@@ -65,7 +73,10 @@ public class TrainerProfile extends BaseEntity {
             String bio,
             int careerYears,
             Set<Specialty> specialties,
+            String gymName,
             String gymAddress,
+            double gymLatitude,
+            double gymLongitude,
             String profileImageUrl,
             Integer pricePerSession) {
         this.user = user;
@@ -84,17 +95,23 @@ public class TrainerProfile extends BaseEntity {
             String bio,
             int careerYears,
             Set<Specialty> specialties,
+            String gymName,
             String gymAddress,
+            double gymLatitude,
+            double gymLongitude,
             String profileImageUrl,
             Integer pricePerSession) {
-        return new TrainerProfile(user, bio, careerYears, specialties, gymAddress, profileImageUrl, pricePerSession);
+        return new TrainerProfile(user, bio, careerYears, specialties, gymName, gymAddress, gymLatitude, gymLongitude, profileImageUrl, pricePerSession);
     }
 
     public void updateProfile(
             String bio,
             int careerYears,
             Set<Specialty> specialties,
+            String gymName,
             String gymAddress,
+            double gymLatitude,
+            double gymLongitude,
             String profileImageUrl,
             Integer pricePerSession) {
         this.bio = bio;
@@ -102,6 +119,9 @@ public class TrainerProfile extends BaseEntity {
         this.careerYears = careerYears;
         replaceSpecialties(specialties);
         this.gymAddress = gymAddress;
+        this.gymName = gymName;
+        this.gymLatitude = gymLatitude;
+        this.gymLongitude = gymLongitude;
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
     }
