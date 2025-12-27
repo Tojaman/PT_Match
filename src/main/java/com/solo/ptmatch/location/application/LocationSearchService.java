@@ -36,7 +36,7 @@ public class LocationSearchService {
         }
 
         // 2. trainer_profiles 테이블에서 gymName 검색
-        List<TrainerProfile> gyms = trainerProfileRepository.searchByGymNamePrefix(keyword.trim());
+        List<TrainerProfile> gyms = trainerProfileRepository.findByGymNameStartingWithOrderByGymName(keyword.trim());
 
         Set<String> seenGymNames = new HashSet<>();
         for (TrainerProfile gym : gyms) {
