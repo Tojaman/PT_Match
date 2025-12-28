@@ -45,24 +45,30 @@ public class Matching extends BaseEntity {
     @OneToMany(mappedBy = "matching", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<MatchingSchedule> schedules = new ArrayList<>();
 
-    @Column(name = "remaining_sessions") 
-    private int remainingSessions;  // 잔여 횟수
+    @Column(name = "remaining_sessions")
+    private int remainingSessions; // 잔여 횟수
 
     public void addSchedule(MatchingSchedule schedule) {
         schedule.assignMatching(this);
         schedules.add(schedule);
     }
 
-    private Matching(User user, TrainerProfile trainerProfile, String message, MatchingUserInfo matchingUserInfo) {
+    @Column(name = "price_per_session")
+    private Integer pricePerSession;
+
+    private Matching(User user, TrainerProfile trainerProfile, String message, MatchingUserInfo matchingUserInfo,
+            Integer pricePerSession) {
         this.user = user;
         this.trainerProfile = trainerProfile;
         this.message = message;
         this.matchingStatus = MatchingStatus.PENDING;
         this.matchingUserInfo = matchingUserInfo;
+        this.pricePerSession = pricePerSession;
     }
 
-    public static Matching create(User user, TrainerProfile trainerProfile, String message, MatchingUserInfo matchingUserInfo) {
-        return new Matching(user, trainerProfile, message, matchingUserInfo);
+    public static Matching create(User user, TrainerProfile trainerProfile, String message,
+            MatchingUserInfo matchingUserInfo, Integer pricePerSession) {
+        return new Matching(user, trainerProfile, message, matchingUserInfo, pricePerSession);
     }
 
     public void accept() {
