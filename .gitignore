@@ -52,3 +52,5 @@ wsl.bat
 application-db.yml
 .env
 hq
+/src/main/resources/sql
+/src/test/
