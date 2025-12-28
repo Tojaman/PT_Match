@@ -50,14 +50,17 @@ public class AuthController {
                 ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", result.refreshToken())
                                 .httpOnly(true)
                                 .secure(false)
-                                .path("/api/auth/refresh")
+                                .path("/")
                                 .maxAge(1209600) // 14일
                                 .sameSite("Lax")
                                 .build();
 
+                HttpHeaders headers = new HttpHeaders();
+                headers.add(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+                headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
                 return ResponseEntity.ok()
-                                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
-                                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                                .headers(headers)
                                 .body(ApiResponse.success(LoginResponse.from(result)));
         }
 
@@ -72,7 +75,7 @@ public class AuthController {
                 ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", "")
                                 .httpOnly(true)
                                 .secure(false)
-                                .path("/api/auth/refresh")
+                                .path("/")
                                 .maxAge(0)
                                 .sameSite("Lax")
                                 .build();
@@ -85,9 +88,12 @@ public class AuthController {
                                 .sameSite("Lax")
                                 .build();
 
+                HttpHeaders headers = new HttpHeaders();
+                headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+                headers.add(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+
                 return ResponseEntity.noContent()
-                                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-                                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
+                                .headers(headers)
                                 .build();
         }
 
