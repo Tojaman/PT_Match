@@ -56,7 +56,7 @@ public class MatchingService {
 
         // 1. 매칭 엔티티 생성
         MatchingUserInfo matchingUserInfo = MatchingUserInfo.from(request.userInfo());
-        Matching matching = Matching.create(user, trainerProfile, request.message(), matchingUserInfo);
+        Matching matching = Matching.create(user, trainerProfile, request.message(), matchingUserInfo, trainerProfile.getPricePerSession());
 
         // 2. 매칭 엔티티에 매칭 스케줄 추가(세션 횟수만큼)
         List<AvailableSchedule> schedules = availableScheduleRepository.findAllByIdInWithLock(request.availableScheduleIds()); // 공유 락 획득
