@@ -4,12 +4,14 @@ spring:
         username: ${SPRING_DATASOURCE_USERNAME:root}
         password: ${SPRING_DATASOURCE_PASSWORD:0000}
         driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+            maximum-pool-size: 20
     jpa:
         hibernate:
             ddl-auto: update
         properties:
             hibernate:
-                show_sql: true
+                show_sql: false
 
 security:
     jwt:

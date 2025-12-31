@@ -11,3 +11,17 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['host.docker.internal:8080'] # 서버 주소
+
+  # MySQL 모니터링
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysqld-exporter:9104']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'mysql-primary'
+
+  # Container 리소스 모니터링 (CPU, Memory, Network, Disk I/O)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']  # 컨테이너 내부 포트는 8080 유지
