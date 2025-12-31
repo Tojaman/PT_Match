@@ -33,7 +33,7 @@ management:
 
 logging:
     pattern:
-        level: "%5p [%X{traceId:-},%X{spanId:-}]"
+        console: "%5p [%t] [%X{traceId:-},%X{spanId:-}] %c{1} - %m%n"
     level:
         root: INFO
         com.solo.ptmatch: DEBUG
