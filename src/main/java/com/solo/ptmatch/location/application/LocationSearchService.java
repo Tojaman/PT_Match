@@ -1,6 +1,8 @@
 package com.solo.ptmatch.location.application;
 
+import com.solo.ptmatch.location.domain.LegalDistrict;
 import com.solo.ptmatch.location.domain.Location;
+import com.solo.ptmatch.location.infrastructure.LegalDistrictRepository;
 import com.solo.ptmatch.location.infrastructure.LocationRepository;
 import com.solo.ptmatch.location.presentation.dto.LocationSearchResponse;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
@@ -20,7 +22,9 @@ public class LocationSearchService {
 
     private final LocationRepository locationRepository;
     private final TrainerProfileRepository trainerProfileRepository;
+    private final LegalDistrictRepository legalDistrictRepository;
 
+    // 자동완성
     @Transactional(readOnly = true)
     public List<LocationSearchResponse> search(String keyword) {
         if (keyword == null || keyword.isBlank()) {
@@ -29,7 +33,13 @@ public class LocationSearchService {
 
         List<LocationSearchResponse> results = new ArrayList<>();
 
-        // 1. locations 테이블에서 검색 (지하철역, 동 주소)
+        // 1. 법정동 검색
+        List<LegalDistrict> legalDistricts = legalDistrictRepository.findByNameContainingOrderByName(keyword.trim());
+        for (LegalDistrict legalDistrict : legalDistricts) {
+            results.add(LocationSearchResponse.from(legalDistrict));
+        }
+
+        // 2. locations 테이블에서 검색 (지하철역, 동 주소)
         List<Location> locations = locationRepository.searchByNamePrefix(keyword.trim());
         for (Location location : locations) {
             results.add(LocationSearchResponse.from(location));

@@ -1,5 +1,6 @@
 package com.solo.ptmatch.location.presentation.dto;
 
+import com.solo.ptmatch.location.domain.LegalDistrict;
 import com.solo.ptmatch.location.domain.Location;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,12 +19,14 @@ public record LocationSearchResponse(
     @Schema(description = "주소", example = "서울시 강남구")
     String address,
 
+    @Schema(description = "법정동 코드 (DISTRICT 타입일 때만)", example = "1168010100")
+    String districtCode,
+
     @Schema(description = "위도", example = "37.5116")
-    double latitude,
+    Double latitude,
 
     @Schema(description = "경도", example = "127.0347")
-    double longitude
-    ) {
+    Double longitude) {
 
     public static LocationSearchResponse from(Location location) {
         return new LocationSearchResponse(
@@ -31,6 +34,7 @@ public record LocationSearchResponse(
                 location.getName(),
                 location.getHint(),
                 location.getAddress(),
+                null,
                 location.getLatitude(),
                 location.getLongitude());
     }
@@ -41,7 +45,19 @@ public record LocationSearchResponse(
                 trainerProfile.getGymName(),
                 null,
                 trainerProfile.getGymAddress(),
+                null,
                 trainerProfile.getGymLatitude(),
                 trainerProfile.getGymLongitude());
+    }
+
+    public static LocationSearchResponse from(LegalDistrict district) {
+        return new LocationSearchResponse(
+                "DISTRICT",
+                district.getName(),
+                null,
+                null,
+                district.getCode(),
+                district.getLatitude(),
+                district.getLongitude());
     }
 }
