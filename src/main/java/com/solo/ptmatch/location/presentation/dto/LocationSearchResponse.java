@@ -57,7 +57,7 @@ public record LocationSearchResponse(
                 null,
                 null,
                 district.getCode(),
-                district.getLatitude(),
-                district.getLongitude());
+                district.getCentroidLatitude(),
+                district.getCentroidLongitude());
     }
 }
