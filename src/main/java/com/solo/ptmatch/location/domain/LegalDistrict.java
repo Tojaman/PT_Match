@@ -26,9 +26,6 @@ public class LegalDistrict {
     @Column(columnDefinition = "geometry(MultiPolygon, 4326)")
     private MultiPolygon boundary; // 법정동 경계 폴리곤
 
-    private Double latitude;
-    private Double longitude;
-
     public LegalDistrict(String code, String name, MultiPolygon boundary) {
         this.code = code;
         this.name = name;
@@ -37,5 +34,17 @@ public class LegalDistrict {
 
     public static LegalDistrict create(String code, String name, MultiPolygon boundary) {
         return new LegalDistrict(code, name, boundary);
+    }
+
+    public Double getCentroidLatitude() {
+        if (boundary == null)
+            return null;
+        return boundary.getCentroid().getY();
+    }
+
+    public Double getCentroidLongitude() {
+        if (boundary == null)
+            return null;
+        return boundary.getCentroid().getX();
     }
 }
