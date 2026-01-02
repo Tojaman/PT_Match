@@ -3,6 +3,10 @@ package com.solo.ptmatch.trainer.domain;
 import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -29,8 +33,7 @@ public class TrainerProfile extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String bio;
 
     @Column(name = "career_years", nullable = false)
@@ -46,6 +49,15 @@ public class TrainerProfile extends BaseEntity {
 
     @Column(name = "gym_longitude", nullable = false)
     private double gymLongitude;
+
+    // PostGIS Point (SRID 4326 = WGS84)
+    @Column(columnDefinition = "geometry(Point, 4326)")
+    private Point location;
+
+    @Column(name = "district_code", length = 10)
+    private String districtCode;
+
+    private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "trainer_profile_specialties", joinColumns = @JoinColumn(name = "trainer_profile_id"))
@@ -84,7 +96,11 @@ public class TrainerProfile extends BaseEntity {
         validateCareerYears(careerYears);
         this.careerYears = careerYears;
         this.specialties = new HashSet<>(specialties);
+        this.gymName = gymName;
         this.gymAddress = gymAddress;
+        this.gymLatitude = gymLatitude;
+        this.gymLongitude = gymLongitude;
+        this.location = createPoint(gymLongitude, gymLatitude);
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
         this.averageRating = DEFAULT_RATING;
@@ -101,7 +117,8 @@ public class TrainerProfile extends BaseEntity {
             double gymLongitude,
             String profileImageUrl,
             Integer pricePerSession) {
-        return new TrainerProfile(user, bio, careerYears, specialties, gymName, gymAddress, gymLatitude, gymLongitude, profileImageUrl, pricePerSession);
+        return new TrainerProfile(user, bio, careerYears, specialties, gymName, gymAddress, gymLatitude, gymLongitude,
+                profileImageUrl, pricePerSession);
     }
 
     public void updateProfile(
@@ -122,6 +139,7 @@ public class TrainerProfile extends BaseEntity {
         this.gymName = gymName;
         this.gymLatitude = gymLatitude;
         this.gymLongitude = gymLongitude;
+        this.location = createPoint(gymLongitude, gymLatitude);
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
     }
@@ -182,5 +200,9 @@ public class TrainerProfile extends BaseEntity {
         if (careerYears < 0) {
             throw new IllegalArgumentException("careerYears must not be negative");
         }
+    }
+
+    private static Point createPoint(double longitude, double latitude) {
+        return GEOMETRY_FACTORY.createPoint(new Coordinate(longitude, latitude));
     }
 }
