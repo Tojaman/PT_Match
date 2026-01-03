@@ -1,9 +1,9 @@
 spring:
     datasource:
-        url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ptmatch?useSSL=false&allowPublicKeyRetrieval=true}
-        username: ${SPRING_DATASOURCE_USERNAME:root}
-        password: ${SPRING_DATASOURCE_PASSWORD:0000}
-        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/ptmatch}
+        username: ${SPRING_DATASOURCE_USERNAME:ptmatch}
+        password: ${SPRING_DATASOURCE_PASSWORD:ptmatch1234}
+        driver-class-name: org.postgresql.Driver
         hikari:
             maximum-pool-size: 20
     jpa:
@@ -12,6 +12,7 @@ spring:
         properties:
             hibernate:
                 show_sql: false
+        database-platform: org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect
 
 security:
     jwt:
