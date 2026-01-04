@@ -11,7 +11,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -41,8 +40,7 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -72,8 +70,7 @@ public class Product extends BaseEntity {
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
-            int sessionCount
-    ) {
+            int sessionCount) {
         this.trainerProfile = trainerProfile;
         this.title = title;
         this.description = description;
@@ -90,8 +87,7 @@ public class Product extends BaseEntity {
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
-            int sessionCount
-    ) {
+            int sessionCount) {
         return new Product(trainerProfile, title, description, category, pricePerSession, sessionCount);
     }
 
@@ -100,8 +96,7 @@ public class Product extends BaseEntity {
             String description,
             ProductCategory category,
             BigDecimal pricePerSession,
-            int sessionCount
-    ) {
+            int sessionCount) {
         this.title = title;
         this.description = description;
         this.category = category;

@@ -32,7 +32,7 @@ public class Matching extends BaseEntity {
     @JoinColumn(name = "trainer_profile_id", nullable = false)
     private TrainerProfile trainerProfile;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String message;
 
     @Enumerated(EnumType.STRING)
