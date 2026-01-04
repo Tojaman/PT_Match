@@ -70,18 +70,6 @@ public class TrainerProfileController {
         return ResponseEntity.ok(ApiResponse.success(clusters));
     }
 
-    @Operation(summary = "최적화된 지도 클러스터 조회", description = "비정규화된 컬럼을 이용한 빠른 클러스터 조회")
-    @GetMapping("/map/clusters-optimized")
-    public ResponseEntity<ApiResponse<List<MapClusterResponse>>> getMapClustersOptimized(
-            @RequestParam double minLat,
-            @RequestParam double maxLat,
-            @RequestParam double minLon,
-            @RequestParam double maxLon) {
-        List<MapClusterResponse> clusters = trainerProfileService.getMapClustersOptimized(minLat, maxLat, minLon,
-                maxLon);
-        return ResponseEntity.ok(ApiResponse.success(clusters));
-    }
-
     @Operation(summary = "내 트레이너 프로필 조회", description = "트레이너 자신의 상세 정보를 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상세 조회 성공")
     @GetMapping("/me")
