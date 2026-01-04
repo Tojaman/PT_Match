@@ -50,7 +50,7 @@ public class Location {
         return new Location(LocationType.SUBWAY, name, hint, address, latitude, longitude);
     }
 
-    public static Location createAddress(String name, String address, double latitude, double longitude) {
-        return new Location(LocationType.ADDRESS, name, null, address, latitude, longitude);
+    public static Location createDistrict(String name, String address, double latitude, double longitude) {
+        return new Location(LocationType.DISTRICT, name, null, address, latitude, longitude);
     }
 }
