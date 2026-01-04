@@ -7,6 +7,7 @@ import com.solo.ptmatch.product.presentation.response.PresignedUrlResponse;
 import com.solo.ptmatch.trainer.application.TrainerProfileService;
 import com.solo.ptmatch.trainer.presentation.request.TrainerProfileUpsertRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
+import com.solo.ptmatch.trainer.presentation.response.MapClusterResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerProfileUpsertResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
@@ -32,11 +33,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/trainers")
-public class TrainerController {
+public class TrainerProfileController {
 
     private final TrainerProfileService trainerProfileService;
 
-    @Operation(summary = "트레이너 목록 조회", description = "필터 및 정렬 조건으로 트레이너 목록을 조회한다")
+    @Operation(summary = "지하철 역, 법정동, 헬스장 이름으로 검색", description = "명확한 타입 기반 검색")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "목록 조회 성공")
     @GetMapping
     public ResponseEntity<ApiResponse<List<TrainerSummaryResponse>>> getTrainers(
@@ -45,6 +46,40 @@ public class TrainerController {
         Page<TrainerSummaryResponse> response = trainerProfileService.getTrainerSummaries(trainerSearchRequest,
                 pageable);
         return ResponseEntity.ok(ApiResponse.success(response.getContent(), PageResponse.from(response)));
+    }
+
+    @Operation(summary = "지도 트레이너 탐색", description = "지도 영역 내 트레이너 목록 조회")
+    @GetMapping("/map/markers")
+    public ResponseEntity<ApiResponse<List<TrainerSummaryResponse>>> getMapTrainers(
+            @RequestParam double minLat,
+            @RequestParam double maxLat,
+            @RequestParam double minLon,
+            @RequestParam double maxLon) {
+        List<TrainerSummaryResponse> trainers = trainerProfileService.getMapTrainers(minLat, maxLat, minLon, maxLon);
+        return ResponseEntity.ok(ApiResponse.success(trainers));
+    }
+
+    @Operation(summary = "지도 클러스터 조회", description = "영역 내 법정동별 트레이너 수 집계 (줌 아웃 시 사용)")
+    @GetMapping("/map/clusters")
+    public ResponseEntity<ApiResponse<List<MapClusterResponse>>> getMapClusters(
+            @RequestParam double minLat,
+            @RequestParam double maxLat,
+            @RequestParam double minLon,
+            @RequestParam double maxLon) {
+        List<MapClusterResponse> clusters = trainerProfileService.getMapClusters(minLat, maxLat, minLon, maxLon);
+        return ResponseEntity.ok(ApiResponse.success(clusters));
+    }
+
+    @Operation(summary = "최적화된 지도 클러스터 조회", description = "비정규화된 컬럼을 이용한 빠른 클러스터 조회")
+    @GetMapping("/map/clusters-optimized")
+    public ResponseEntity<ApiResponse<List<MapClusterResponse>>> getMapClustersOptimized(
+            @RequestParam double minLat,
+            @RequestParam double maxLat,
+            @RequestParam double minLon,
+            @RequestParam double maxLon) {
+        List<MapClusterResponse> clusters = trainerProfileService.getMapClustersOptimized(minLat, maxLat, minLon,
+                maxLon);
+        return ResponseEntity.ok(ApiResponse.success(clusters));
     }
 
     @Operation(summary = "내 트레이너 프로필 조회", description = "트레이너 자신의 상세 정보를 조회한다")
