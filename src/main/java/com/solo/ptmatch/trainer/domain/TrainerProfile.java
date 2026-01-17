@@ -1,6 +1,7 @@
 package com.solo.ptmatch.trainer.domain;
 
 import com.solo.ptmatch.common.BaseEntity;
+import com.solo.ptmatch.common.util.S2Util;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.*;
 import org.locationtech.jts.geom.Coordinate;
@@ -15,6 +16,7 @@ import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import ch.hsr.geohash.GeoHash;
 
 @Entity
 @Getter
@@ -56,6 +58,12 @@ public class TrainerProfile extends BaseEntity {
 
     @Column(name = "district_code", length = 10)
     private String districtCode;
+
+    @Column(name = "geo_hash", length = 12)
+    private String geoHash;
+
+    @Column(name = "s2_cell_id")
+    private Long s2CellId;
 
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
 
@@ -101,6 +109,8 @@ public class TrainerProfile extends BaseEntity {
         this.gymLatitude = gymLatitude;
         this.gymLongitude = gymLongitude;
         this.location = createPoint(gymLongitude, gymLatitude);
+        this.geoHash = calculateGeoHash(gymLongitude, gymLatitude, 8);
+        this.s2CellId = S2Util.calculateS2CellId(gymLatitude, gymLongitude);
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
         this.averageRating = DEFAULT_RATING;
@@ -140,6 +150,8 @@ public class TrainerProfile extends BaseEntity {
         this.gymLatitude = gymLatitude;
         this.gymLongitude = gymLongitude;
         this.location = createPoint(gymLongitude, gymLatitude);
+        this.geoHash = calculateGeoHash(gymLongitude, gymLatitude, 8);
+        this.s2CellId = S2Util.calculateS2CellId(gymLatitude, gymLongitude);
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
     }
@@ -147,6 +159,13 @@ public class TrainerProfile extends BaseEntity {
     public void replaceSpecialties(Set<Specialty> specialties) {
         this.specialties.clear();
         this.specialties.addAll(specialties);
+    }
+
+    /**
+     * S2 Cell ID 업데이트 (마이그레이션용)
+     */
+    public void updateS2CellId(Long s2CellId) {
+        this.s2CellId = s2CellId;
     }
 
     public void increaseLikes() {
@@ -204,5 +223,9 @@ public class TrainerProfile extends BaseEntity {
 
     private static Point createPoint(double longitude, double latitude) {
         return GEOMETRY_FACTORY.createPoint(new Coordinate(longitude, latitude));
+    }
+
+    private static String calculateGeoHash(double longitude, double latitude, int precision) {
+        return GeoHash.geoHashStringWithCharacterPrecision(latitude, longitude, precision);
     }
 }

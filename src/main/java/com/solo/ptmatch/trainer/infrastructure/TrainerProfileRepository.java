@@ -1,8 +1,6 @@
 package com.solo.ptmatch.trainer.infrastructure;
 
-import com.solo.ptmatch.trainer.domain.Specialty;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
-
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -11,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, Long> {
+public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, Long>, TrainerProfileRepositoryCustom {
 
     Optional<TrainerProfile> findByUserId(Long trainerId);
 
@@ -24,6 +22,9 @@ public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, 
 
     // 위치 자동완성용 헬스장 이름 prefix 검색
     List<TrainerProfile> findByGymNameStartingWithOrderByGymName(String gymNamePrefix);
+
+    // S2 Cell ID 목록으로 트레이너 조회 (성능 비교용)
+    List<TrainerProfile> findByS2CellIdIn(List<Long> cellIds);
 
     // ST_DWithin 기반 반경 검색
     @Query(value = """
@@ -69,24 +70,30 @@ public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, 
             @Param("districtCode") String districtCode,
             Pageable pageable);
 
-    // 줌 레벨에 따른 법정동별 트레이너 수 집계
+    // ST_SnapToGrid 기반 클러스터링 (BETWEEN 조건 + PostGIS ST_SnapToGrid 함수)
     @Query(value = """
-            SELECT ld.code as districtCode, ld.name as districtName,
-                   ST_Y(ST_Centroid(ld.boundary)) as latitude,
-                   ST_X(ST_Centroid(ld.boundary)) as longitude,
-                   COUNT(t.trainer_profile_id) as trainerCount
-            FROM legal_districts ld
-            JOIN trainer_profiles t ON ld.code = t.district_code
-            WHERE ST_Intersects(
-                ld.boundary,
-                ST_MakeEnvelope(:minLon, :minLat, :maxLon, :maxLat, 4326)
-            )
-            GROUP BY ld.code, ld.name
+            SELECT
+                gridX,
+                gridY,
+                AVG(gym_latitude) as latitude,
+                AVG(gym_longitude) as longitude,
+                COUNT(*) as trainerCount
+            FROM (
+                SELECT
+                    gym_latitude,
+                    gym_longitude,
+                    ST_X(ST_SnapToGrid(location, :gridSize)) as gridX,
+                    ST_Y(ST_SnapToGrid(location, :gridSize)) as gridY
+                FROM trainer_profiles
+                WHERE gym_latitude BETWEEN :minLat AND :maxLat
+                  AND gym_longitude BETWEEN :minLon AND :maxLon
+            ) sub
+            GROUP BY gridX, gridY
             """, nativeQuery = true)
-    List<MapClusterProjection> findDistrictClustersByDistrictCode(
+    List<GridClusterProjection> findSnapToGridClustersBetween(
             @Param("minLon") double minLon,
             @Param("minLat") double minLat,
             @Param("maxLon") double maxLon,
-            @Param("maxLat") double maxLat);
-
+            @Param("maxLat") double maxLat,
+            @Param("gridSize") double gridSize);
 }

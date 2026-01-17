@@ -1,10 +1,10 @@
 package com.solo.ptmatch.location.infrastructure;
 
-import com.solo.ptmatch.location.domain.LegalDistrict;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.solo.ptmatch.location.domain.LegalDistrict;
+
 import java.util.List;
-import java.util.Optional;
 
 public interface LegalDistrictRepository extends JpaRepository<LegalDistrict, String> {
 
