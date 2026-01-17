@@ -46,9 +46,9 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/me/verification").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/trainers/me").hasRole("TRAINER") // ID 와일드카드보다 먼저 선언하여 보호
+                        .requestMatchers(HttpMethod.GET, "/api/map/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/trainers", "/api/trainers/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/locations/search").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health", "/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS Preflight 요청(OPTIONS)은 인증 없이 허용
                         .requestMatchers(HttpMethod.POST, "/api/trainers/me", "/api/products/", "/api/products/{productId}").hasRole("TRAINER")

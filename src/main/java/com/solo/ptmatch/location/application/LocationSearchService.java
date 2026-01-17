@@ -4,7 +4,7 @@ import com.solo.ptmatch.location.domain.LegalDistrict;
 import com.solo.ptmatch.location.domain.Location;
 import com.solo.ptmatch.location.infrastructure.LegalDistrictRepository;
 import com.solo.ptmatch.location.infrastructure.LocationRepository;
-import com.solo.ptmatch.location.presentation.dto.LocationSearchResponse;
+import com.solo.ptmatch.location.presentation.response.LocationSearchResponse;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import lombok.RequiredArgsConstructor;
