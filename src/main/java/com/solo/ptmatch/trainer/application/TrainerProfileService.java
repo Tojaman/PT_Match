@@ -51,6 +51,7 @@ public class TrainerProfileService {
     private final TrainerImageRepository trainerImageRepository;
     private final GymImageRepository gymImageRepository;
     private final ObjectStorageService objectStorageService;
+    private final  TrainerCellCacheService trainerCellCacheService;
 
     @Transactional(readOnly = true)
     public Page<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request, Pageable pageable) {
@@ -136,6 +137,8 @@ public class TrainerProfileService {
 
         TrainerProfile profile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
+        
+        Long oldCellId = profile.getS2CellId();
 
         profile.updateProfile(
                 request.bio(),
@@ -147,6 +150,11 @@ public class TrainerProfileService {
                 request.gymLongitude(),
                 request.trainerImages().get(0).imageUrl(), // 첫 번째 이미지 썸네일로 설정
                 request.pricePerSession());
+        
+        trainerCellCacheService.invalidateCell(oldCellId); // 기존 캐시 삭제
+        if (!oldCellId.equals(profile.getS2CellId())) { // 다른 셀로 이동했다면, 해당 셀도 캐시 삭제
+            trainerCellCacheService.invalidateCell(profile.getS2CellId());
+        }
 
         // 프로필 수정 시 기존 자격증 삭제 후 재등록
         certificationRepository.deleteByTrainerProfileId(profile.getId());
