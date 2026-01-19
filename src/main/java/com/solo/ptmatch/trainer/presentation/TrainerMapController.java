@@ -88,4 +88,31 @@ public class TrainerMapController {
                 zoomLevel);
         return ResponseEntity.ok(ApiResponse.success(clusters));
     }
+
+    // ==================== Redis 캐시 적용 API ====================
+
+    @Operation(summary = "지도 트레이너 마커 조회 (S2 Cell ID + Redis)", description = "Redis MGET 배치 조회 기반 캐시 적용 트레이너 목록 조회")
+    @GetMapping("/markers-s2-cached")
+    public ResponseEntity<ApiResponse<List<TrainerSummaryResponse>>> getMapTrainersS2Cached(
+            @RequestParam double minLat,
+            @RequestParam double maxLat,
+            @RequestParam double minLon,
+            @RequestParam double maxLon) {
+        List<TrainerSummaryResponse> trainers = trainerMapService.getMapTrainersMarkers(minLat, maxLat, minLon,
+                maxLon);
+        return ResponseEntity.ok(ApiResponse.success(trainers));
+    }
+
+    @Operation(summary = "S2 Geometry 기반 클러스터 조회 (Redis)", description = "Redis 캐시 적용 + Java 집계 기반 트레이너 클러스터링")
+    @GetMapping("/clusters-s2-cached")
+    public ResponseEntity<ApiResponse<List<S2ClusterResponse>>> getMapClustersS2Cached(
+            @RequestParam double minLat,
+            @RequestParam double maxLat,
+            @RequestParam double minLon,
+            @RequestParam double maxLon,
+            @RequestParam int zoomLevel) {
+        List<S2ClusterResponse> clusters = trainerMapService.getMapClustersS2Cached(minLat, maxLat, minLon, maxLon,
+                zoomLevel);
+        return ResponseEntity.ok(ApiResponse.success(clusters));
+    }
 }
