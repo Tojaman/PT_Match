@@ -16,7 +16,6 @@ import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import ch.hsr.geohash.GeoHash;
 
 @Entity
 @Getter
@@ -58,9 +57,6 @@ public class TrainerProfile extends BaseEntity {
 
     @Column(name = "district_code", length = 10)
     private String districtCode;
-
-    @Column(name = "geo_hash", length = 12)
-    private String geoHash;
 
     @Column(name = "s2_cell_id")
     private Long s2CellId;
@@ -109,7 +105,6 @@ public class TrainerProfile extends BaseEntity {
         this.gymLatitude = gymLatitude;
         this.gymLongitude = gymLongitude;
         this.location = createPoint(gymLongitude, gymLatitude);
-        this.geoHash = calculateGeoHash(gymLongitude, gymLatitude, 8);
         this.s2CellId = S2Util.calculateS2CellId(gymLatitude, gymLongitude);
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
@@ -150,7 +145,6 @@ public class TrainerProfile extends BaseEntity {
         this.gymLatitude = gymLatitude;
         this.gymLongitude = gymLongitude;
         this.location = createPoint(gymLongitude, gymLatitude);
-        this.geoHash = calculateGeoHash(gymLongitude, gymLatitude, 8);
         this.s2CellId = S2Util.calculateS2CellId(gymLatitude, gymLongitude);
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
@@ -223,9 +217,5 @@ public class TrainerProfile extends BaseEntity {
 
     private static Point createPoint(double longitude, double latitude) {
         return GEOMETRY_FACTORY.createPoint(new Coordinate(longitude, latitude));
-    }
-
-    private static String calculateGeoHash(double longitude, double latitude, int precision) {
-        return GeoHash.geoHashStringWithCharacterPrecision(latitude, longitude, precision);
     }
 }
