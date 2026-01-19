@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public class TrainerCellCacheService {
 
     private static final String CACHE_KEY_PREFIX = "trainer:cell:14:";
-    private static final long TTL_HOURS = 1;
+    private static final long TTL_HOURS = 24;
 
     private final RedisTemplate<String, List<TrainerSummaryResponse>> trainerCacheTemplate;
 
