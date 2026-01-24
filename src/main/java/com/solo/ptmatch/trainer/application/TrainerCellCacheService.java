@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
+import org.springframework.data.redis.core.StringRedisTemplate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +17,11 @@ import java.util.concurrent.TimeUnit;
 public class TrainerCellCacheService {
 
     private static final String CACHE_KEY_PREFIX = "trainer:cell:14:";
+    private static final String COUNT_KEY_PREFIX = "trainer:cell:count:14:";
     private static final long TTL_HOURS = 24;
 
     private final RedisTemplate<String, List<TrainerSummaryResponse>> trainerCacheTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     // 캐시 조회
     public Map<Long, List<TrainerSummaryResponse>> getTrainersByCells(List<Long> cellIds) {
@@ -55,9 +57,18 @@ public class TrainerCellCacheService {
             return;
         }
 
-        String key = CACHE_KEY_PREFIX + cellId;
-        trainerCacheTemplate.opsForValue().set(key, trainers, TTL_HOURS, TimeUnit.HOURS);
-        log.info("✅ Cell {}에 대해 {}명의 트레이너 캐시 저장 완료", cellId, trainers.size());
+        String dataKey = CACHE_KEY_PREFIX + cellId;
+        String countKey = COUNT_KEY_PREFIX + cellId;
+
+        try {
+            trainerCacheTemplate.opsForValue().set(dataKey, trainers, TTL_HOURS, TimeUnit.HOURS);
+            stringRedisTemplate.opsForValue().set(countKey, String.valueOf(trainers.size()), TTL_HOURS, TimeUnit.HOURS);
+        } catch (Exception e) {
+            trainerCacheTemplate.delete(dataKey);
+            stringRedisTemplate.delete(countKey);
+            // 예외 전파 방지
+            log.warn("캐시 저장 실패 (cellId: {}): {}", cellId, e.getMessage());
+        }
     }
 
     // 캐시 무효화 (수정/삭제)
@@ -66,8 +77,52 @@ public class TrainerCellCacheService {
             return;
         }
 
-        String key = CACHE_KEY_PREFIX + cellId;
-        trainerCacheTemplate.delete(key);
-        log.debug("Cell {} 캐시 무효화 완료", cellId);
+        String dataKey = CACHE_KEY_PREFIX + cellId;
+        String countKey = COUNT_KEY_PREFIX + cellId;
+
+        try {
+            trainerCacheTemplate.delete(dataKey);
+            stringRedisTemplate.delete(countKey);
+        } catch (Exception e) {
+            // 예외 전파 방지
+            log.warn("캐시 삭제 실패 (cellId: {}): {}", cellId, e.getMessage());
+        }
+    }
+
+    // 클러스터 조회 
+    public Map<Long, Integer> getClusterCountsByCells(List<Long> cellIds) {
+        if (cellIds == null || cellIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<String> keys = cellIds.stream()
+                .map(id -> COUNT_KEY_PREFIX + id)
+                .toList();
+
+        List<String> counts = stringRedisTemplate.opsForValue().multiGet(keys);
+
+        Map<Long, Integer> result = new HashMap<>();
+        if (counts != null) {
+            for (int i = 0; i < cellIds.size(); i++) {
+                if (counts.get(i) != null) {
+                    result.put(cellIds.get(i), Integer.parseInt(counts.get(i)));
+                }
+            }
+        }
+        return result;
+    }
+
+    // 클러스터 저장
+    public void cacheCount(Long cellId, int count) {
+        if (cellId == null) {
+            return;
+        }
+
+        String key = COUNT_KEY_PREFIX + cellId;
+        stringRedisTemplate.opsForValue().set(
+                key,
+                String.valueOf(count),
+                TTL_HOURS,
+                TimeUnit.HOURS);
     }
 }
