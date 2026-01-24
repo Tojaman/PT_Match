@@ -11,8 +11,7 @@ import org.locationtech.jts.geom.PrecisionModel;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashSet;
-import java.util.Set;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,16 +39,16 @@ public class TrainerProfile extends BaseEntity {
     @Column(name = "career_years", nullable = false)
     private int careerYears;
 
-    private String gymName;
+    private String facilityName;
 
-    @Column(name = "gym_address", nullable = false)
-    private String gymAddress;
+    @Column(name = "facility_address", nullable = false)
+    private String facilityAddress;
 
-    @Column(name = "gym_latitude", nullable = false)
-    private double gymLatitude;
+    @Column(nullable = false)
+    private double latitude;
 
-    @Column(name = "gym_longitude", nullable = false)
-    private double gymLongitude;
+    @Column(nullable = false)
+    private double longitude;
 
     // PostGIS Point (SRID 4326 = WGS84)
     @Column(columnDefinition = "geometry(Point, 4326)")
@@ -63,11 +62,9 @@ public class TrainerProfile extends BaseEntity {
 
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "trainer_profile_specialties", joinColumns = @JoinColumn(name = "trainer_profile_id"))
     @Enumerated(EnumType.STRING)
-    @Column(name = "specialty", nullable = false, length = 30)
-    private Set<Specialty> specialties = new HashSet<>();
+    @Column(name = "sport_type", nullable = false, length = 30)
+    private SportType sportType;
 
     @Column(name = "profile_image_url")
     private String profileImageUrl;
@@ -88,24 +85,24 @@ public class TrainerProfile extends BaseEntity {
             User user,
             String bio,
             int careerYears,
-            Set<Specialty> specialties,
-            String gymName,
-            String gymAddress,
-            double gymLatitude,
-            double gymLongitude,
+            SportType sportType,
+            String facilityName,
+            String facilityAddress,
+            double latitude,
+            double longitude,
             String profileImageUrl,
             Integer pricePerSession) {
         this.user = user;
         this.bio = bio;
         validateCareerYears(careerYears);
         this.careerYears = careerYears;
-        this.specialties = new HashSet<>(specialties);
-        this.gymName = gymName;
-        this.gymAddress = gymAddress;
-        this.gymLatitude = gymLatitude;
-        this.gymLongitude = gymLongitude;
-        this.location = createPoint(gymLongitude, gymLatitude);
-        this.s2CellId = S2Util.calculateS2CellId(gymLatitude, gymLongitude);
+        this.sportType = sportType;
+        this.facilityName = facilityName;
+        this.facilityAddress = facilityAddress;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.location = createPoint(longitude, latitude);
+        this.s2CellId = S2Util.calculateS2CellId(latitude, longitude);
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
         this.averageRating = DEFAULT_RATING;
@@ -115,44 +112,39 @@ public class TrainerProfile extends BaseEntity {
             User user,
             String bio,
             int careerYears,
-            Set<Specialty> specialties,
-            String gymName,
-            String gymAddress,
-            double gymLatitude,
-            double gymLongitude,
+            SportType sportType,
+            String facilityName,
+            String facilityAddress,
+            double latitude,
+            double longitude,
             String profileImageUrl,
             Integer pricePerSession) {
-        return new TrainerProfile(user, bio, careerYears, specialties, gymName, gymAddress, gymLatitude, gymLongitude,
+        return new TrainerProfile(user, bio, careerYears, sportType, facilityName, facilityAddress, latitude, longitude,
                 profileImageUrl, pricePerSession);
     }
 
     public void updateProfile(
             String bio,
             int careerYears,
-            Set<Specialty> specialties,
-            String gymName,
-            String gymAddress,
-            double gymLatitude,
-            double gymLongitude,
+            SportType sportType,
+            String facilityName,
+            String facilityAddress,
+            double latitude,
+            double longitude,
             String profileImageUrl,
             Integer pricePerSession) {
         this.bio = bio;
         validateCareerYears(careerYears);
         this.careerYears = careerYears;
-        replaceSpecialties(specialties);
-        this.gymAddress = gymAddress;
-        this.gymName = gymName;
-        this.gymLatitude = gymLatitude;
-        this.gymLongitude = gymLongitude;
-        this.location = createPoint(gymLongitude, gymLatitude);
-        this.s2CellId = S2Util.calculateS2CellId(gymLatitude, gymLongitude);
+        this.sportType = sportType;
+        this.facilityAddress = facilityAddress;
+        this.facilityName = facilityName;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.location = createPoint(longitude, latitude);
+        this.s2CellId = S2Util.calculateS2CellId(latitude, longitude);
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
-    }
-
-    public void replaceSpecialties(Set<Specialty> specialties) {
-        this.specialties.clear();
-        this.specialties.addAll(specialties);
     }
 
     /**

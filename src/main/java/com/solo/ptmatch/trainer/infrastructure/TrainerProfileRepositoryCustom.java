@@ -1,10 +1,11 @@
 package com.solo.ptmatch.trainer.infrastructure;
 
 import com.solo.ptmatch.common.util.S2CellRange;
+import com.solo.ptmatch.trainer.domain.SportType;
 import java.util.List;
 import java.util.Map;
 
 public interface TrainerProfileRepositoryCustom {
 
-    Map<Long, Long> countTrainersByCellRanges(List<S2CellRange> ranges);
+    Map<Long, Long> countTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges);
 }

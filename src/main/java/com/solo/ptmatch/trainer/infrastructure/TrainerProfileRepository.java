@@ -1,5 +1,6 @@
 package com.solo.ptmatch.trainer.infrastructure;
 
+import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import java.util.List;
 import java.util.Optional;
@@ -13,15 +14,13 @@ public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, 
 
     Optional<TrainerProfile> findByUserId(Long trainerId);
 
-    Page<TrainerProfile> findByGymName(String gymName, Pageable pageable);
+    Page<TrainerProfile> findByFacilityName(String facilityName, Pageable pageable);
 
-    // Bounding Box 반경 검색
-    List<TrainerProfile> findByGymLatitudeBetweenAndGymLongitudeBetween(
-            double minLat, double maxLat,
-            double minLng, double maxLng);
+    // 위치 자동완성용 시설 이름 prefix 검색
+    List<TrainerProfile> findByFacilityNameStartingWith(String facilityNamePrefix);
 
-    // 위치 자동완성용 헬스장 이름 prefix 검색
-    List<TrainerProfile> findByGymNameStartingWithOrderByGymName(String gymNamePrefix);
+    // S2 Cell ID 목록으로 트레이너 조회 (종목별)
+    List<TrainerProfile> findBySportTypeAndS2CellIdIn(SportType sportType, List<Long> cellIds);
 
     // S2 Cell ID 목록으로 트레이너 조회 (성능 비교용)
     List<TrainerProfile> findByS2CellIdIn(List<Long> cellIds);

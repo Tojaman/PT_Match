@@ -10,7 +10,7 @@ public record MonthlyScheduleResponse(
         LocalDateTime startTime,
         LocalDateTime endTime,
         String sessionStatus,
-        String gym) {
+        String facility) {
 
     public static MonthlyScheduleResponse from(MatchingSchedule schedule) {
         return new MonthlyScheduleResponse(
@@ -20,6 +20,6 @@ public record MonthlyScheduleResponse(
                 schedule.getStartTime(),
                 schedule.getEndTime(),
                 schedule.getSessionStatus().name(),
-                schedule.getMatching().getTrainerProfile().getGymAddress());
+                schedule.getMatching().getTrainerProfile().getFacilityAddress());
     }
 }

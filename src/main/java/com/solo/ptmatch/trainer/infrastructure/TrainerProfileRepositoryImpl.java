@@ -1,6 +1,9 @@
+
+
 package com.solo.ptmatch.trainer.infrastructure;
 
 import com.solo.ptmatch.common.util.S2CellRange;
+import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -23,8 +26,8 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
     private EntityManager entityManager;
 
     @Override
-    public Map<Long, Long> countTrainersByCellRanges(List<S2CellRange> ranges) {
-        if (ranges == null || ranges.isEmpty()) {
+    public Map<Long, Long> countTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges) {
+        if (sportType == null || ranges == null || ranges.isEmpty()) {
             return Map.of();
         }
 
@@ -37,8 +40,8 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
                 root.get("s2CellId"),
                 cb.count(root));
 
-        // WHERE (s2_cell_id BETWEEN min1 AND max1) OR (s2_cell_id BETWEEN min2 AND
-        // max2) ...
+        // WHERE sport_type = :sportType AND ((s2_cell_id BETWEEN min1 AND max1) OR
+        // (s2_cell_id BETWEEN min2 AND max2) ...)
         List<Predicate> orPredicates = new ArrayList<>();
         for (S2CellRange range : ranges) {
             orPredicates.add(cb.between(
@@ -46,7 +49,12 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
                     range.minId(),
                     range.maxId()));
         }
-        query.where(cb.or(orPredicates.toArray(new Predicate[0])));
+
+        // sportType 조건과 range 조건을 AND로 결합
+        Predicate sportTypePredicate = cb.equal(root.get("sportType"), sportType);
+        Predicate rangePredicate = cb.or(orPredicates.toArray(new Predicate[0]));
+        query.where(cb.and(sportTypePredicate, rangePredicate));
+
         query.groupBy(root.get("s2CellId"));
 
         // Map으로 변환
