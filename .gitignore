@@ -53,4 +53,8 @@ application-db.yml
 .env
 hq
 /src/main/resources/sql
+/src/main/resources/db
 /src/test/
+/법정동 경계 데이터
+/sql
+/docs
