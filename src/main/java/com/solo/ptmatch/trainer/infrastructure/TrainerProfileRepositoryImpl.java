@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -21,23 +23,22 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
     private EntityManager entityManager;
 
     @Override
-    public List<LatLngProjection> findLatLngByS2CellRangesCriteria(List<S2CellRange> ranges) {
+    public Map<Long, Long> countTrainersByCellRanges(List<S2CellRange> ranges) {
         if (ranges == null || ranges.isEmpty()) {
-            return List.of();
+            return Map.of();
         }
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<LatLngProjection> query = cb.createQuery(LatLngProjection.class);
+        CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
         Root<TrainerProfile> root = query.from(TrainerProfile.class);
 
-        // SELECT gym_latitude, gym_longitude
-        query.select(cb.construct(
-                LatLngProjection.class,
-                root.get("gymLatitude"),
-                root.get("gymLongitude")));
+        // SELECT s2_cell_id, COUNT(*)
+        query.multiselect(
+                root.get("s2CellId"),
+                cb.count(root));
 
         // WHERE (s2_cell_id BETWEEN min1 AND max1) OR (s2_cell_id BETWEEN min2 AND
-        // max2) OR ...
+        // max2) ...
         List<Predicate> orPredicates = new ArrayList<>();
         for (S2CellRange range : ranges) {
             orPredicates.add(cb.between(
@@ -46,7 +47,13 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
                     range.maxId()));
         }
         query.where(cb.or(orPredicates.toArray(new Predicate[0])));
+        query.groupBy(root.get("s2CellId"));
 
-        return entityManager.createQuery(query).getResultList();
+        // Map으로 변환
+        return entityManager.createQuery(query).getResultList().stream()
+                .collect(Collectors.toMap(
+                        arr -> (Long) arr[0], // s2_cell_id
+                        arr -> (Long) arr[1] // count
+                ));
     }
 }
