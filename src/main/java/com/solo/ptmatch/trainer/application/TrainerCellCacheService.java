@@ -1,5 +1,6 @@
 package com.solo.ptmatch.trainer.application;
 
+import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,22 +17,23 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class TrainerCellCacheService {
 
-    private static final String CACHE_KEY_PREFIX = "trainer:cell:14:";
-    private static final String COUNT_KEY_PREFIX = "trainer:cell:count:14:";
+    // 캐시 키 형식: trainer:cell:{sportType}:{s2CellId}
+    private static final String CACHE_KEY_FORMAT = "trainer:cell:%s:14:%d";
+    private static final String COUNT_KEY_FORMAT = "trainer:cell:count:%s:14:%d";
     private static final long TTL_HOURS = 24;
 
     private final RedisTemplate<String, List<TrainerSummaryResponse>> trainerCacheTemplate;
     private final StringRedisTemplate stringRedisTemplate;
 
-    // 캐시 조회
-    public Map<Long, List<TrainerSummaryResponse>> getTrainersByCells(List<Long> cellIds) {
-        if (cellIds == null || cellIds.isEmpty()) {
+    // 캐시 조회 (종목별)
+    public Map<Long, List<TrainerSummaryResponse>> getTrainersByCells(SportType sportType, List<Long> cellIds) {
+        if (sportType == null || cellIds == null || cellIds.isEmpty()) {
             return Map.of();
         }
 
-        // 1. Redis 키 리스트 생성
+        // 1. Redis 키 리스트 생성 (종목별)
         List<String> keys = cellIds.stream()
-                .map(id -> CACHE_KEY_PREFIX + id)
+                .map(id -> String.format(CACHE_KEY_FORMAT, sportType.name(), id))
                 .toList();
 
         // 2. MGET 배치 조회
@@ -51,14 +53,14 @@ public class TrainerCellCacheService {
         return result;
     }
 
-    // 캐시 저장
-    public void cacheTrainersByCell(Long cellId, List<TrainerSummaryResponse> trainers) {
-        if (cellId == null || trainers == null) {
+    // 캐시 저장 (종목별)
+    public void cacheTrainersByCell(SportType sportType, Long cellId, List<TrainerSummaryResponse> trainers) {
+        if (sportType == null || cellId == null || trainers == null) {
             return;
         }
 
-        String dataKey = CACHE_KEY_PREFIX + cellId;
-        String countKey = COUNT_KEY_PREFIX + cellId;
+        String dataKey = String.format(CACHE_KEY_FORMAT, sportType.name(), cellId);
+        String countKey = String.format(COUNT_KEY_FORMAT, sportType.name(), cellId);
 
         try {
             trainerCacheTemplate.opsForValue().set(dataKey, trainers, TTL_HOURS, TimeUnit.HOURS);
@@ -71,14 +73,14 @@ public class TrainerCellCacheService {
         }
     }
 
-    // 캐시 무효화 (수정/삭제)
-    public void invalidateCell(Long cellId) {
-        if (cellId == null) {
+    // 캐시 무효화 (수정/삭제, 종목별)
+    public void invalidateCell(SportType sportType, Long cellId) {
+        if (sportType == null || cellId == null) {
             return;
         }
 
-        String dataKey = CACHE_KEY_PREFIX + cellId;
-        String countKey = COUNT_KEY_PREFIX + cellId;
+        String dataKey = String.format(CACHE_KEY_FORMAT, sportType.name(), cellId);
+        String countKey = String.format(COUNT_KEY_FORMAT, sportType.name(), cellId);
 
         try {
             trainerCacheTemplate.delete(dataKey);
@@ -89,14 +91,14 @@ public class TrainerCellCacheService {
         }
     }
 
-    // 클러스터 조회 
-    public Map<Long, Integer> getClusterCountsByCells(List<Long> cellIds) {
-        if (cellIds == null || cellIds.isEmpty()) {
+    // 클러스터 조회 (종목별)
+    public Map<Long, Integer> getClusterCountsByCells(SportType sportType, List<Long> cellIds) {
+        if (sportType == null || cellIds == null || cellIds.isEmpty()) {
             return Map.of();
         }
 
         List<String> keys = cellIds.stream()
-                .map(id -> COUNT_KEY_PREFIX + id)
+                .map(id -> String.format(COUNT_KEY_FORMAT, sportType.name(), id))
                 .toList();
 
         List<String> counts = stringRedisTemplate.opsForValue().multiGet(keys);
@@ -112,13 +114,13 @@ public class TrainerCellCacheService {
         return result;
     }
 
-    // 클러스터 저장
-    public void cacheCount(Long cellId, int count) {
-        if (cellId == null) {
+    // 클러스터 저장 (종목별)
+    public void cacheCount(SportType sportType, Long cellId, int count) {
+        if (sportType == null || cellId == null) {
             return;
         }
 
-        String key = COUNT_KEY_PREFIX + cellId;
+        String key = String.format(COUNT_KEY_FORMAT, sportType.name(), cellId);
         stringRedisTemplate.opsForValue().set(
                 key,
                 String.valueOf(count),

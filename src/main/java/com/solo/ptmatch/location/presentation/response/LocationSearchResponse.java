@@ -41,13 +41,13 @@ public record LocationSearchResponse(
 
     public static LocationSearchResponse from(TrainerProfile trainerProfile) {
         return new LocationSearchResponse(
-                "GYM",
-                trainerProfile.getGymName(),
+                "FACILITY",
+                trainerProfile.getFacilityName(),
                 null,
-                trainerProfile.getGymAddress(),
+                trainerProfile.getFacilityAddress(),
                 null,
-                trainerProfile.getGymLatitude(),
-                trainerProfile.getGymLongitude());
+                trainerProfile.getLatitude(),
+                trainerProfile.getLongitude());
     }
 
     public static LocationSearchResponse from(LegalDistrict district) {

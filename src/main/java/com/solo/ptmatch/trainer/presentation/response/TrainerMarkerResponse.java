@@ -6,27 +6,27 @@ import com.solo.ptmatch.trainer.domain.TrainerProfile;
 public record TrainerMarkerResponse(
         Long trainerId,
         String trainerName,
-        String gymName,
+        String facilityName,
         Double latitude,
         Double longitude,
         String profileImageUrl) {
     public static TrainerMarkerResponse of(
             Long trainerId,
             String trainerName,
-            String gymName,
+            String facilityName,
             Double latitude,
             Double longitude,
             String profileImageUrl) {
-        return new TrainerMarkerResponse(trainerId, trainerName, gymName, latitude, longitude, profileImageUrl);
+        return new TrainerMarkerResponse(trainerId, trainerName, facilityName, latitude, longitude, profileImageUrl);
     }
 
     public static TrainerMarkerResponse from(TrainerProfile trainerProfile) {
         return new TrainerMarkerResponse(
                 trainerProfile.getId(),
                 trainerProfile.getUser().getName(),
-                trainerProfile.getGymName(),
-                trainerProfile.getGymLatitude(),
-                trainerProfile.getGymLongitude(),
+                trainerProfile.getFacilityName(),
+                trainerProfile.getLatitude(),
+                trainerProfile.getLongitude(),
                 trainerProfile.getProfileImageUrl());
     }
 }

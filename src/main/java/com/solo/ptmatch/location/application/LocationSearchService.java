@@ -45,13 +45,13 @@ public class LocationSearchService {
             results.add(LocationSearchResponse.from(location));
         }
 
-        // 2. trainer_profiles 테이블에서 gymName 검색
-        List<TrainerProfile> gyms = trainerProfileRepository.findByGymNameStartingWithOrderByGymName(keyword.trim());
+        // 2. trainer_profiles 테이블에서 facilityName 검색
+        List<TrainerProfile> facilities = trainerProfileRepository.findByFacilityNameStartingWith(keyword.trim());
 
-        Set<String> seenGymNames = new HashSet<>();
-        for (TrainerProfile gym : gyms) {
-            if (seenGymNames.add(gym.getGymName())) {
-                results.add(LocationSearchResponse.from(gym));
+        Set<String> seenFacilityNames = new HashSet<>();
+        for (TrainerProfile facility : facilities) {
+            if (seenFacilityNames.add(facility.getFacilityName())) {
+                results.add(LocationSearchResponse.from(facility));
             }
         }
 

@@ -33,8 +33,8 @@ public class S2CellIdMigrationService {
         for (TrainerProfile profile : profiles) {
             if (profile.getS2CellId() == null) {
                 long s2CellId = S2Util.calculateS2CellId(
-                        profile.getGymLatitude(),
-                        profile.getGymLongitude());
+                        profile.getLatitude(),
+                        profile.getLongitude());
                 profile.updateS2CellId(s2CellId);
                 updatedCount++;
             }
@@ -55,8 +55,8 @@ public class S2CellIdMigrationService {
 
         for (TrainerProfile profile : profiles) {
             long s2CellId = S2Util.calculateS2CellId(
-                    profile.getGymLatitude(),
-                    profile.getGymLongitude());
+                    profile.getLatitude(),
+                    profile.getLongitude());
             profile.updateS2CellId(s2CellId);
         }
 
