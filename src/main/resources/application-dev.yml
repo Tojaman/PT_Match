@@ -13,6 +13,16 @@ spring:
             hibernate:
                 show_sql: false
         database-platform: org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect
+    data:
+        redis:
+            host: ${REDIS_HOST}
+            port: ${REDIS_PORT}
+            lettuce:
+                pool:
+                    max-active: 50    # 최대 연결 수
+                    max-idle: 20      # 유휴 연결 최대 수
+                    min-idle: 5       # 유휴 연결 최소 수
+                    max-wait: 3000ms  # 연결 대기 시간
 
 security:
     jwt:
@@ -25,3 +35,6 @@ minio:
     secret-key: ${MINIO_SECRET_KEY:minioadmin}
     presign-expiry: ${MINIO_PRESIGN_EXPIRY:15m}
     public-url: ${MINIO_PUBLIC_URL}
+
+loki:
+    url: ${LOKI_ENDPOINT}

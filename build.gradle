@@ -48,6 +48,12 @@ dependencies {
 	// PostGIS Spatial Support
 	implementation 'org.hibernate.orm:hibernate-spatial:6.4.4.Final'
 	implementation 'org.locationtech.jts:jts-core:1.19.0'
+	// S2 Geometry Library for spatial clustering
+	implementation 'com.google.geometry:s2-geometry:2.0.0'
+	
+	// Redis Cache
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 	annotationProcessor 'org.projectlombok:lombok'

@@ -24,12 +24,14 @@ management:
             type: w3c
     otlp:
         tracing: # 데이터 내보내기(OTEL)
-            endpoint: http://localhost:4318/v1/traces
+            endpoint: ${OTLP_ENDPOINT}
             transport: http
     metrics:
         distribution:
             percentiles-histogram:
                 http.server.requests: true
+        tags:
+            application: ${spring.application.name}
 
 logging:
     pattern:
