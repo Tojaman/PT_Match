@@ -47,6 +47,18 @@ public class TrainerProfileController {
                 return ResponseEntity.ok(ApiResponse.success(response.getContent(), PageResponse.from(response)));
         }
 
+        @Operation(summary = "인기 트레이너 조회", description = "위치 기반 인기 트레이너 목록 (인기도 점수 정렬)")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "인기 트레이너 조회 성공")
+        @GetMapping("/popular")
+        public ResponseEntity<ApiResponse<List<TrainerSummaryResponse>>> getPopularTrainers(
+                        @RequestParam double lat,
+                        @RequestParam double lon,
+                        @RequestParam(defaultValue = "10000") double radiusMeters,
+                        @RequestParam(defaultValue = "8") int limit) {
+                List<TrainerSummaryResponse> trainers = trainerProfileService.getPopularTrainers(lat, lon, radiusMeters, limit);
+                return ResponseEntity.ok(ApiResponse.success(trainers));
+        }
+
         @Operation(summary = "내 트레이너 프로필 조회", description = "트레이너 자신의 상세 정보를 조회한다")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상세 조회 성공")
         @GetMapping("/me")

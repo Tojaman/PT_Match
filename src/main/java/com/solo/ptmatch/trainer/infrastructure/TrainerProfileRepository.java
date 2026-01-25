@@ -25,6 +25,23 @@ public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, 
     // S2 Cell ID 목록으로 트레이너 조회 (성능 비교용)
     List<TrainerProfile> findByS2CellIdIn(List<Long> cellIds);
 
+    // 위치 기반 인기 트레이너 조회 (인기도 점수 정렬)
+    @Query(value = """
+            SELECT * FROM trainer_profiles t
+            WHERE ST_DWithin(
+                t.location,
+                ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography,
+                :radiusMeters
+            )
+            ORDER BY (t.likes_count * 1.0 + t.review_count * 2.0 + t.average_rating * 10) DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<TrainerProfile> findPopularTrainersNearby(
+            @Param("lat") double latitude,
+            @Param("lon") double longitude,
+            @Param("radiusMeters") double radiusMeters,
+            @Param("limit") int limit);
+
     // ST_DWithin 기반 반경 검색
     @Query(value = """
             SELECT * FROM trainer_profiles t
