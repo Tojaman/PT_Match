@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import com.solo.ptmatch.trainer.domain.TrainerProfile;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -18,8 +19,8 @@ import java.util.concurrent.TimeUnit;
 public class TrainerCellCacheService {
 
     // 캐시 키 형식: trainer:cell:{sportType}:{s2CellId}
-    private static final String CACHE_KEY_FORMAT = "trainer:cell:%s:14:%d";
-    private static final String COUNT_KEY_FORMAT = "trainer:cell:count:%s:14:%d";
+    private static final String CACHE_KEY_FORMAT = "trainer:cell:%s:%d";
+    private static final String COUNT_KEY_FORMAT = "trainer:cell:count:%s:%d";
     private static final long TTL_HOURS = 24;
 
     private final RedisTemplate<String, List<TrainerSummaryResponse>> trainerCacheTemplate;
@@ -126,5 +127,68 @@ public class TrainerCellCacheService {
                 String.valueOf(count),
                 TTL_HOURS,
                 TimeUnit.HOURS);
+    }
+
+    // 캐시 미스된 트레이너들을 셀별로 그룹화하여 캐시 저장
+    // 빈 셀도 함께 캐싱하여 반복 조회 방지
+    public Map<Long, List<TrainerSummaryResponse>> cacheMissedTrainers(SportType sportType, List<TrainerProfile> missedTrainers, List<Long> cacheMissCellIds) {
+
+        if (sportType == null || missedTrainers == null || cacheMissCellIds == null) {
+            return Map.of();
+        }
+
+        Map<Long, List<TrainerSummaryResponse>> result = new HashMap<>();
+
+        // 1. 셀별로 그룹화하여 캐시 저장
+        Map<Long, List<TrainerProfile>> missedTrainersByCell = missedTrainers.stream()
+                .collect(java.util.stream.Collectors
+                        .groupingBy(TrainerProfile::getS2CellId));
+
+        for (Map.Entry<Long, List<TrainerProfile>> entry : missedTrainersByCell.entrySet()) {
+            List<TrainerSummaryResponse> responses = entry.getValue().stream()
+                    .map(TrainerSummaryResponse::from)
+                    .toList();
+            cacheTrainersByCell(sportType, entry.getKey(), responses);
+            result.put(entry.getKey(), responses);
+        }
+
+        // 2. 빈 셀도 캐시 저장 (반복 조회 방지, 종목별)
+        // 저장하지 않으면 빈 셀은 항상 DB 조회 발생하기 때문
+        for (Long missedCellId : cacheMissCellIds) {
+            if (!result.containsKey(missedCellId)) {
+                cacheTrainersByCell(sportType, missedCellId, List.of());
+                result.put(missedCellId, List.of());
+            }
+        }
+
+        return result;
+    }
+
+    // 캐시 미스된 셀의 count를 캐싱
+    // 빈 셀도 함께 캐싱하여 반복 조회 방지
+    public Map<Long, Integer> cacheMissedCounts(SportType sportType, Map<Long, Long> dbCounts, List<Long> cacheMissCellIds) {
+
+        if (sportType == null || dbCounts == null || cacheMissCellIds == null) {
+            return Map.of();
+        }
+
+        Map<Long, Integer> result = new HashMap<>();
+
+        // 1. DB 조회 결과 캐싱
+        for (Map.Entry<Long, Long> entry : dbCounts.entrySet()) {
+            int count = entry.getValue().intValue();
+            cacheCount(sportType, entry.getKey(), count);
+            result.put(entry.getKey(), count);
+        }
+
+        // 2. 빈 셀도 캐싱 (반복 조회 방지, 종목별)
+        for (Long missedCellId : cacheMissCellIds) {
+            if (!result.containsKey(missedCellId)) {
+                cacheCount(sportType, missedCellId, 0);
+                result.put(missedCellId, 0);
+            }
+        }
+
+        return result;
     }
 }
