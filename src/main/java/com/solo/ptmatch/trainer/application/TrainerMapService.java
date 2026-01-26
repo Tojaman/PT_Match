@@ -46,26 +46,14 @@ public class TrainerMapService {
         List<Long> missCells = cellIdLongs.stream()
                 .filter(id -> !cacheHits.containsKey(id))
                 .toList();
-
         if (!missCells.isEmpty()) {
             // BETWEEN + Merge 최적화 (종목별 필터링)
             List<S2CellRange> ranges = S2Util.mergeCellIdsToRanges(missCells);
             Map<Long, Long> dbCounts = trainerProfileRepository.countTrainersByCellRanges(sportType, ranges);
 
-            // count 캐싱 (종목별)
-            for (Map.Entry<Long, Long> entry : dbCounts.entrySet()) {
-                int count = entry.getValue().intValue();
-                trainerCellCacheService.cacheCount(sportType, entry.getKey(), count);
-                cacheHits.put(entry.getKey(), count);
-            }
-
-            // 빈 셀도 캐싱 (반복 조회 방지, 종목별)
-            for (Long missCell : missCells) {
-                if (!cacheHits.containsKey(missCell)) {
-                    trainerCellCacheService.cacheCount(sportType, missCell, 0);
-                    cacheHits.put(missCell, 0);
-                }
-            }
+            // count 캐싱 (빈 셀 포함)
+            Map<Long, Integer> cachedCounts = trainerCellCacheService.cacheMissedCounts(sportType, dbCounts, missCells);
+            cacheHits.putAll(cachedCounts);
         }
 
         // 4. 클러스터 레벨로 집계
@@ -102,26 +90,9 @@ public class TrainerMapService {
             // 마커 조회는 셀 개수가 적기 때문에 BETWEEN와 IN 성능 차이 없음 -> IN 사용
             List<TrainerProfile> missedTrainers = trainerProfileRepository.findBySportTypeAndS2CellIdIn(sportType, cacheMissCellIds);
 
-            // 셀별로 그룹화하여 캐시 저장
-            Map<Long, List<TrainerProfile>> missedTrainersByCell = missedTrainers.stream()
-                    .collect(Collectors.groupingBy(TrainerProfile::getS2CellId));
-
-            for (Map.Entry<Long, List<TrainerProfile>> entry : missedTrainersByCell.entrySet()) {
-                List<TrainerSummaryResponse> responses = entry.getValue().stream()
-                        .map(TrainerSummaryResponse::from)
-                        .toList();
-                trainerCellCacheService.cacheTrainersByCell(sportType, entry.getKey(), responses);
-                cacheHits.put(entry.getKey(), responses);
-            }
-
-            // 빈 셀도 캐시 저장 (반복 조회 방지, 종목별)
-            // 저장하지 않으면 빈 셀은 항상 DB 조회 발생하기 때문
-            for (Long missedCellId : cacheMissCellIds) {
-                if (!cacheHits.containsKey(missedCellId)) {
-                    trainerCellCacheService.cacheTrainersByCell(sportType, missedCellId, List.of());
-                    cacheHits.put(missedCellId, List.of());
-                }
-            }
+            // 셀별로 그룹화하여 캐시 저장 (빈 셀 포함)
+            Map<Long, List<TrainerSummaryResponse>> cachedResults = trainerCellCacheService.cacheMissedTrainers(sportType, missedTrainers, cacheMissCellIds);
+            cacheHits.putAll(cachedResults);
         }
 
         // 5. 모든 결과 병합
