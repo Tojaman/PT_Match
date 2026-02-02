@@ -75,13 +75,12 @@ public class S2Util {
 
     // === 클러스터 ===
     // Cache Miss된 Cell ID 목록을 연속된 범위로 병합 (DB 조회 최적화)
-    public static List<S2CellRange> mergeCellIdsToRanges(List<Long> cellIds) {
-        if (cellIds == null || cellIds.isEmpty()) {
-            return List.of();
-        }
+    public static List<S2CellRange> mergeCellIdsToRanges(List<String> cellIds) {
+
 
         // Cell ID를 S2CellId로 변환 후 정렬
         List<S2CellId> cells = cellIds.stream()
+                .map(Long::valueOf)
                 .map(S2CellId::new)
                 .sorted((a, b) -> Long.compare(a.id(), b.id()))
                 .toList();

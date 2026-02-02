@@ -1,5 +1,4 @@
 
-
 package com.solo.ptmatch.trainer.infrastructure;
 
 import com.solo.ptmatch.common.util.S2CellRange;
@@ -63,5 +62,34 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
                         arr -> (Long) arr[0], // s2_cell_id
                         arr -> (Long) arr[1] // count
                 ));
+    }
+
+    @Override
+    public List<TrainerProfile> findTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges) {
+        if (sportType == null || ranges == null || ranges.isEmpty()) {
+            return List.of();
+        }
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<TrainerProfile> query = cb.createQuery(TrainerProfile.class);
+        Root<TrainerProfile> root = query.from(TrainerProfile.class);
+
+        // SELECT *
+        query.select(root);
+
+        // WHERE sport_type = :sportType AND ((s2_cell_id BETWEEN min1 AND max1) OR ...)
+        List<Predicate> orPredicates = new ArrayList<>();
+        for (S2CellRange range : ranges) {
+            orPredicates.add(cb.between(
+                    root.get("s2CellId"),
+                    range.minId(),
+                    range.maxId()));
+        }
+
+        Predicate sportTypePredicate = cb.equal(root.get("sportType"), sportType);
+        Predicate rangePredicate = cb.or(orPredicates.toArray(new Predicate[0]));
+        query.where(cb.and(sportTypePredicate, rangePredicate));
+
+        return entityManager.createQuery(query).getResultList();
     }
 }
