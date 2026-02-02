@@ -24,6 +24,10 @@ import com.solo.ptmatch.trainer.presentation.request.GymImageRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerImageRequest;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
+import com.solo.ptmatch.common.cache.enums.CacheTarget;
+import com.solo.ptmatch.common.cache.facade.CacheRouter;
+import com.solo.ptmatch.common.cache.pubsub.RedisMessagePublisher;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -31,10 +35,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -51,7 +53,8 @@ public class TrainerProfileService {
         private final TrainerImageRepository trainerImageRepository;
         private final GymImageRepository gymImageRepository;
         private final ObjectStorageService objectStorageService;
-        private final TrainerCellCacheService trainerCellCacheService;
+        private final CacheRouter cacheRouter;
+        private final RedisMessagePublisher messagePublisher;
 
         @Transactional(readOnly = true)
         public Page<TrainerSummaryResponse> getTrainerSummaries(TrainerSearchRequest request, Pageable pageable) {
@@ -100,8 +103,10 @@ public class TrainerProfileService {
         }
 
         @Transactional(readOnly = true)
-        public List<TrainerSummaryResponse> getPopularTrainers(double latitude, double longitude, double radiusMeters, int limit) {
-                List<TrainerProfile> trainers = trainerProfileRepository.findPopularTrainersNearby(latitude, longitude, radiusMeters, limit);
+        public List<TrainerSummaryResponse> getPopularTrainers(double latitude, double longitude, double radiusMeters,
+                        int limit) {
+                List<TrainerProfile> trainers = trainerProfileRepository.findPopularTrainersNearby(latitude, longitude,
+                                radiusMeters, limit);
                 return trainers.stream()
                                 .map(TrainerSummaryResponse::from)
                                 .toList();
@@ -159,9 +164,11 @@ public class TrainerProfileService {
                                 request.trainerImages().get(0).imageUrl(), // 첫 번째 이미지 썸네일로 설정
                                 request.pricePerSession());
 
-                trainerCellCacheService.invalidateCell(profile.getSportType(), oldCellId); // 기존 캐시 삭제
+                // 기존 캐시 삭제 (Layered Cache + Pub/Sub 적용)
+                evictCache(profile.getSportType().name(), String.valueOf(oldCellId));
+
                 if (!oldCellId.equals(profile.getS2CellId())) { // 다른 셀로 이동했다면, 해당 셀도 캐시 삭제
-                        trainerCellCacheService.invalidateCell(profile.getSportType(), profile.getS2CellId());
+                        evictCache(profile.getSportType().name(), String.valueOf(profile.getS2CellId()));
                 }
 
                 // 프로필 수정 시 기존 자격증 삭제 후 재등록
@@ -273,5 +280,15 @@ public class TrainerProfileService {
                 keptImages.sort(Comparator.comparingInt(GymImage::getDisplayOrder));
 
                 return keptImages;
+        }
+
+        private void evictCache(String sportType, String cellId) {
+                String key = sportType + ":" + cellId;
+                cacheRouter.evict(CacheTarget.TRAINER_COUNT, key);
+                cacheRouter.evict(CacheTarget.TRAINER_MARKER, key);
+
+                // Pub/Sub으로 변경 전파
+                messagePublisher.publish(CacheTarget.TRAINER_COUNT, key);
+                messagePublisher.publish(CacheTarget.TRAINER_MARKER, key);
         }
 }
