@@ -2,7 +2,7 @@ package com.solo.ptmatch.common.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.solo.ptmatch.common.cache.enums.CacheType;
-import com.solo.ptmatch.common.cache.enums.CacheDef;
+import com.solo.ptmatch.common.cache.enums.CacheTarget;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCache;
@@ -24,7 +24,7 @@ public class CacheConfig {
     @Primary
     public CacheManager caffeineCacheManager() {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
-        List<CaffeineCache> caches = Arrays.stream(CacheDef.values())
+        List<CaffeineCache> caches = Arrays.stream(CacheTarget.values())
                 .filter(def -> def.getType() != CacheType.GLOBAL) // LOCAL, LAYERED 캐시만 생성
                 .map(def -> new CaffeineCache(def.getName(), buildLocalCache(def)))
                 .toList();
@@ -32,7 +32,7 @@ public class CacheConfig {
         return cacheManager;
     }
 
-    private Cache<Object, Object> buildLocalCache(CacheDef def) {
+    private Cache<Object, Object> buildLocalCache(CacheTarget def) {
         return Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofSeconds(def.getTtlSeconds())).build();
     }
