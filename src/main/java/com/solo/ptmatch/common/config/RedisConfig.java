@@ -2,7 +2,7 @@ package com.solo.ptmatch.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
-import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
+import com.solo.ptmatch.trainer.presentation.response.TrainerLatLon;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -17,10 +17,10 @@ import java.util.List;
 public class RedisConfig {
 
         @Bean
-        public RedisTemplate<String, List<TrainerSummaryResponse>> trainerCacheTemplate(
+        public RedisTemplate<String, List<TrainerLatLon>> trainerCacheTemplate(
                         RedisConnectionFactory connectionFactory,
                         ObjectMapper objectMapper) {
-                RedisTemplate<String, List<TrainerSummaryResponse>> template = new RedisTemplate<>();
+                RedisTemplate<String, List<TrainerLatLon>> template = new RedisTemplate<>();
                 template.setConnectionFactory(connectionFactory);
 
                 // Key는 String으로 직렬화
@@ -30,9 +30,9 @@ public class RedisConfig {
                 // Value는 Jackson2JsonRedisSerializer로 자동 직렬화
                 // JavaType을 사용하여 List<TrainerSummaryResponse> 타입 지정
                 CollectionType listType = objectMapper.getTypeFactory()
-                                .constructCollectionType(List.class, TrainerSummaryResponse.class);
+                                .constructCollectionType(List.class, TrainerLatLon.class);
 
-                Jackson2JsonRedisSerializer<List<TrainerSummaryResponse>> serializer = new Jackson2JsonRedisSerializer<>(
+                Jackson2JsonRedisSerializer<List<TrainerLatLon>> serializer = new Jackson2JsonRedisSerializer<>(
                                 objectMapper, listType);
 
                 template.setValueSerializer(serializer);
