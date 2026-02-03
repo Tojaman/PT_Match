@@ -1,42 +1,35 @@
 package com.solo.ptmatch.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
-import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
+import com.solo.ptmatch.common.cache.pubsub.RedisMessageSubscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-import java.util.List;
 
 @Configuration
 public class RedisConfig {
 
         @Bean
-        public RedisTemplate<String, List<TrainerSummaryResponse>> trainerCacheTemplate(
+        public RedisTemplate<String, Object> cacheRedisTemplate(
                         RedisConnectionFactory connectionFactory,
                         ObjectMapper objectMapper) {
-                RedisTemplate<String, List<TrainerSummaryResponse>> template = new RedisTemplate<>();
+                RedisTemplate<String, Object> template = new RedisTemplate<>();
                 template.setConnectionFactory(connectionFactory);
 
-                // Key는 String으로 직렬화
-                template.setKeySerializer(new StringRedisSerializer());
-                template.setHashKeySerializer(new StringRedisSerializer());
+                StringRedisSerializer keySerializer = new StringRedisSerializer();
+                // 객체 타입 정보(@class)를 포함하여 직렬화
+                GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
 
-                // Value는 Jackson2JsonRedisSerializer로 자동 직렬화
-                // JavaType을 사용하여 List<TrainerSummaryResponse> 타입 지정
-                CollectionType listType = objectMapper.getTypeFactory()
-                                .constructCollectionType(List.class, TrainerSummaryResponse.class);
-
-                Jackson2JsonRedisSerializer<List<TrainerSummaryResponse>> serializer = new Jackson2JsonRedisSerializer<>(
-                                objectMapper, listType);
-
-                template.setValueSerializer(serializer);
-                template.setHashValueSerializer(serializer);
+                template.setKeySerializer(keySerializer);
+                template.setHashKeySerializer(keySerializer);
+                template.setValueSerializer(valueSerializer);
+                template.setHashValueSerializer(valueSerializer);
 
                 return template;
         }
@@ -44,5 +37,16 @@ public class RedisConfig {
         @Bean
         public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
                 return new StringRedisTemplate(connectionFactory);
+        }
+
+        @Bean
+        public RedisMessageListenerContainer redisMessageListenerContainer(
+                        RedisConnectionFactory connectionFactory,
+                        RedisMessageSubscriber subscriber) {
+
+                RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+                container.setConnectionFactory(connectionFactory);
+                container.addMessageListener(subscriber, new ChannelTopic("cache:evict"));
+                return container;
         }
 }
