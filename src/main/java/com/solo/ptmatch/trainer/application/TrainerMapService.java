@@ -1,33 +1,39 @@
 package com.solo.ptmatch.trainer.application;
 
 import com.google.common.geometry.S2CellId;
-import com.solo.ptmatch.common.util.S2CellRange;
 import com.solo.ptmatch.common.util.S2Util;
 import com.solo.ptmatch.trainer.domain.SportType;
-import com.solo.ptmatch.trainer.domain.TrainerProfile;
-import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
+import com.solo.ptmatch.trainer.infrastructure.provider.TrainerMapProvider;
 import com.solo.ptmatch.trainer.presentation.response.S2ClusterResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
+import com.solo.ptmatch.trainer.presentation.response.TrainerLatLon;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class TrainerMapService {
 
-    private final TrainerProfileRepository trainerProfileRepository;
-    private final TrainerCellCacheService trainerCellCacheService;
+    private final TrainerMapProvider trainerMapProvider;
 
     @Transactional(readOnly = true)
-    public List<TrainerSummaryResponse> getMapTrainers(SportType sportType, double minLat, double maxLat, double minLon, double maxLon) {
-        return getMapTrainersMarkers(sportType, minLat, maxLat, minLon, maxLon);
+    public List<TrainerLatLon> getMapTrainers(SportType sportType, double minLat, double maxLat, double minLon, double maxLon) {
+        // 1. S2 Cell ID 리스트 생성
+        List<S2CellId> cellIds = S2Util.getCoveringCellIds(minLat, maxLat, minLon, maxLon, S2Util.STORAGE_LEVEL);
+        List<Long> cellIdLongs = cellIds.stream().map(S2CellId::id).toList();
+
+        Map<Long, List<TrainerLatLon>> markers = trainerMapProvider.getMarkers(sportType, cellIdLongs);
+
+        // 결과 병합
+        return markers.values().stream()
+                .flatMap(List::stream)
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -39,65 +45,20 @@ public class TrainerMapService {
         List<S2CellId> cellIds = S2Util.getCoveringCellIds(minLat, maxLat, minLon, maxLon, S2Util.STORAGE_LEVEL);
         List<Long> cellIdLongs = cellIds.stream().map(S2CellId::id).toList();
 
-        // 2. count 캐시 MGET 조회 (종목별)
-        Map<Long, Integer> cacheHits = trainerCellCacheService.getClusterCountsByCells(sportType, cellIdLongs);
+        Map<Long, Long> counts = trainerMapProvider.getCounts(sportType, cellIdLongs);
 
-        // 3. Cache Miss 처리
-        List<Long> missCells = cellIdLongs.stream()
-                .filter(id -> !cacheHits.containsKey(id))
-                .toList();
-        if (!missCells.isEmpty()) {
-            // BETWEEN + Merge 최적화 (종목별 필터링)
-            List<S2CellRange> ranges = S2Util.mergeCellIdsToRanges(missCells);
-            Map<Long, Long> dbCounts = trainerProfileRepository.countTrainersByCellRanges(sportType, ranges);
+        // 6. 클러스터 레벨로 집계
+        Map<Long, Long> clusterMap = new HashMap<>();
+        for (Long cellId : cellIdLongs) {
+            Long count = counts.get(cellId);
+            if (count == null) continue;                                                                                                                                                                              
 
-            // count 캐싱 (빈 셀 포함)
-            Map<Long, Integer> cachedCounts = trainerCellCacheService.cacheMissedCounts(sportType, dbCounts, missCells);
-            cacheHits.putAll(cachedCounts);
-        }
-
-        // 4. 클러스터 레벨로 집계
-        Map<Long, Integer> clusterMap = new HashMap<>();
-        for (Map.Entry<Long, Integer> entry : cacheHits.entrySet()) {
-            S2CellId cellId = new S2CellId(entry.getKey());
-            Long parentId = cellId.parent(clusterLevel).id();
-            clusterMap.merge(parentId, entry.getValue(), Integer::sum);
+            long parentId = new S2CellId(cellId).parent(clusterLevel).id();
+            clusterMap.merge(parentId, count, Long::sum);
         }
 
         return clusterMap.entrySet().stream()
                 .map(e -> S2ClusterResponse.fromCellId(e.getKey(), e.getValue()))
-                .toList();
-    }
-
-    // 지도 트레이너 탐색 (S2 Cell ID + Redis 캐시, 종목별)
-    // Redis MGET으로 배치 조회 → Cache Miss만 DB 조회 → 캐시 저장
-    public List<TrainerSummaryResponse> getMapTrainersMarkers(SportType sportType, double minLat, double maxLat, double minLon, double maxLon) {
-
-        // 1. S2 Cell ID 리스트 생성
-        List<S2CellId> cellIds = S2Util.getCoveringCellIds(minLat, maxLat, minLon, maxLon, S2Util.STORAGE_LEVEL);
-        List<Long> cellIdLongs = cellIds.stream().map(S2CellId::id).toList();
-
-        // 2. Redis MGET 배치 조회 (종목별)
-        Map<Long, List<TrainerSummaryResponse>> cacheHits = trainerCellCacheService.getTrainersByCells(sportType, cellIdLongs);
-
-        // 3. Cache Miss 셀 ID 추출
-        List<Long> cacheMissCellIds = cellIdLongs.stream()
-                .filter(id -> !cacheHits.containsKey(id))
-                .toList();
-
-        // 4. Cache Miss 셀만 DB 조회 (종목별 필터링)
-        if (!cacheMissCellIds.isEmpty()) {
-            // 마커 조회는 셀 개수가 적기 때문에 BETWEEN와 IN 성능 차이 없음 -> IN 사용
-            List<TrainerProfile> missedTrainers = trainerProfileRepository.findBySportTypeAndS2CellIdIn(sportType, cacheMissCellIds);
-
-            // 셀별로 그룹화하여 캐시 저장 (빈 셀 포함)
-            Map<Long, List<TrainerSummaryResponse>> cachedResults = trainerCellCacheService.cacheMissedTrainers(sportType, missedTrainers, cacheMissCellIds);
-            cacheHits.putAll(cachedResults);
-        }
-
-        // 5. 모든 결과 병합
-        return cacheHits.values().stream()
-                .flatMap(List::stream)
                 .toList();
     }
 }

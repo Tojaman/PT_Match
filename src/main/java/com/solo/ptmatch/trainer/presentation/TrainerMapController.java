@@ -4,7 +4,7 @@ import com.solo.ptmatch.common.response.ApiResponse;
 import com.solo.ptmatch.trainer.application.TrainerMapService;
 import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.presentation.response.S2ClusterResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
+import com.solo.ptmatch.trainer.presentation.response.TrainerLatLon;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -26,19 +26,19 @@ public class TrainerMapController {
         private final TrainerMapService trainerMapService;
 
         @Operation(summary = "지도 트레이너 마커 조회 (S2 Cell ID + Redis)", description = "Redis MGET 배치 조회 기반 캐시 적용 트레이너 목록 조회")
-        @GetMapping("/markers-s2-cached")
-        public ResponseEntity<ApiResponse<List<TrainerSummaryResponse>>> getMapTrainers(
+        @GetMapping("/markers")
+        public ResponseEntity<ApiResponse<List<TrainerLatLon>>> getMapTrainers(
                 @RequestParam SportType sportType,
                 @RequestParam double minLat,
                 @RequestParam double maxLat,
                 @RequestParam double minLon,
                 @RequestParam double maxLon) {
-            List<TrainerSummaryResponse> trainers = trainerMapService.getMapTrainersMarkers(sportType, minLat, maxLat, minLon, maxLon);
+            List<TrainerLatLon> trainers = trainerMapService.getMapTrainers(sportType, minLat, maxLat, minLon, maxLon);
             return ResponseEntity.ok(ApiResponse.success(trainers));
         }
 
         @Operation(summary = "S2 클러스터링 v2 (count 캐시)", description = "count만 조회하여 메모리 최적화 + BETWEEN 쿼리 최적화")
-        @GetMapping("/clusters-s2-cached-v2")
+        @GetMapping("/clusters")
         public ResponseEntity<ApiResponse<List<S2ClusterResponse>>> getMapClusters(
                 @RequestParam SportType sportType,
                 @RequestParam double minLat,
