@@ -5,6 +5,7 @@ import com.solo.ptmatch.common.cache.facade.CacheFacade;
 import com.solo.ptmatch.common.util.S2Util;
 import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
+import com.solo.ptmatch.trainer.infrastructure.CellStat;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.trainer.presentation.response.TrainerLatLon;
 import lombok.RequiredArgsConstructor;
@@ -24,15 +25,15 @@ public class TrainerMapProvider {
     private final CacheFacade cacheManagerFacade;
     private final TrainerProfileRepository trainerProfileRepository;
 
-    public Map<Long, Long> getCounts(SportType sportType, List<Long> cellIds) {
-        return getAllOrLoad(CacheTarget.TRAINER_COUNT, sportType, cellIds, this::loadCounts, () -> 0L );
+    public Map<Long, CellStat> getCounts(SportType sportType, List<Long> cellIds) {
+        return getAllOrLoad(CacheTarget.TRAINER_COUNT, sportType, cellIds, this::loadCounts, CellStat::empty);
     }
 
     public Map<Long, List<TrainerLatLon>> getMarkers(SportType sportType, List<Long> cellIds) {
         return getAllOrLoad( CacheTarget.TRAINER_MARKER, sportType, cellIds, this::loadMarkers, List::of );
     }
 
-    private Map<Long, Long> loadCounts(SportType sportType, List<Long> missIds) {
+    private Map<Long, CellStat> loadCounts(SportType sportType, List<Long> missIds) {
         return trainerProfileRepository.countTrainersByCellRanges(sportType, S2Util.mergeCellIdsToRanges(missIds));
     }
 
