@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface TrainerProfileRepositoryCustom {
 
-    Map<Long, Long> countTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges);
+    Map<Long, CellStat> countTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges);
 
     List<TrainerProfile> findTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges);
 }

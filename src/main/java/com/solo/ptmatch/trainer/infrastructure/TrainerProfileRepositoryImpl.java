@@ -25,7 +25,7 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
     private EntityManager entityManager;
 
     @Override
-    public Map<Long, Long> countTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges) {
+    public Map<Long, CellStat> countTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges) {
         if (sportType == null || ranges == null || ranges.isEmpty()) {
             return Map.of();
         }
@@ -34,10 +34,12 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
         CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
         Root<TrainerProfile> root = query.from(TrainerProfile.class);
 
-        // SELECT s2_cell_id, COUNT(*)
+        // SELECT s2_cell_id, COUNT(*), SUM(latitude), SUM(longitude)
         query.multiselect(
                 root.get("s2CellId"),
-                cb.count(root));
+                cb.count(root),
+                cb.sum(root.get("latitude")),
+                cb.sum(root.get("longitude")));
 
         // WHERE sport_type = :sportType AND ((s2_cell_id BETWEEN min1 AND max1) OR
         // (s2_cell_id BETWEEN min2 AND max2) ...)
@@ -60,7 +62,10 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
         return entityManager.createQuery(query).getResultList().stream()
                 .collect(Collectors.toMap(
                         arr -> (Long) arr[0], // s2_cell_id
-                        arr -> (Long) arr[1] // count
+                        arr -> CellStat.of(
+                                (Long) arr[1],
+                                arr[2] == null ? 0d : ((Number) arr[2]).doubleValue(),
+                                arr[3] == null ? 0d : ((Number) arr[3]).doubleValue())
                 ));
     }
 
