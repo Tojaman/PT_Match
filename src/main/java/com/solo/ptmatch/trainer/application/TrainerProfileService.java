@@ -8,6 +8,7 @@ import com.solo.ptmatch.common.storage.PresignedUploadCommand;
 import com.solo.ptmatch.product.presentation.request.PresignedUrlRequest;
 import com.solo.ptmatch.product.presentation.response.PresignedUrlResponse;
 import com.solo.ptmatch.trainer.domain.Certification;
+import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.domain.TrainerImage;
 import com.solo.ptmatch.trainer.domain.GymImage;
@@ -34,6 +35,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -139,6 +142,8 @@ public class TrainerProfileService {
                 .toList();
         certificationRepository.saveAll(certifications);
 
+        evictCacheAfterCommit(savedProfile.getSportType(), savedProfile.getS2CellId());
+
         return TrainerProfileUpsertResponse.from(savedProfile, trainerImages, gymImages, certifications);
     }
 
@@ -150,6 +155,7 @@ public class TrainerProfileService {
         TrainerProfile profile = trainerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
+        SportType oldSportType = profile.getSportType();
         Long oldCellId = profile.getS2CellId();
 
         profile.updateProfile(
@@ -163,11 +169,13 @@ public class TrainerProfileService {
                 request.trainerImages().get(0).imageUrl(), // 첫 번째 이미지 썸네일로 설정
                 request.pricePerSession());
 
-        // 기존 캐시 삭제 (Layered Cache + Pub/Sub 적용)
-        evictCache(profile.getSportType().name(), String.valueOf(oldCellId));
+        SportType newSportType = profile.getSportType();
+        Long newCellId = profile.getS2CellId();
 
-        if (!oldCellId.equals(profile.getS2CellId())) { // 다른 셀로 이동했다면, 해당 셀도 캐시 삭제
-            evictCache(profile.getSportType().name(), String.valueOf(profile.getS2CellId()));
+        // 기존 캐시 삭제 (Pub/Sub 적용)
+        if (!oldCellId.equals(newCellId) || !oldSportType.equals(newSportType)) {
+            evictCacheAfterCommit(newSportType, newCellId);
+            evictCacheAfterCommit(oldSportType, oldCellId);
         }
 
         // 프로필 수정 시 기존 자격증 삭제 후 재등록
@@ -289,5 +297,18 @@ public class TrainerProfileService {
         // Pub/Sub으로 변경 전파
         messagePublisher.publish(CacheTarget.TRAINER_COUNT, key);
         messagePublisher.publish(CacheTarget.TRAINER_MARKER, key);
+    }
+
+    private void evictCacheAfterCommit(SportType sportType, Long cellId) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    evictCache(sportType.name(), String.valueOf(cellId));
+                }
+            });
+        } else {
+            evictCache(sportType.name(), String.valueOf(cellId));
+        }
     }
 }
