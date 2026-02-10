@@ -29,7 +29,12 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND("리프레시 토큰을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     PASSWORD_NOT_MATCH("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
     PROGRAM_NOT_FOUND("프로그램을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    MATCHING_SCHEDULE_NOT_FOUND("매칭 스케줄을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    MATCHING_SCHEDULE_NOT_FOUND("매칭 스케줄을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    CHAT_ROOM_NOT_FOUND("채팅방을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    CHAT_FORBIDDEN("해당 채팅방에 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    CHAT_PARTNER_NOT_FOUND("대상 사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    CHAT_INVALID_CURSOR("유효하지 않은 채팅 커서입니다.", HttpStatus.BAD_REQUEST),
+    CHAT_MESSAGE_TOO_LONG("메시지 길이는 1000자를 초과할 수 없습니다.", HttpStatus.BAD_REQUEST);
 
     private final String message;
     private final HttpStatus status;

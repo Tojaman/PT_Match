@@ -8,6 +8,9 @@ public record ChatRoomSummaryResponse(
     @Schema(description = "채팅방 ID", example = "12")
     Long roomId,
 
+    @Schema(description = "상대방 사용자 ID", example = "15")
+    Long partnerUserId,
+
     @Schema(description = "상대방 이름", example = "박전문")
     String partnerName,
 

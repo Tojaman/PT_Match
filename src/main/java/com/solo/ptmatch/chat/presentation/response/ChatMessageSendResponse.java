@@ -15,7 +15,7 @@ public record ChatMessageSendResponse(
     Long senderId,
 
     @Schema(description = "메시지 내용", example = "네, 감사합니다!")
-    String message,
+    String content,
 
     @Schema(description = "전송 시각", example = "2025-09-16T11:05:00")
     LocalDateTime sentAt

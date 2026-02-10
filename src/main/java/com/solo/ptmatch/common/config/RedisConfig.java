@@ -1,6 +1,7 @@
 package com.solo.ptmatch.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solo.ptmatch.chat.infrastructure.redis.RedisChatEventSubscriber;
 import com.solo.ptmatch.common.cache.pubsub.RedisMessageSubscriber;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +9,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -24,7 +26,8 @@ public class RedisConfig {
 
                 StringRedisSerializer keySerializer = new StringRedisSerializer();
                 // 객체 타입 정보(@class)를 포함하여 직렬화
-                GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+                GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer(
+                                objectMapper);
 
                 template.setKeySerializer(keySerializer);
                 template.setHashKeySerializer(keySerializer);
@@ -42,11 +45,13 @@ public class RedisConfig {
         @Bean
         public RedisMessageListenerContainer redisMessageListenerContainer(
                         RedisConnectionFactory connectionFactory,
-                        RedisMessageSubscriber subscriber) {
+                        RedisMessageSubscriber subscriber,
+                        RedisChatEventSubscriber redisChatEventSubscriber) {
 
                 RedisMessageListenerContainer container = new RedisMessageListenerContainer();
                 container.setConnectionFactory(connectionFactory);
                 container.addMessageListener(subscriber, new ChannelTopic("cache:evict"));
+                container.addMessageListener(redisChatEventSubscriber, new PatternTopic("chat:room:*"));
                 return container;
         }
 }
