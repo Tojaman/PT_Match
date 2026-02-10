@@ -1,6 +1,7 @@
 
 package com.solo.ptmatch.trainer.infrastructure;
 
+import com.google.common.geometry.S2CellId;
 import com.solo.ptmatch.common.util.S2CellRange;
 import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
@@ -96,5 +97,32 @@ public class TrainerProfileRepositoryImpl implements TrainerProfileRepositoryCus
         query.where(cb.and(sportTypePredicate, rangePredicate));
 
         return entityManager.createQuery(query).getResultList();
+    }
+
+    @Override
+    public List<TrainerProfile> findTrainersByClusterCellCursor(SportType sportType, long clusterCellId, long cursor, int limit) {
+        if (sportType == null || limit <= 0) {
+            return List.of();
+        }
+
+        S2CellId clusterCell = new S2CellId(clusterCellId);
+        long rangeMin = clusterCell.rangeMin().id();
+        long rangeMax = clusterCell.rangeMax().id();
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<TrainerProfile> query = cb.createQuery(TrainerProfile.class);
+        Root<TrainerProfile> root = query.from(TrainerProfile.class);
+
+        query.select(root);
+
+        Predicate sportTypePredicate = cb.equal(root.get("sportType"), sportType);
+        Predicate rangePredicate = cb.between(root.get("s2CellId"), rangeMin, rangeMax);
+        Predicate cursorPredicate = cb.greaterThan(root.get("id"), cursor);
+        query.where(cb.and(sportTypePredicate, rangePredicate, cursorPredicate));
+        query.orderBy(cb.asc(root.get("id")));
+
+        return entityManager.createQuery(query)
+                .setMaxResults(limit)
+                .getResultList();
     }
 }

@@ -59,6 +59,12 @@ public class TrainerMapProvider {
                 .toList();
     }
 
+    public List<TrainerSummaryResponse> getTrainerSummariesByClusterCellCursor(SportType sportType, long s2CellId, long cursor, int limit) {
+        return trainerProfileRepository.findTrainersByClusterCellCursor(sportType, s2CellId, cursor, limit).stream()
+                .map(TrainerSummaryResponse::from)
+                .toList();
+    }
+
     private <V> Map<Long, V> getAllOrLoad(
             CacheTarget cacheTarget,
             SportType sportType,

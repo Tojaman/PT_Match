@@ -3,11 +3,13 @@ package com.solo.ptmatch.trainer.presentation;
 import com.solo.ptmatch.common.response.ApiResponse;
 import com.solo.ptmatch.trainer.application.TrainerMapService;
 import com.solo.ptmatch.trainer.domain.SportType;
+import com.solo.ptmatch.trainer.presentation.response.ClusterTrainerListResponse;
 import com.solo.ptmatch.trainer.presentation.response.S2ClusterResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerMarker;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryCursorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,5 +64,16 @@ public class TrainerMapController {
             @RequestParam int zoomLevel) {
         List<S2ClusterResponse> clusters = trainerMapService.getMapClusters(sportType, minLat, maxLat, minLon, maxLon, zoomLevel);
         return ResponseEntity.ok(ApiResponse.success(clusters));
+    }
+
+    @Operation(summary = "클러스터 트레이너 리스트 lazy 조회", description = "클러스터 클릭 후 s2CellId 기준으로 트레이너 요약을 커서 조회")
+    @GetMapping("/clusters/list")
+    public ResponseEntity<ApiResponse<ClusterTrainerListResponse>> getClusterTrainerList(
+            @RequestParam SportType sportType,
+            @RequestParam @Min(1) String s2CellId,
+            @RequestParam(defaultValue = "0") @Min(0) long cursor,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+        ClusterTrainerListResponse response = trainerMapService.getClusterTrainerList(sportType, Long.parseLong(s2CellId), cursor, size);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

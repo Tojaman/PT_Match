@@ -25,7 +25,7 @@ public class S2Util {
             case 6 -> 13;
             case 7 -> 12;
             case 8 -> 11;
-            case 9, 10 -> 10;
+            case 9 -> 10;
             default -> 9;
         };
     }
