@@ -49,9 +49,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/map/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/trainers", "/api/trainers/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/*").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health", "/actuator/prometheus").permitAll()
+                        .requestMatchers("/api/chat/**").authenticated()
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health",
+                                "/actuator/prometheus")
+                        .permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS Preflight 요청(OPTIONS)은 인증 없이 허용
-                        .requestMatchers(HttpMethod.POST, "/api/trainers/me", "/api/products/", "/api/products/{productId}").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.POST, "/api/trainers/me", "/api/products/",
+                                "/api/products/{productId}")
+                        .hasRole("TRAINER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/{productId}").hasRole("TRAINER")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/{productId}").hasRole("TRAINER")
                         .requestMatchers(HttpMethod.POST, "/api/products/*/like").hasRole("USER")

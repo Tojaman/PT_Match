@@ -1,7 +1,6 @@
 package com.solo.ptmatch.chat.domain;
 
-import com.solo.ptmatch.matching.domain.Matching;
-import com.solo.ptmatch.trainer.domain.TrainerProfile;
+import com.solo.ptmatch.common.BaseEntity;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,9 +10,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import jakarta.persistence.UniqueConstraint;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,9 +19,14 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "chat_rooms")
+@Table(
+    name = "chat_rooms",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uq_chat_room_pair", columnNames = {"user_a_id", "user_b_id"})
+    }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatRoom {
+public class ChatRoom extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,48 +34,42 @@ public class ChatRoom {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private User member;
+    @JoinColumn(name = "user_a_id", nullable = false)
+    private User userA;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trainer_profile_id", nullable = false)
-    private TrainerProfile trainerProfile;
+    @JoinColumn(name = "user_b_id", nullable = false)
+    private User userB;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "matching_id", nullable = false)
-    private Matching matching;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    private ChatRoom(User member, TrainerProfile trainerProfile, Matching matching) {
-        this.member = Objects.requireNonNull(member, "member must not be null");
-        this.trainerProfile = Objects.requireNonNull(trainerProfile, "trainerProfile must not be null");
-        this.matching = Objects.requireNonNull(matching, "matching must not be null");
-        validateMatchingConsistency();
-    }
-
-    public static ChatRoom open(User member, TrainerProfile trainerProfile, Matching matching) {
-        return new ChatRoom(member, trainerProfile, matching);
-    }
-
-    public boolean belongsTo(User member, TrainerProfile trainerProfile) {
-        Objects.requireNonNull(member, "member must not be null");
-        Objects.requireNonNull(trainerProfile, "trainerProfile must not be null");
-        return this.member.equals(member) && this.trainerProfile.equals(trainerProfile);
-    }
-
-    private void validateMatchingConsistency() {
-        if (!matching.getUser().equals(member)) {
-            throw new IllegalArgumentException("Matching applicant must match chat member");
+    private ChatRoom(User userA, User userB) {
+        this.userA = Objects.requireNonNull(userA, "userA must not be null");
+        this.userB = Objects.requireNonNull(userB, "userB must not be null");
+        if (Objects.equals(userA.getId(), userB.getId())) {
+            throw new IllegalArgumentException("userA and userB must be different");
         }
-        if (!matching.getTrainerProfile().equals(trainerProfile)) {
-            throw new IllegalArgumentException("Matching trainer must match chat trainer profile");
+        if (userA.getId() == null || userB.getId() == null) {
+            throw new IllegalArgumentException("participants must be persisted users");
+        }
+        if (userA.getId() > userB.getId()) {
+            throw new IllegalArgumentException("userA.id must be less than userB.id");
         }
     }
 
-    @PrePersist
-    private void onCreate() {
-        createdAt = LocalDateTime.now();
+    public static ChatRoom create(User userA, User userB) {
+        return new ChatRoom(userA, userB);
+    }
+
+    public boolean hasParticipant(Long userId) {
+        return userA.getId().equals(userId) || userB.getId().equals(userId);
+    }
+
+    public User getPartner(Long userId) {
+        if (userA.getId().equals(userId)) {
+            return userB;
+        }
+        if (userB.getId().equals(userId)) {
+            return userA;
+        }
+        throw new IllegalArgumentException("user is not a participant of this chat room");
     }
 }
