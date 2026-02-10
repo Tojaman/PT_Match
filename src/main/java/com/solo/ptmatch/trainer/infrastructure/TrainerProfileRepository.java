@@ -25,6 +25,8 @@ public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, 
     // S2 Cell ID 목록으로 트레이너 조회 (성능 비교용)
     List<TrainerProfile> findByS2CellIdIn(List<Long> cellIds);
 
+    List<TrainerProfile> findByIdIn(List<Long> ids);
+
     // 위치 기반 인기 트레이너 조회 (인기도 점수 정렬)
     @Query(value = """
             SELECT * FROM trainer_profiles t
