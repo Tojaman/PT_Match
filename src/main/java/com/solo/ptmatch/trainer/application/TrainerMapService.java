@@ -5,6 +5,7 @@ import com.solo.ptmatch.common.util.S2Util;
 import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.infrastructure.CellStat;
 import com.solo.ptmatch.trainer.infrastructure.provider.TrainerMapProvider;
+import com.solo.ptmatch.trainer.presentation.response.ClusterTrainerListResponse;
 import com.solo.ptmatch.trainer.presentation.response.S2ClusterResponse;
 import com.solo.ptmatch.trainer.presentation.response.TrainerMarker;
 import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryCursorResponse;
@@ -22,9 +23,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Service
 public class TrainerMapService {
-
-    private static final int DEFAULT_SUMMARY_PAGE_SIZE = 20;
-    private static final int MAX_SUMMARY_PAGE_SIZE = 100;
 
     private final TrainerMapProvider trainerMapProvider;
 
@@ -49,11 +47,25 @@ public class TrainerMapService {
         int end = Math.min(cursor + size, trainerIds.size());
         List<Long> pageTrainerIds = trainerIds.subList(cursor, end);
         List<TrainerSummaryResponse> summaries = trainerMapProvider.getTrainerSummaries(pageTrainerIds);
+        
 
         boolean hasNext = end < trainerIds.size();
         Integer nextCursor = hasNext ? end : null;
 
-        return new TrainerSummaryCursorResponse(summaries, nextCursor, hasNext);
+        return TrainerSummaryCursorResponse.from(summaries, nextCursor, hasNext);
+    }
+
+    @Transactional(readOnly = true)
+    public ClusterTrainerListResponse getClusterTrainerList(SportType sportType, long s2CellId, long cursor, int size) {
+        int fetchSize = size + 1;
+
+        List<TrainerSummaryResponse> fetched = trainerMapProvider.getTrainerSummariesByClusterCellCursor(sportType, s2CellId, cursor, fetchSize);
+
+        boolean hasNext = fetched.size() > size;
+        List<TrainerSummaryResponse> items = hasNext ? fetched.subList(0, size) : fetched;
+        Long nextCursor = hasNext ? items.get(items.size() - 1).trainerId() : null;
+
+        return new ClusterTrainerListResponse(items, nextCursor, hasNext);
     }
 
     @Transactional(readOnly = true)

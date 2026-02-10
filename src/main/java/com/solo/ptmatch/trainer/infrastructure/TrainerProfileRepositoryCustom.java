@@ -11,4 +11,6 @@ public interface TrainerProfileRepositoryCustom {
     Map<Long, CellStat> countTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges);
 
     List<TrainerProfile> findTrainersByCellRanges(SportType sportType, List<S2CellRange> ranges);
+
+    List<TrainerProfile> findTrainersByClusterCellCursor(SportType sportType, long clusterCellId, long cursor, int limit);
 }
