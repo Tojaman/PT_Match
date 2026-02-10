@@ -7,7 +7,8 @@ import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.CellStat;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
-import com.solo.ptmatch.trainer.presentation.response.TrainerLatLon;
+import com.solo.ptmatch.trainer.presentation.response.TrainerMarker;
+import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
@@ -29,21 +30,33 @@ public class TrainerMapProvider {
         return getAllOrLoad(CacheTarget.TRAINER_COUNT, sportType, cellIds, this::loadCounts, CellStat::empty);
     }
 
-    public Map<Long, List<TrainerLatLon>> getMarkers(SportType sportType, List<Long> cellIds) {
-        return getAllOrLoad( CacheTarget.TRAINER_MARKER, sportType, cellIds, this::loadMarkers, List::of );
+    public Map<Long, List<TrainerMarker>> getMarkers(SportType sportType, List<Long> cellIds) {
+        return getAllOrLoad(CacheTarget.TRAINER_MARKER, sportType, cellIds, this::loadMarkers, List::of);
     }
 
     private Map<Long, CellStat> loadCounts(SportType sportType, List<Long> missIds) {
         return trainerProfileRepository.countTrainersByCellRanges(sportType, S2Util.mergeCellIdsToRanges(missIds));
     }
 
-    private Map<Long, List<TrainerLatLon>> loadMarkers(SportType sportType, List<Long> missIds) {
+    private Map<Long, List<TrainerMarker>> loadMarkers(SportType sportType, List<Long> missIds) {
         List<TrainerProfile> missedTrainers = trainerProfileRepository.findTrainersByCellRanges(sportType, S2Util.mergeCellIdsToRanges(missIds));
         // Cell ID별로 그룹화하여 좌표 리스트 생성
         return missedTrainers.stream()
                 .collect(Collectors.groupingBy(
                         TrainerProfile::getS2CellId,
-                        Collectors.mapping(TrainerLatLon::from, Collectors.toList())));
+                        Collectors.mapping(TrainerMarker::from, Collectors.toList())));
+    }
+
+    public List<TrainerSummaryResponse> getTrainerSummaries(List<Long> trainerIds) {
+        List<TrainerProfile> profiles = trainerProfileRepository.findByIdIn(trainerIds);
+        Map<Long, TrainerSummaryResponse> summaryById = profiles.stream()
+                .map(TrainerSummaryResponse::from)
+                .collect(Collectors.toMap(TrainerSummaryResponse::trainerId, response -> response));
+
+        return trainerIds.stream()
+                .map(summaryById::get)
+                .filter(summary -> summary != null)
+                .toList();
     }
 
     private <V> Map<Long, V> getAllOrLoad(

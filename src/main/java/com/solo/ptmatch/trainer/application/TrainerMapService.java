@@ -6,7 +6,9 @@ import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.infrastructure.CellStat;
 import com.solo.ptmatch.trainer.infrastructure.provider.TrainerMapProvider;
 import com.solo.ptmatch.trainer.presentation.response.S2ClusterResponse;
-import com.solo.ptmatch.trainer.presentation.response.TrainerLatLon;
+import com.solo.ptmatch.trainer.presentation.response.TrainerMarker;
+import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryCursorResponse;
+import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,20 +23,37 @@ import java.util.Map;
 @Service
 public class TrainerMapService {
 
+    private static final int DEFAULT_SUMMARY_PAGE_SIZE = 20;
+    private static final int MAX_SUMMARY_PAGE_SIZE = 100;
+
     private final TrainerMapProvider trainerMapProvider;
 
     @Transactional(readOnly = true)
-    public List<TrainerLatLon> getMapTrainers(SportType sportType, double minLat, double maxLat, double minLon, double maxLon) {
+    public List<TrainerMarker> getMapTrainers(SportType sportType, double minLat, double maxLat, double minLon, double maxLon) {
         // 1. S2 Cell ID 리스트 생성
         List<S2CellId> cellIds = S2Util.getCoveringCellIds(minLat, maxLat, minLon, maxLon, S2Util.STORAGE_LEVEL);
         List<Long> cellIdLongs = cellIds.stream().map(S2CellId::id).toList();
 
-        Map<Long, List<TrainerLatLon>> markers = trainerMapProvider.getMarkers(sportType, cellIdLongs);
+        Map<Long, List<TrainerMarker>> markers = trainerMapProvider.getMarkers(sportType, cellIdLongs);
 
         // 결과 병합
         return markers.values().stream()
                 .flatMap(List::stream)
+                .filter(t -> t.latitude() >= minLat && t.latitude() <= maxLat
+                        && t.longitude() >= minLon && t.longitude() <= maxLon)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public TrainerSummaryCursorResponse getTrainerSummariesByIds(List<Long> trainerIds, int cursor, int size) {
+        int end = Math.min(cursor + size, trainerIds.size());
+        List<Long> pageTrainerIds = trainerIds.subList(cursor, end);
+        List<TrainerSummaryResponse> summaries = trainerMapProvider.getTrainerSummaries(pageTrainerIds);
+
+        boolean hasNext = end < trainerIds.size();
+        Integer nextCursor = hasNext ? end : null;
+
+        return new TrainerSummaryCursorResponse(summaries, nextCursor, hasNext);
     }
 
     @Transactional(readOnly = true)

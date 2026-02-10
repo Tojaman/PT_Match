@@ -2,6 +2,9 @@ package com.solo.ptmatch.common.cache.enums;
 
 import com.solo.ptmatch.trainer.domain.SportType;
 
+import lombok.Getter;
+
+@Getter
 public enum CacheTarget {
     TRAINER_COUNT("trainerCount", CacheType.LOCAL, 3_600, 200_000),
     TRAINER_MARKER("trainerMarker", CacheType.LOCAL, 3_600, 100_000);
@@ -16,14 +19,6 @@ public enum CacheTarget {
         this.type = type;
         this.ttlSeconds = ttlSeconds;
         this.maxEntries = maxEntries;
-    }
-
-    public long getTtlSeconds() {
-        return ttlSeconds;
-    }
-
-    public long getMaxEntries() {
-        return maxEntries;
     }
 
     public String buildKey(SportType sportType, long cellId) {
