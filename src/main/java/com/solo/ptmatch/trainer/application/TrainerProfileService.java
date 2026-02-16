@@ -13,6 +13,7 @@ import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.domain.TrainerImage;
 import com.solo.ptmatch.trainer.domain.GymImage;
 import com.solo.ptmatch.trainer.infrastructure.CertificationRepository;
+import com.solo.ptmatch.trainer.infrastructure.TrainerLikeRepository;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.trainer.infrastructure.TrainerImageRepository;
 import com.solo.ptmatch.trainer.infrastructure.GymImageRepository;
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
 public class TrainerProfileService {
 
     private final TrainerProfileRepository trainerProfileRepository;
+    private final TrainerLikeRepository trainerLikeRepository;
     private final UserRepository userRepository;
     private final CertificationRepository certificationRepository;
     private final TrainerImageRepository trainerImageRepository;
@@ -83,14 +85,20 @@ public class TrainerProfileService {
 
     @Transactional(readOnly = true)
     public TrainerDetailResponse getTrainerDetail(Long trainerId) {
+        return getTrainerDetail(trainerId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public TrainerDetailResponse getTrainerDetail(Long trainerId, String loggedInEmail) {
         TrainerProfile profile = trainerProfileRepository.findById(trainerId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
 
         List<TrainerImage> trainerImages = trainerImageRepository.findAllByTrainerProfileId(profile.getId());
         List<GymImage> gymImages = gymImageRepository.findAllByTrainerProfileId(profile.getId());
         List<Certification> certifications = certificationRepository.findAllByTrainerProfileId(profile.getId());
+        boolean isFollowed = resolveIsFollowed(profile, loggedInEmail);
 
-        return TrainerDetailResponse.from(profile, trainerImages, gymImages, certifications);
+        return TrainerDetailResponse.from(profile, trainerImages, gymImages, certifications, isFollowed);
     }
 
     @Transactional(readOnly = true)
@@ -310,5 +318,16 @@ public class TrainerProfileService {
         } else {
             evictCache(sportType.name(), String.valueOf(cellId));
         }
+    }
+
+    private boolean resolveIsFollowed(TrainerProfile profile, String loggedInEmail) {
+        if (loggedInEmail == null || loggedInEmail.isBlank()) {
+            return false;
+        }
+
+        return userRepository.findByEmail(loggedInEmail)
+                .filter(user -> !user.getId().equals(profile.getUser().getId()))
+                .map(user -> trainerLikeRepository.existsByUserIdAndTrainerProfileId(user.getId(), profile.getId()))
+                .orElse(false);
     }
 }

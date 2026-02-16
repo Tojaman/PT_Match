@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,6 +27,18 @@ public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, 
     List<TrainerProfile> findByS2CellIdIn(List<Long> cellIds);
 
     List<TrainerProfile> findByIdIn(List<Long> ids);
+
+    @Modifying
+    @Query("""
+            update TrainerProfile t
+            set t.likesCount = t.likesCount + :delta
+            where t.id = :trainerProfileId
+              and (:delta >= 0 or t.likesCount > 0)
+            """)
+    int updateLikeCountAtomically(
+            @Param("trainerProfileId") Long trainerProfileId,
+            @Param("delta") int delta
+    );
 
     // 위치 기반 인기 트레이너 조회 (인기도 점수 정렬)
     @Query(value = """

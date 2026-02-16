@@ -27,13 +27,23 @@ public class TrainerLikeController {
 
     private final TrainerLikeService trainerLikeService;
 
-    @Operation(summary = "트레이너 좋아요 토글", description = "사용자가 트레이너 좋아요 상태를 토글한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좋아요 토글 성공")
+    @Operation(summary = "트레이너 좋아요", description = "사용자가 트레이너를 좋아요한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좋아요 성공")
     @PostMapping("/trainers/{trainerId}/follow")
-    public ResponseEntity<ApiResponse<TrainerLikeToggleResponse>> toggleFollow(
+    public ResponseEntity<ApiResponse<TrainerLikeToggleResponse>> followTrainer(
             @AuthenticationPrincipal(expression = "username") String loggedInEmail,
             @PathVariable Long trainerId) {
-        TrainerLikeToggleResponse response = trainerLikeService.toggleFollow(trainerId, loggedInEmail);
+        TrainerLikeToggleResponse response = trainerLikeService.followTrainer(trainerId, loggedInEmail);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "트레이너 좋아요 취소", description = "사용자가 트레이너 좋아요를 취소한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "좋아요 취소 성공")
+    @DeleteMapping("/trainers/{trainerId}/follow")
+    public ResponseEntity<ApiResponse<TrainerLikeToggleResponse>> unfollowTrainer(
+            @AuthenticationPrincipal(expression = "username") String loggedInEmail,
+            @PathVariable Long trainerId) {
+        TrainerLikeToggleResponse response = trainerLikeService.unfollowTrainer(trainerId, loggedInEmail);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
