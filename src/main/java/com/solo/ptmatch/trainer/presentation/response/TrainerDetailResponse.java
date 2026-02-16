@@ -33,6 +33,8 @@ public record TrainerDetailResponse(
 
                 @Schema(description = "좋아요/팔로우 수") int likesCount,
 
+                @Schema(description = "내 좋아요 여부", example = "true") boolean isFollowed,
+
                 @Schema(description = "리뷰 수", example = "120") int reviewCount,
 
                 @Schema(description = "평균 평점") BigDecimal averageRating,
@@ -53,7 +55,8 @@ public record TrainerDetailResponse(
                         TrainerProfile profile,
                         List<TrainerImage> trainerImages,
                         List<GymImage> gymImages,
-                        List<Certification> certifications) {
+                        List<Certification> certifications,
+                        boolean isFollowed) {
                 return new TrainerDetailResponse(
                                 profile.getId(),
                                 profile.getUser().getName() != null ? profile.getUser().getName() : "이름 없음",
@@ -66,6 +69,7 @@ public record TrainerDetailResponse(
                                 profile.getLongitude(),
                                 profile.getProfileImageUrl(),
                                 profile.getLikesCount(),
+                                isFollowed,
                                 profile.getReviewCount(),
                                 profile.getAverageRating(),
                                 profile.getPricePerSession(),

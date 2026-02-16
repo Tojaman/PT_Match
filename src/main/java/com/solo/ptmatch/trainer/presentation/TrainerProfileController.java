@@ -64,10 +64,8 @@ public class TrainerProfileController {
         @GetMapping("/me")
         public ResponseEntity<ApiResponse<TrainerDetailResponse>> getMyTrainer(
                         @AuthenticationPrincipal(expression = "username") String loggedInEmail) {
-
-                log.info("유저 이메일: {}", loggedInEmail);
                 Long trainerId = trainerProfileService.getTrainerId(loggedInEmail);
-                TrainerDetailResponse response = trainerProfileService.getTrainerDetail(trainerId);
+                TrainerDetailResponse response = trainerProfileService.getTrainerDetail(trainerId, loggedInEmail);
                 return ResponseEntity.ok(ApiResponse.success(response));
         }
 
@@ -75,8 +73,9 @@ public class TrainerProfileController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상세 조회 성공")
         @GetMapping("/{trainerId}")
         public ResponseEntity<ApiResponse<TrainerDetailResponse>> getTrainer(
+                        @AuthenticationPrincipal(expression = "username") String loggedInEmail,
                         @PathVariable Long trainerId) {
-                TrainerDetailResponse response = trainerProfileService.getTrainerDetail(trainerId);
+                TrainerDetailResponse response = trainerProfileService.getTrainerDetail(trainerId, loggedInEmail);
                 return ResponseEntity.ok(ApiResponse.success(response));
         }
 
