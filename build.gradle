@@ -67,3 +67,8 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+// UTF-8 encoding for Korean comments
+tasks.withType(JavaCompile) {
+	options.encoding = 'UTF-8'
+}
