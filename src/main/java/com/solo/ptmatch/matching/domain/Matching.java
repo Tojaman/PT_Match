@@ -1,14 +1,12 @@
 package com.solo.ptmatch.matching.domain;
 
 import com.solo.ptmatch.common.BaseEntity;
-import com.solo.ptmatch.product.domain.Product;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.user.domain.User;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -71,8 +69,15 @@ public class Matching extends BaseEntity {
         return new Matching(user, trainerProfile, message, matchingUserInfo, pricePerSession);
     }
 
-    public void accept() {
+    public void markPaymentPending() {
+        this.matchingStatus = MatchingStatus.PAYMENT_PENDING;
+    }
 
+    public void markPending() {
+        this.matchingStatus = MatchingStatus.PENDING;
+    }
+
+    public void accept() {
         this.matchingStatus = MatchingStatus.ACCEPTED;
     }
 
@@ -82,6 +87,10 @@ public class Matching extends BaseEntity {
 
     public void complete() {
         this.matchingStatus = MatchingStatus.COMPLETED;
+    }
+
+    public void cancel() {
+        this.matchingStatus = MatchingStatus.CANCELED;
     }
 
     public void completeSession() {
