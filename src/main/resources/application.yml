@@ -12,6 +12,14 @@ spring:
 security:
     jwt:
         access-token-validity-ms: 3600000
+payment:
+    order-ttl: ${PAYMENT_ORDER_TTL}
+    success-url: ${PAYMENT_SUCCESS_URL}
+    fail-url: ${PAYMENT_FAIL_URL}
+    toss:
+        base-url: ${TOSS_BASE_URL}
+        client-key: ${TOSS_CLIENT_KEY}
+        secret-key: ${TOSS_SECRET_KEY}
 management: 
     endpoints: # 입구 개방(prometheus)
         web:
