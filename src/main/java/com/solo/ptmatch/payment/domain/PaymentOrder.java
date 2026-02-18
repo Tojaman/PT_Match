@@ -168,6 +168,10 @@ public class PaymentOrder extends BaseEntity {
         this.failedMessage = null;
     }
 
+    public void markApproving() {
+        this.status = PaymentStatus.APPROVING;
+    }
+
     public void markFailed(String failedCode, String failedMessage) {
         this.status = PaymentStatus.FAILED;
         this.failedCode = failedCode;
