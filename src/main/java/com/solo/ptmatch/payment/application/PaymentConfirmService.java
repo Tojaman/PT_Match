@@ -11,9 +11,11 @@ import com.solo.ptmatch.payment.presentation.response.PaymentConfirmResponse;
 import com.solo.ptmatch.payment.presentation.response.PaymentOrderStatusResponse;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class PaymentConfirmService {
 
@@ -47,13 +49,24 @@ public class PaymentConfirmService {
 
         
         validateAmountOrReject(preConfirmResult, confirmResponse); // 금액 검증
-        validateApprovedAtOrReject(preConfirmResult, confirmResponse); // 승인 시각 검증
 
         // 3. 결제 성공 -> 매칭 및 스케줄 확정
-        return paymentConfirmTxService.finalizeSuccess(
-                preConfirmResult.orderId(),
-                confirmResponse.paymentKey(),
-                confirmResponse.approvedAt().toLocalDateTime());
+        try {
+            return paymentConfirmTxService.finalizeSuccess(
+                    preConfirmResult.orderId(),
+                    confirmResponse.paymentKey(),
+                    confirmResponse.approvedAt().toLocalDateTime());
+        } catch (RuntimeException exception) {
+            log.error("승인 성공 후 로컬 반영 실패. orderId={}", preConfirmResult.orderId(), exception);
+            return paymentConfirmTxService.markCancelPending(
+                    preConfirmResult.orderId(),
+                    confirmResponse.paymentKey(),
+                    "LOCAL_FINALIZE_FAILED",
+                    "승인 성공 후 로컬 반영에 실패해 취소 보상을 진행합니다.",
+                    "LOCAL_FINALIZE_FAILED",
+                    "CONFIRM_FINALIZE",
+                    LocalDateTime.now());
+        }
     }
 
     // 클라이언트 polling 용도
@@ -71,17 +84,5 @@ public class PaymentConfirmService {
                 "PAYMENT_AMOUNT_MISMATCH",
                 "승인 응답 금액이 주문 금액과 일치하지 않습니다.");
         throw GlobalException.of(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
-    }
-
-    private void validateApprovedAtOrReject(PreConfirmResult preConfirmResult, TossConfirmResponse confirmResponse) {
-        if (confirmResponse.approvedAt() != null) {
-            return;
-        }
-
-        paymentConfirmTxService.finalizeRejected(
-                preConfirmResult.orderId(),
-                "INVALID_PROVIDER_RESPONSE",
-                "승인 시각이 없습니다.");
-        throw GlobalException.of(ErrorCode.PAYMENT_PROVIDER_ERROR);
     }
 }
