@@ -1,5 +1,7 @@
-package com.solo.ptmatch.payment.application;
+package com.solo.ptmatch.payment.scheduler;
 
+import com.solo.ptmatch.payment.application.PaymentConfirmTxService;
+import com.solo.ptmatch.payment.application.PaymentRetryPolicy;
 import com.solo.ptmatch.payment.domain.PaymentStatus;
 import com.solo.ptmatch.payment.infrastructure.PaymentOrderRepository;
 import com.solo.ptmatch.payment.infrastructure.toss.TossPaymentsClient;
@@ -25,7 +27,7 @@ public class PaymentReconcileScheduler {
     private final TossPaymentsClient tossPaymentsClient;
     private final PaymentRetryPolicy paymentRetryPolicy;
 
-    // UNKNOWN 상태이면서 재시도 시각이 도래한 주문을 주기적으로 재조회
+    // UNKNOWN 상태 & 재시도 시점 도래 -> 재조회
     @Scheduled(fixedDelayString = "${payment.retry.reconcile-interval}")
     public void reconcileUnknownOrders() {
         LocalDateTime now = LocalDateTime.now();
@@ -39,13 +41,27 @@ public class PaymentReconcileScheduler {
         }
     }
 
-    // 단일 주문의 Toss 상태를 조회해 DONE/FAILED/재시도 대기 상태로 전이
+    // APPROVING 상태가 장기 체류 -> 재조회
+    @Scheduled(fixedDelayString = "${payment.retry.reconcile-interval}")
+    public void reconcileStaleApprovingOrders() {
+        LocalDateTime now = LocalDateTime.now();
+        List<String> orderIds = paymentOrderRepository.findStaleOrderIds(
+                PaymentStatus.APPROVING,
+                paymentRetryPolicy.approvingStaleBefore(now),
+                PageRequest.of(0, paymentRetryPolicy.reconcileBatchSize()));
+
+        for (String orderId : orderIds) {
+            reconcileOrder(orderId, now);
+        }
+    }
+
+    // 단일 재조회(단일 트랜잭션)
     private void reconcileOrder(String orderId, LocalDateTime now) {
         try {
             TossConfirmResponse response = tossPaymentsClient.getPaymentByOrderId(orderId);
             // DONE 상태 -> 결제/매칭/스케줄 최종 성공
             if (isDone(response.status())) {
-                paymentConfirmTxService.finalizeFromReconcileSuccess(orderId, response.paymentKey(), response.approvedAt().toLocalDateTime(), response.totalAmount());
+                paymentConfirmTxService.finalizeFromReconcileSuccess(orderId, response.paymentKey(), response.approvedLocalDateTime(), response.totalAmount());
                 return;
             }
 
@@ -57,20 +73,12 @@ public class PaymentReconcileScheduler {
 
             paymentConfirmTxService.handleReconcileRetryFailure(orderId, "RECONCILE_UNRESOLVED_STATUS", "재조회 결과 확정 불가 상태입니다: " + response.status(), now);
         } catch (TossServerException exception) { // 재조회 갱신
-            paymentConfirmTxService.handleReconcileRetryFailure(
-                    orderId,
-                    exception.getProviderCode(),
-                    exception.getProviderMessage(),
-                    now);
+            paymentConfirmTxService.handleReconcileRetryFailure(orderId, exception.getProviderCode(), exception.getProviderMessage(), now);
         } catch (TossPaymentsException exception) { // 결제 실패
             paymentConfirmTxService.finalizeRejected(orderId, exception.getProviderCode(), exception.getProviderMessage());
         } catch (Exception exception) { // 재조회 자체 실패 -> 갱신
             log.error("결제 재조회 처리 중 예외 발생. orderId={}", orderId, exception);
-            paymentConfirmTxService.handleReconcileRetryFailure(
-                    orderId,
-                    "RECONCILE_INTERNAL_ERROR",
-                    exception.getMessage(),
-                    now);
+            paymentConfirmTxService.handleReconcileRetryFailure(orderId, "RECONCILE_INTERNAL_ERROR", exception.getMessage(), now);
         }
     }
 
@@ -81,10 +89,12 @@ public class PaymentReconcileScheduler {
 
     // Toss 상태가 최종 실패(ABORTED/EXPIRED/CANCELED/PARTIAL_CANCELED)인지 판별
     private boolean isFailed(String status) {
+        if (status == null) {
+            return false;
+        }
         String normalized = status.toUpperCase(Locale.ROOT);
         return normalized.equals("ABORTED")
                 || normalized.equals("EXPIRED")
-                || normalized.equals("CANCELED")
-                || normalized.equals("PARTIAL_CANCELED");
+                || normalized.equals("CANCELED");
     }
 }

@@ -45,7 +45,8 @@ public class PaymentController {
             @AuthenticationPrincipal(expression = "username") String email,
             @Valid @RequestBody PaymentConfirmRequest request) {
         PaymentConfirmResponse response = paymentConfirmService.confirm(email, request);
-        HttpStatus status = response.paymentStatus() == PaymentStatus.UNKNOWN
+        HttpStatus status = (response.paymentStatus() == PaymentStatus.UNKNOWN
+                || response.paymentStatus() == PaymentStatus.CANCEL_PENDING)
                 ? HttpStatus.ACCEPTED
                 : HttpStatus.OK;
         return ResponseEntity.status(status).body(ApiResponse.success(response));
