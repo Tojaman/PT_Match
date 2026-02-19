@@ -2,6 +2,7 @@ package com.solo.ptmatch.payment.infrastructure.toss;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.solo.ptmatch.payment.infrastructure.toss.dto.TossCancelRequest;
 import com.solo.ptmatch.payment.infrastructure.toss.dto.TossConfirmRequest;
 import com.solo.ptmatch.payment.infrastructure.toss.dto.TossConfirmResponse;
 import com.solo.ptmatch.payment.infrastructure.toss.dto.TossErrorResponse;
@@ -63,6 +64,32 @@ public class TossPaymentsApiClient implements TossPaymentsClient {
         } catch (RestClientResponseException exception) { // 4xx, 5xx
             throw toTossException(exception);
         } catch (RestClientException exception) { // 5xx -> 재시도
+            throw new TossServerException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "NETWORK_ERROR",
+                    exception.getMessage());
+        }
+    }
+
+    @Override
+    public TossConfirmResponse cancel(String paymentKey, String cancelReason) {
+        TossCancelRequest request = new TossCancelRequest(cancelReason);
+
+        try {
+            TossConfirmResponse response = tossRestClient.post()
+                    .uri("/v1/payments/{paymentKey}/cancel", paymentKey)
+                    .headers(headers -> headers.setBasicAuth(tossPaymentsProperties.secretKey(), ""))
+                    .body(request)
+                    .retrieve()
+                    .body(TossConfirmResponse.class);
+
+            if (response == null) {
+                throw new TossServerException(HttpStatus.INTERNAL_SERVER_ERROR, "EMPTY_RESPONSE", "Toss 응답이 비어 있습니다.");
+            }
+            return response;
+        } catch (RestClientResponseException exception) {
+            throw toTossException(exception);
+        } catch (RestClientException exception) {
             throw new TossServerException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "NETWORK_ERROR",

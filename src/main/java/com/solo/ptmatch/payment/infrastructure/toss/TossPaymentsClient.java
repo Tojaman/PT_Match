@@ -7,4 +7,6 @@ public interface TossPaymentsClient {
     TossConfirmResponse confirm(String paymentKey, String orderId, int amount);
 
     TossConfirmResponse getPaymentByOrderId(String orderId);
+
+    TossConfirmResponse cancel(String paymentKey, String cancelReason);
 }
