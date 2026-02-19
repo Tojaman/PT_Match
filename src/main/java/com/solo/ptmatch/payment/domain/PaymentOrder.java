@@ -89,6 +89,15 @@ public class PaymentOrder extends BaseEntity {
     @Column(name = "failed_message", length = 500)
     private String failedMessage;
 
+    @Column(name = "attempt_count", nullable = false, columnDefinition = "integer default 0")
+    private int attemptCount = 0;
+
+    @Column(name = "next_retry_at")
+    private LocalDateTime nextRetryAt;
+
+    @Column(name = "resolve_deadline_at")
+    private LocalDateTime resolveDeadlineAt;
+
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
@@ -166,6 +175,7 @@ public class PaymentOrder extends BaseEntity {
         this.approvedAt = approvedAt;
         this.failedCode = null;
         this.failedMessage = null;
+        clearRetryMeta();
     }
 
     public void markApproving() {
@@ -176,12 +186,38 @@ public class PaymentOrder extends BaseEntity {
         this.status = PaymentStatus.FAILED;
         this.failedCode = failedCode;
         this.failedMessage = failedMessage;
+        clearRetryMeta();
+    }
+
+    public void markUnknown(String failedCode, String failedMessage, LocalDateTime nextRetryAt, LocalDateTime resolveDeadlineAt) {
+        this.status = PaymentStatus.UNKNOWN;
+        this.failedCode = failedCode;
+        this.failedMessage = failedMessage;
+        this.attemptCount = 0;
+        this.nextRetryAt = nextRetryAt;
+        this.resolveDeadlineAt = resolveDeadlineAt;
+    }
+
+    public void markRetryWaiting(int attemptCount, String failedCode, String failedMessage, LocalDateTime nextRetryAt) {
+        this.status = PaymentStatus.UNKNOWN;
+        this.attemptCount = attemptCount;
+        this.failedCode = failedCode;
+        this.failedMessage = failedMessage;
+        this.nextRetryAt = nextRetryAt;
+    }
+
+    public void markManualReview(String failedCode, String failedMessage) {
+        this.status = PaymentStatus.MANUAL_REVIEW;
+        this.failedCode = failedCode;
+        this.failedMessage = failedMessage;
+        this.nextRetryAt = null;
     }
 
     public void markExpired() {
         this.status = PaymentStatus.EXPIRED;
         this.failedCode = "PAYMENT_ORDER_EXPIRED";
         this.failedMessage = "결제 유효시간이 만료되었습니다.";
+        clearRetryMeta();
     }
 
     public boolean isDone() {
@@ -194,5 +230,11 @@ public class PaymentOrder extends BaseEntity {
 
     public boolean isExpired(LocalDateTime now) {
         return expiresAt != null && now.isAfter(expiresAt);
+    }
+
+    private void clearRetryMeta() {
+        this.attemptCount = 0;
+        this.nextRetryAt = null;
+        this.resolveDeadlineAt = null;
     }
 }

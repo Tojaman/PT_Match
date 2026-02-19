@@ -16,8 +16,4 @@ public class TossPaymentsException extends RuntimeException {
         this.providerCode = providerCode;
         this.providerMessage = providerMessage;
     }
-
-    public boolean isClientError() {
-        return statusCode != null && statusCode.is4xxClientError();
-    }
 }

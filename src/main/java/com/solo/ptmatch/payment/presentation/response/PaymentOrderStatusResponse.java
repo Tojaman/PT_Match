@@ -5,22 +5,28 @@ import com.solo.ptmatch.payment.domain.PaymentOrder;
 import com.solo.ptmatch.payment.domain.PaymentStatus;
 import java.time.LocalDateTime;
 
-public record PaymentConfirmResponse(
+public record PaymentOrderStatusResponse(
         Long matchingId,
         String orderId,
         String paymentKey,
         PaymentStatus paymentStatus,
         MatchingStatus matchingStatus,
-        LocalDateTime approvedAt
+        LocalDateTime approvedAt,
+        int attemptCount,
+        LocalDateTime nextRetryAt,
+        LocalDateTime resolveDeadlineAt
 ) {
 
-    public static PaymentConfirmResponse from(PaymentOrder paymentOrder) {
-        return new PaymentConfirmResponse(
+    public static PaymentOrderStatusResponse from(PaymentOrder paymentOrder) {
+        return new PaymentOrderStatusResponse(
                 paymentOrder.getMatching() == null ? null : paymentOrder.getMatching().getId(),
                 paymentOrder.getOrderId(),
                 paymentOrder.getPaymentKey(),
                 paymentOrder.getStatus(),
                 paymentOrder.getMatching() == null ? null : paymentOrder.getMatching().getMatchingStatus(),
-                paymentOrder.getApprovedAt());
+                paymentOrder.getApprovedAt(),
+                paymentOrder.getAttemptCount(),
+                paymentOrder.getNextRetryAt(),
+                paymentOrder.getResolveDeadlineAt());
     }
 }

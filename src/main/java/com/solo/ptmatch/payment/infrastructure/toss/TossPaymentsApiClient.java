@@ -33,14 +33,37 @@ public class TossPaymentsApiClient implements TossPaymentsClient {
                     .retrieve()
                     .body(TossConfirmResponse.class);
 
-            if (response == null) {
-                throw new TossPaymentsException(HttpStatus.INTERNAL_SERVER_ERROR, "EMPTY_RESPONSE", "Toss 응답이 비어 있습니다.");
+            if (response == null) { // 5xx -> 재시도
+                throw new TossServerException(HttpStatus.INTERNAL_SERVER_ERROR, "EMPTY_RESPONSE", "Toss 응답이 비어 있습니다.");
             }
             return response;
-        } catch (RestClientResponseException exception) {
+        } catch (RestClientResponseException exception) { // 4xx, 5xx
             throw toTossException(exception);
-        } catch (RestClientException exception) {
-            throw new TossPaymentsException(
+        } catch (RestClientException exception) { // 5xx -> 재시도
+            throw new TossServerException(
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "NETWORK_ERROR",
+                    exception.getMessage());
+        }
+    }
+
+    @Override
+    public TossConfirmResponse getPaymentByOrderId(String orderId) {
+        try {
+            TossConfirmResponse response = tossRestClient.get()
+                    .uri("/v1/payments/orders/{orderId}", orderId)
+                    .headers(headers -> headers.setBasicAuth(tossPaymentsProperties.secretKey(), ""))
+                    .retrieve()
+                    .body(TossConfirmResponse.class);
+
+            if (response == null) { // 5xx -> 재시도
+                throw new TossServerException(HttpStatus.INTERNAL_SERVER_ERROR, "EMPTY_RESPONSE", "Toss 응답이 비어 있습니다.");
+            }
+            return response;
+        } catch (RestClientResponseException exception) { // 4xx, 5xx
+            throw toTossException(exception);
+        } catch (RestClientException exception) { // 5xx -> 재시도
+            throw new TossServerException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "NETWORK_ERROR",
                     exception.getMessage());
@@ -56,6 +79,12 @@ public class TossPaymentsApiClient implements TossPaymentsClient {
                 ? errorResponse.message()
                 : exception.getResponseBodyAsString();
 
+        if (exception.getStatusCode().is4xxClientError()) {
+            return new TossPaymentsException(exception.getStatusCode(), providerCode, providerMessage);
+        }
+        if (exception.getStatusCode().is5xxServerError()) {
+            return new TossServerException(exception.getStatusCode(), providerCode, providerMessage);
+        }
         return new TossPaymentsException(exception.getStatusCode(), providerCode, providerMessage);
     }
 
