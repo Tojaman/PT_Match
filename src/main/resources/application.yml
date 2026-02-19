@@ -16,6 +16,12 @@ payment:
     order-ttl: ${PAYMENT_ORDER_TTL}
     success-url: ${PAYMENT_SUCCESS_URL}
     fail-url: ${PAYMENT_FAIL_URL}
+    retry:
+        backoff-delays: [1m, 2m, 4m, 8m, 16m, 30m, 30m]
+        max-attempts: 7
+        resolve-deadline: 90m
+        reconcile-interval: 30s
+        reconcile-batch-size: 50
     toss:
         base-url: ${TOSS_BASE_URL}
         client-key: ${TOSS_CLIENT_KEY}
