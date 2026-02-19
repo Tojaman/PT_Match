@@ -38,6 +38,10 @@ public class PaymentRetryPolicy {
         return paymentRetryProperties.reconcileBatchSize();
     }
 
+    public LocalDateTime approvingStaleBefore(LocalDateTime now) {
+        return now.minus(paymentRetryProperties.approvingStaleThreshold());
+    }
+
     private Duration backoffDelayForAttempt(int attemptCount) {
         List<Duration> backoffDelays = paymentRetryProperties.backoffDelays();
         int index = Math.max(0, Math.min(attemptCount - 1, backoffDelays.size() - 1));

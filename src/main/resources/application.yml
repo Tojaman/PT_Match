@@ -22,6 +22,7 @@ payment:
         resolve-deadline: 90m
         reconcile-interval: 30s
         reconcile-batch-size: 50
+        approving-stale-threshold: 2m
     toss:
         base-url: ${TOSS_BASE_URL}
         client-key: ${TOSS_CLIENT_KEY}

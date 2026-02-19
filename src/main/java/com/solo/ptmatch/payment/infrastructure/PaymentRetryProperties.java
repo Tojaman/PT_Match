@@ -15,6 +15,7 @@ public record PaymentRetryProperties(
         @Positive int maxAttempts,
         @NotNull Duration resolveDeadline,
         @NotNull Duration reconcileInterval,
-        @Positive int reconcileBatchSize
+        @Positive int reconcileBatchSize,
+        @NotNull Duration approvingStaleThreshold
 ) {
 }

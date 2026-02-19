@@ -210,7 +210,37 @@ public class PaymentOrder extends BaseEntity {
         this.status = PaymentStatus.MANUAL_REVIEW;
         this.failedCode = failedCode;
         this.failedMessage = failedMessage;
-        this.nextRetryAt = null;
+        clearRetryMeta();
+    }
+
+    public void markCancelPending(
+            String paymentKey,
+            String failedCode,
+            String failedMessage,
+            LocalDateTime nextRetryAt,
+            LocalDateTime resolveDeadlineAt) {
+        this.status = PaymentStatus.CANCEL_PENDING;
+        this.paymentKey = paymentKey;
+        this.failedCode = failedCode;
+        this.failedMessage = failedMessage;
+        this.attemptCount = 0;
+        this.nextRetryAt = nextRetryAt;
+        this.resolveDeadlineAt = resolveDeadlineAt;
+    }
+
+    public void markCancelRetryWaiting(int attemptCount, String failedCode, String failedMessage, LocalDateTime nextRetryAt) {
+        this.status = PaymentStatus.CANCEL_PENDING;
+        this.attemptCount = attemptCount;
+        this.failedCode = failedCode;
+        this.failedMessage = failedMessage;
+        this.nextRetryAt = nextRetryAt;
+    }
+
+    public void markCanceled() {
+        this.status = PaymentStatus.CANCELED;
+        this.failedCode = null;
+        this.failedMessage = null;
+        clearRetryMeta();
     }
 
     public void markExpired() {
@@ -225,7 +255,10 @@ public class PaymentOrder extends BaseEntity {
     }
 
     public boolean isTerminal() {
-        return status == PaymentStatus.DONE || status == PaymentStatus.FAILED || status == PaymentStatus.CANCELED;
+        return status == PaymentStatus.DONE
+                || status == PaymentStatus.FAILED
+                || status == PaymentStatus.CANCELED
+                || status == PaymentStatus.EXPIRED;
     }
 
     public boolean isExpired(LocalDateTime now) {
