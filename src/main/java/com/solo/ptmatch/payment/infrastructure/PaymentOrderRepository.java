@@ -26,38 +26,38 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
     Optional<PaymentOrder> findByOrderIdWithUserAndMatching(@Param("orderId") String orderId);
 
     @Query("""
-            SELECT po.orderId FROM PaymentOrder po
+            SELECT po FROM PaymentOrder po
             WHERE po.status = :status
-              AND po.nextRetryAt IS NOT NULL
-              AND po.nextRetryAt <= :now
+                AND po.nextRetryAt IS NOT NULL
+                AND po.nextRetryAt <= :now
             ORDER BY po.nextRetryAt ASC
             """)
-    List<String> findRetryTargetOrderIds(
-            @Param("status") PaymentStatus status,
-            @Param("now") LocalDateTime now,
-            Pageable pageable);
+    List<PaymentOrder> findRetryTargetOrders(
+                    @Param("status") PaymentStatus status,
+                    @Param("now") LocalDateTime now,
+                    Pageable pageable);
 
     @Query("""
-            SELECT po.orderId FROM PaymentOrder po
+            SELECT po FROM PaymentOrder po
             WHERE po.status = :status
-              AND po.updatedAt <= :staleBefore
+                AND po.updatedAt <= :staleBefore
             ORDER BY po.updatedAt ASC
             """)
-    List<String> findStaleOrderIds(
-            @Param("status") PaymentStatus status,
-            @Param("staleBefore") LocalDateTime staleBefore,
-            Pageable pageable);
+    List<PaymentOrder> findStaleOrders(
+                    @Param("status") PaymentStatus status,
+                    @Param("staleBefore") LocalDateTime staleBefore,
+                    Pageable pageable);
 
     @Query("""
             SELECT po.orderId FROM PaymentOrder po
             WHERE po.status = :status
-              AND po.expiresAt <= :now
+                AND po.expiresAt <= :now
             ORDER BY po.expiresAt ASC
             """)
     List<String> findExpiredOrderIds(
-            @Param("status") PaymentStatus status,
-            @Param("now") LocalDateTime now,
-            Pageable pageable);
+                    @Param("status") PaymentStatus status,
+                    @Param("now") LocalDateTime now,
+                    Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
