@@ -5,7 +5,7 @@ import com.solo.ptmatch.common.exception.GlobalException;
 import com.solo.ptmatch.payment.infrastructure.toss.TossPaymentsClient;
 import com.solo.ptmatch.payment.infrastructure.toss.TossPaymentsException;
 import com.solo.ptmatch.payment.infrastructure.toss.TossServerException;
-import com.solo.ptmatch.payment.infrastructure.toss.dto.TossConfirmResponse;
+import com.solo.ptmatch.payment.infrastructure.toss.dto.TossPaymentResponse;
 import com.solo.ptmatch.payment.presentation.request.PaymentConfirmRequest;
 import com.solo.ptmatch.payment.presentation.response.PaymentConfirmResponse;
 import com.solo.ptmatch.payment.presentation.response.PaymentOrderStatusResponse;
@@ -29,7 +29,7 @@ public class PaymentConfirmService {
             return preConfirmResult.doneResponse();
         }
 
-        TossConfirmResponse confirmResponse;
+        TossPaymentResponse confirmResponse;
         try {
             // 2. 토스 페이먼츠 결제 승인 API 호출
             confirmResponse = tossPaymentsClient.confirm(request.paymentKey(), request.orderId(), request.amount());
@@ -47,42 +47,16 @@ public class PaymentConfirmService {
             throw GlobalException.of(ErrorCode.INVALID_REQUEST);
         }
 
-        
-        validateAmountOrReject(preConfirmResult, confirmResponse); // 금액 검증
-
         // 3. 결제 성공 -> 매칭 및 스케줄 확정
-        try {
-            return paymentConfirmTxService.finalizeSuccess(
-                    preConfirmResult.orderId(),
-                    confirmResponse.paymentKey(),
-                    confirmResponse.approvedAt().toLocalDateTime());
-        } catch (RuntimeException exception) {
-            log.error("승인 성공 후 로컬 반영 실패. orderId={}", preConfirmResult.orderId(), exception);
-            return paymentConfirmTxService.markCancelPending(
-                    preConfirmResult.orderId(),
-                    confirmResponse.paymentKey(),
-                    "LOCAL_FINALIZE_FAILED",
-                    "승인 성공 후 로컬 반영에 실패해 취소 보상을 진행합니다.",
-                    "LOCAL_FINALIZE_FAILED",
-                    "CONFIRM_FINALIZE",
-                    LocalDateTime.now());
-        }
+        // 실패 시 재시도 (APPROVING)
+        return paymentConfirmTxService.finalizeSuccess(
+                preConfirmResult.orderId(),
+                confirmResponse.paymentKey(),
+                confirmResponse.approvedAt().toLocalDateTime());
     }
 
     // 클라이언트 polling 용도
     public PaymentOrderStatusResponse getOrderStatus(String userEmail, String orderId) {
         return paymentConfirmTxService.getOrderStatus(userEmail, orderId);
-    }
-
-    private void validateAmountOrReject(PreConfirmResult preConfirmResult, TossConfirmResponse confirmResponse) {
-        if (preConfirmResult.amount().equals(confirmResponse.totalAmount())) {
-            return;
-        }
-
-        paymentConfirmTxService.finalizeRejected(
-                preConfirmResult.orderId(),
-                "PAYMENT_AMOUNT_MISMATCH",
-                "승인 응답 금액이 주문 금액과 일치하지 않습니다.");
-        throw GlobalException.of(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
     }
 }
