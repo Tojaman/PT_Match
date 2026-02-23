@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.solo.ptmatch.payment.infrastructure.toss.dto.TossCancelRequest;
 import com.solo.ptmatch.payment.infrastructure.toss.dto.TossConfirmRequest;
-import com.solo.ptmatch.payment.infrastructure.toss.dto.TossConfirmResponse;
+import com.solo.ptmatch.payment.infrastructure.toss.dto.TossPaymentResponse;
 import com.solo.ptmatch.payment.infrastructure.toss.dto.TossErrorResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,24 +23,19 @@ public class TossPaymentsApiClient implements TossPaymentsClient {
     private final ObjectMapper objectMapper;
 
     @Override
-    public TossConfirmResponse confirm(String paymentKey, String orderId, int amount) {
+    public TossPaymentResponse confirm(String paymentKey, String orderId, int amount) {
         TossConfirmRequest request = new TossConfirmRequest(paymentKey, orderId, amount);
 
         try {
-            TossConfirmResponse response = tossRestClient.post()
+            return tossRestClient.post()
                     .uri("/v1/payments/confirm")
                     .headers(headers -> headers.setBasicAuth(tossPaymentsProperties.secretKey(), ""))
                     .body(request)
                     .retrieve()
-                    .body(TossConfirmResponse.class);
-
-            if (response == null) { // 5xx -> 재시도
-                throw new TossServerException(HttpStatus.INTERNAL_SERVER_ERROR, "EMPTY_RESPONSE", "Toss 응답이 비어 있습니다.");
-            }
-            return response;
+                    .body(TossPaymentResponse.class);
         } catch (RestClientResponseException exception) { // 4xx, 5xx
             throw toTossException(exception);
-        } catch (RestClientException exception) { // 5xx -> 재시도
+        } catch (RestClientException exception) { // 네트워크 오류
             throw new TossServerException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "NETWORK_ERROR",
@@ -49,21 +44,16 @@ public class TossPaymentsApiClient implements TossPaymentsClient {
     }
 
     @Override
-    public TossConfirmResponse getPaymentByOrderId(String orderId) {
+    public TossPaymentResponse getPaymentByOrderId(String orderId) {
         try {
-            TossConfirmResponse response = tossRestClient.get()
+            return tossRestClient.get()
                     .uri("/v1/payments/orders/{orderId}", orderId)
                     .headers(headers -> headers.setBasicAuth(tossPaymentsProperties.secretKey(), ""))
                     .retrieve()
-                    .body(TossConfirmResponse.class);
-
-            if (response == null) { // 5xx -> 재시도
-                throw new TossServerException(HttpStatus.INTERNAL_SERVER_ERROR, "EMPTY_RESPONSE", "Toss 응답이 비어 있습니다.");
-            }
-            return response;
+                    .body(TossPaymentResponse.class);
         } catch (RestClientResponseException exception) { // 4xx, 5xx
             throw toTossException(exception);
-        } catch (RestClientException exception) { // 5xx -> 재시도
+        } catch (RestClientException exception) { // 네트워크 오류
             throw new TossServerException(
                     HttpStatus.SERVICE_UNAVAILABLE,
                     "NETWORK_ERROR",
@@ -72,21 +62,16 @@ public class TossPaymentsApiClient implements TossPaymentsClient {
     }
 
     @Override
-    public TossConfirmResponse cancel(String paymentKey, String cancelReason) {
+    public TossPaymentResponse cancel(String paymentKey, String cancelReason) {
         TossCancelRequest request = new TossCancelRequest(cancelReason);
 
         try {
-            TossConfirmResponse response = tossRestClient.post()
+            return tossRestClient.post()
                     .uri("/v1/payments/{paymentKey}/cancel", paymentKey)
                     .headers(headers -> headers.setBasicAuth(tossPaymentsProperties.secretKey(), ""))
                     .body(request)
                     .retrieve()
-                    .body(TossConfirmResponse.class);
-
-            if (response == null) {
-                throw new TossServerException(HttpStatus.INTERNAL_SERVER_ERROR, "EMPTY_RESPONSE", "Toss 응답이 비어 있습니다.");
-            }
-            return response;
+                    .body(TossPaymentResponse.class);
         } catch (RestClientResponseException exception) {
             throw toTossException(exception);
         } catch (RestClientException exception) {
@@ -98,32 +83,21 @@ public class TossPaymentsApiClient implements TossPaymentsClient {
     }
 
     private TossPaymentsException toTossException(RestClientResponseException exception) {
-        TossErrorResponse errorResponse = parseErrorResponse(exception.getResponseBodyAsString());
-        String providerCode = errorResponse != null && StringUtils.hasText(errorResponse.code())
-                ? errorResponse.code()
-                : "HTTP_" + exception.getStatusCode().value();
-        String providerMessage = errorResponse != null && StringUtils.hasText(errorResponse.message())
-                ? errorResponse.message()
-                : exception.getResponseBodyAsString();
+        TossErrorResponse errorResponse = parseErrorResponse(exception);
 
-        if (exception.getStatusCode().is4xxClientError()) {
-            return new TossPaymentsException(exception.getStatusCode(), providerCode, providerMessage);
-        }
         if (exception.getStatusCode().is5xxServerError()) {
-            return new TossServerException(exception.getStatusCode(), providerCode, providerMessage);
+            return new TossServerException(exception.getStatusCode(), errorResponse.code(), errorResponse.message());
         }
-        return new TossPaymentsException(exception.getStatusCode(), providerCode, providerMessage);
+        return new TossPaymentsException(exception.getStatusCode(), errorResponse.code(), errorResponse.message());
     }
 
-    private TossErrorResponse parseErrorResponse(String responseBody) {
-        if (!StringUtils.hasText(responseBody)) {
-            return null;
-        }
-
+    private TossErrorResponse parseErrorResponse(RestClientResponseException exception) {
         try {
-            return objectMapper.readValue(responseBody, TossErrorResponse.class);
+            if (StringUtils.hasText(exception.getResponseBodyAsString())) {
+                return objectMapper.readValue(exception.getResponseBodyAsString(), TossErrorResponse.class);
+            }
         } catch (JsonProcessingException ignored) {
-            return null;
         }
+        return new TossErrorResponse("HTTP_" + exception.getStatusCode().value(), exception.getResponseBodyAsString());
     }
 }
