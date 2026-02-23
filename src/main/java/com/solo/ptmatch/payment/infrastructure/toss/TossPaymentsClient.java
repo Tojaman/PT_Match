@@ -1,12 +1,12 @@
 package com.solo.ptmatch.payment.infrastructure.toss;
 
-import com.solo.ptmatch.payment.infrastructure.toss.dto.TossConfirmResponse;
+import com.solo.ptmatch.payment.infrastructure.toss.dto.TossPaymentResponse;
 
 public interface TossPaymentsClient {
 
-    TossConfirmResponse confirm(String paymentKey, String orderId, int amount);
+    TossPaymentResponse confirm(String paymentKey, String orderId, int amount);
 
-    TossConfirmResponse getPaymentByOrderId(String orderId);
+    TossPaymentResponse getPaymentByOrderId(String orderId);
 
-    TossConfirmResponse cancel(String paymentKey, String cancelReason);
+    TossPaymentResponse cancel(String paymentKey, String cancelReason);
 }
