@@ -45,7 +45,7 @@ public class TrainerDashboardService {
 
         // 오늘 수업 수
         LocalDateTime startOfToday = today.atStartOfDay();
-        LocalDateTime endOfToday = today.atTime(LocalTime.MAX);
+        LocalDateTime endOfToday = today.plusDays(1).atStartOfDay();
         int todaySessions = matchingScheduleRepository.countSessionsByTrainerProfileIdAndDateRange(
                         trainerProfileId, startOfToday, endOfToday);
 
