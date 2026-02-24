@@ -10,6 +10,7 @@ import com.solo.ptmatch.user.presentation.response.RegisterResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -17,12 +18,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.TimeUnit;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
+        private static final String ACCESS_TOKEN_COOKIE_NAME = "accessToken";
+        private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+        private static final String COOKIE_PATH = "/";
+        private static final String COOKIE_SAME_SITE = "Lax";
+
         private final AuthService authService;
+        @Value("${security.jwt.access-token-validity-ms}")
+        private long accessTokenValidityMillis;
+        @Value("${security.jwt.refresh-token-validity-ms}")
+        private long refreshTokenValidityMillis;
+        @Value("${security.cookie.secure:false}")
+        private boolean cookieSecure;
 
         @Operation(summary = "회원가입", description = "이메일과 비밀번호, 역할 정보를 입력받아 신규 회원을 등록한다")
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공")
@@ -39,21 +53,8 @@ public class AuthController {
         public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
                 AuthResult result = authService.login(request);
 
-                ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", result.accessToken())
-                                .httpOnly(true)
-                                .secure(false)
-                                .path("/")
-                                .maxAge(3600) // 1시간
-                                .sameSite("Lax")
-                                .build();
-
-                ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", result.refreshToken())
-                                .httpOnly(true)
-                                .secure(false)
-                                .path("/")
-                                .maxAge(1209600) // 14일
-                                .sameSite("Lax")
-                                .build();
+                ResponseCookie accessTokenCookie = buildAccessTokenCookie(result.accessToken());
+                ResponseCookie refreshTokenCookie = buildRefreshTokenCookie(result.refreshToken());
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.add(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
@@ -72,21 +73,8 @@ public class AuthController {
                         authService.logout(authentication.getName());
                 }
 
-                ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", "")
-                                .httpOnly(true)
-                                .secure(false)
-                                .path("/")
-                                .maxAge(0)
-                                .sameSite("Lax")
-                                .build();
-
-                ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken", "")
-                                .httpOnly(true)
-                                .secure(false)
-                                .path("/")
-                                .maxAge(0)
-                                .sameSite("Lax")
-                                .build();
+                ResponseCookie refreshTokenCookie = expireCookie(REFRESH_TOKEN_COOKIE_NAME);
+                ResponseCookie accessTokenCookie = expireCookie(ACCESS_TOKEN_COOKIE_NAME);
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
@@ -106,16 +94,38 @@ public class AuthController {
                 }
                 String newAccessToken = authService.refreshAccessToken(refreshToken);
 
-                ResponseCookie cookie = ResponseCookie.from("accessToken", newAccessToken)
-                                .httpOnly(true)
-                                .secure(false)
-                                .path("/")
-                                .maxAge(3600) // 1시간
-                                .sameSite("Lax")
-                                .build();
+                ResponseCookie cookie = buildAccessTokenCookie(newAccessToken);
 
                 return ResponseEntity.noContent()
                                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                                .build();
+        }
+
+        private ResponseCookie buildAccessTokenCookie(String tokenValue) {
+                return buildCookie(
+                                ACCESS_TOKEN_COOKIE_NAME,
+                                tokenValue,
+                                TimeUnit.MILLISECONDS.toSeconds(accessTokenValidityMillis));
+        }
+
+        private ResponseCookie buildRefreshTokenCookie(String tokenValue) {
+                return buildCookie(
+                                REFRESH_TOKEN_COOKIE_NAME,
+                                tokenValue,
+                                TimeUnit.MILLISECONDS.toSeconds(refreshTokenValidityMillis));
+        }
+
+        private ResponseCookie expireCookie(String cookieName) {
+                return buildCookie(cookieName, "", 0);
+        }
+
+        private ResponseCookie buildCookie(String cookieName, String value, long maxAgeSeconds) {
+                return ResponseCookie.from(cookieName, value)
+                                .httpOnly(true)
+                                .secure(cookieSecure)
+                                .path(COOKIE_PATH)
+                                .maxAge(maxAgeSeconds)
+                                .sameSite(COOKIE_SAME_SITE)
                                 .build();
         }
 }
