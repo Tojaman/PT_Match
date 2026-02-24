@@ -2,20 +2,24 @@ package com.solo.ptmatch.user.application;
 
 import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
-import com.solo.ptmatch.user.domain.RefreshToken;
-import com.solo.ptmatch.user.domain.User;
-import com.solo.ptmatch.user.infrastructure.RefreshTokenRepository;
-import com.solo.ptmatch.user.infrastructure.UserRepository;
 import com.solo.ptmatch.user.application.dto.AuthResult;
+import com.solo.ptmatch.user.infrastructure.redis.RedisRefreshTokenStore;
+import com.solo.ptmatch.user.domain.Role;
+import com.solo.ptmatch.user.domain.User;
+import com.solo.ptmatch.user.infrastructure.UserRepository;
 import com.solo.ptmatch.user.presentation.request.LoginRequest;
 import com.solo.ptmatch.user.presentation.request.RegisterRequest;
 import com.solo.ptmatch.common.security.JwtTokenProvider;
 import com.solo.ptmatch.user.presentation.response.RegisterResponse;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
-import com.solo.ptmatch.user.domain.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.util.HexFormat;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,7 +36,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisRefreshTokenStore refreshTokenStore;
     private final TrainerProfileRepository trainerProfileRepository;
 
     @Transactional
@@ -68,7 +72,8 @@ public class AuthService {
         User user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        refreshTokenRepository.save(RefreshToken.of(user.getEmail(), refreshToken));
+        Duration refreshTokenTtl = Duration.ofMillis(jwtTokenProvider.getRefreshTokenValidityMillis());
+        refreshTokenStore.save(user.getEmail(), refreshToken, refreshTokenTtl);
 
         Long trainerId = null;
         if (user.getRole() == Role.TRAINER) {
@@ -82,7 +87,7 @@ public class AuthService {
 
     @Transactional
     public void logout(String email) {
-        refreshTokenRepository.deleteByEmail(email);
+        refreshTokenStore.deleteByEmail(email);
     }
 
     @Transactional(readOnly = true)
@@ -91,11 +96,28 @@ public class AuthService {
             throw GlobalException.of(ErrorCode.INVALID_TOKEN);
         }
 
-        // DB에서 리프레시 토큰 확인
-        refreshTokenRepository.findByToken(refreshToken)
+        String email = jwtTokenProvider.extractSubject(refreshToken);
+
+        String savedRefreshTokenHash = refreshTokenStore.findByEmail(email)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
+
+        String requestRefreshTokenHash = hash(refreshToken);
+        if (!savedRefreshTokenHash.equals(requestRefreshTokenHash)) {
+            throw GlobalException.of(ErrorCode.INVALID_TOKEN);
+        }
 
         Authentication authentication = jwtTokenProvider.getAuthentication(refreshToken);
         return jwtTokenProvider.generateAccessToken(authentication.getName(), authentication.getAuthorities());
+    }
+
+    private String hash(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hashed);
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Failed to hash refresh token.", e);
+            throw GlobalException.of(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 }

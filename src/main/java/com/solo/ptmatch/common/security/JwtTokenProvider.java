@@ -55,6 +55,10 @@ public class JwtTokenProvider {
         return generateToken(subject, authorities, refreshTokenValidityMillis);
     }
 
+    public long getRefreshTokenValidityMillis() {
+        return refreshTokenValidityMillis;
+    }
+
     private String generateToken(String subject, Collection<? extends GrantedAuthority> authorities,
             long validityMillis) {
         Instant now = Instant.now();
