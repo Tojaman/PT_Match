@@ -49,6 +49,7 @@ public class Matching extends BaseEntity {
     public void addSchedule(MatchingSchedule schedule) {
         schedule.assignMatching(this);
         schedules.add(schedule);
+        remainingSessions += 1;
     }
 
     @Column(name = "price_per_session")
