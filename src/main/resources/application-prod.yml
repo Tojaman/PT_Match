@@ -3,9 +3,19 @@ spring:
         url: ${SPRING_DATASOURCE_URL}
         username: ${SPRING_DATASOURCE_USERNAME}
         password: ${SPRING_DATASOURCE_PASSWORD}
-        driver-class-name: com.mysql.cj.jdbc.Driver
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        hibernate:
+            ddl-auto: validate
+        database-platform: org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect
+    data:
+        redis:
+            host: ${REDIS_HOST}
+            port: ${REDIS_PORT}
 
 security:
+    cookie:
+        secure: true
     jwt:
         secret: ${SPRING_JWT_SECRET}
 
@@ -16,3 +26,6 @@ minio:
     secret-key: ${MINIO_SECRET_KEY}
     presign-expiry: ${MINIO_PRESIGN_EXPIRY}
     public-url: ${MINIO_PUBLIC_URL}
+
+loki:
+    url: ${LOKI_ENDPOINT}

@@ -25,8 +25,12 @@ spring:
                     max-wait: 3000ms  # 연결 대기 시간
 
 security:
+    cookie:
+        secure: false
     jwt:
         secret: ${SPRING_JWT_SECRET}
+        access-token-validity-ms: ${JWT_ACCESS_TOKEN_VALIDITY_MS:3600000}
+        refresh-token-validity-ms: ${JWT_REFRESH_TOKEN_VALIDITY_MS:1209600000}
 
 minio:
     endpoint: ${MINIO_ENDPOINT}
