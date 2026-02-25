@@ -97,9 +97,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration
-                .setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173"));
-        configuration.addAllowedOriginPattern("*"); // 추가적으로 모든 도메인 허용
+        // 운영 프론트엔드 도메인, 로컬 도메인 2개만 CORS 허용
+        configuration.setAllowedOrigins(List.of("https://ptmatch.shop", "http://localhost:5173"));
         configuration.setAllowedMethods(List.of("*")); // 모든 HTTP 메소드 허용
         configuration.setAllowedHeaders(List.of("*")); // 모든 HTTP 헤더 허용
         configuration.setAllowCredentials(true); // 인증 정보 포함 비허용(헤더에 토큰 담기)
