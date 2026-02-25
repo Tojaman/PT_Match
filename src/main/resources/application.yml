@@ -11,7 +11,8 @@ spring:
                 default_batch_fetch_size: 100
 security:
     jwt:
-        access-token-validity-ms: 3600000
+        access-token-validity-ms: ${JWT_ACCESS_TOKEN_VALIDITY_MS}
+        refresh-token-validity-ms: ${JWT_REFRESH_TOKEN_VALIDITY_MS}
 payment:
     order-ttl: ${PAYMENT_ORDER_TTL}
     success-url: ${PAYMENT_SUCCESS_URL}
