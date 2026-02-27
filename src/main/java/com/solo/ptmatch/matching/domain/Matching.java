@@ -94,6 +94,16 @@ public class Matching extends BaseEntity {
         this.matchingStatus = MatchingStatus.CANCELED;
     }
 
+    public boolean canCancel() {
+        return matchingStatus == MatchingStatus.PENDING || matchingStatus == MatchingStatus.ACCEPTED;
+    }
+
+    public void removeSchedule(MatchingSchedule schedule) {
+        if (schedules.remove(schedule) && remainingSessions > 0) {
+            remainingSessions -= 1;
+        }
+    }
+
     public void completeSession() {
         if (remainingSessions > 0) {
             remainingSessions--;

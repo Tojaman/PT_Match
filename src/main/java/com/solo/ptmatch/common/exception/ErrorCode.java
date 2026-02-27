@@ -19,6 +19,8 @@ public enum ErrorCode {
     SCHEDULE_ALREADY_RESERVED("이미 예약이 진행 중인 스케줄입니다.", HttpStatus.CONFLICT),
     CANNOT_DELETE_RESERVED_SCHEDULE("예약된 스케줄은 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST),
     MATCHING_NOT_FOUND("매칭을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    MATCHING_CANNOT_BE_CANCELED("해당 상태에서는 매칭을 취소할 수 없습니다.", HttpStatus.CONFLICT),
+    MATCHING_CANCEL_DEADLINE_EXCEEDED("매칭 취소 가능 시간이 지났습니다.", HttpStatus.CONFLICT),
     PAYMENT_ORDER_NOT_FOUND("결제 주문을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     PAYMENT_AMOUNT_MISMATCH("결제 금액이 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
     PAYMENT_ORDER_EXPIRED("결제 주문이 만료되었습니다.", HttpStatus.CONFLICT),

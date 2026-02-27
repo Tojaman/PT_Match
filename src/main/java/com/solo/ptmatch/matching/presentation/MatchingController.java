@@ -59,6 +59,18 @@ public class MatchingController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "매칭 취소", description = "매칭을 취소한다")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "매칭 취소 성공")
+    @PreAuthorize("hasRole('USER')")
+    @PatchMapping("/{matchingId}/cancel")
+    public ResponseEntity<Void> cancelMatching(
+            @AuthenticationPrincipal(expression = "username") String email,
+            @PathVariable Long matchingId
+    ) {
+        matchingService.cancelMatching(matchingId, email);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "보낸 매칭 신청 목록", description = "사용자가 보낸 매칭 신청 목록을 조회한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "보낸 매칭 신청 목록 조회 성공")
     @GetMapping("/sent")
