@@ -19,14 +19,6 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
 
     @Query("""
             SELECT po FROM PaymentOrder po
-            JOIN FETCH po.user
-            LEFT JOIN FETCH po.matching
-            WHERE po.orderId = :orderId
-            """)
-    Optional<PaymentOrder> findByOrderIdWithUserAndMatching(@Param("orderId") String orderId);
-
-    @Query("""
-            SELECT po FROM PaymentOrder po
             WHERE po.status = :status
                 AND po.nextRetryAt IS NOT NULL
                 AND po.nextRetryAt <= :now
@@ -58,16 +50,6 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
                     @Param("status") PaymentStatus status,
                     @Param("now") LocalDateTime now,
                     Pageable pageable);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT po FROM PaymentOrder po
-            JOIN FETCH po.user
-            JOIN FETCH po.trainerProfile
-            LEFT JOIN FETCH po.matching
-            WHERE po.orderId = :orderId
-            """)
-    Optional<PaymentOrder> findByOrderIdWithLock(@Param("orderId") String orderId);
 
     @Modifying
     @Query(value = """

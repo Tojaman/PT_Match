@@ -17,6 +17,7 @@ import com.solo.ptmatch.matching.infrastructure.MatchingRepository;
 import com.solo.ptmatch.payment.domain.PaymentOrder;
 import com.solo.ptmatch.payment.domain.PaymentStatus;
 import com.solo.ptmatch.payment.infrastructure.PaymentOrderRepository;
+import com.solo.ptmatch.payment.infrastructure.PaymentProperties;
 import com.solo.ptmatch.payment.presentation.request.PaymentConfirmRequest;
 import com.solo.ptmatch.payment.presentation.response.PaymentConfirmResponse;
 import com.solo.ptmatch.payment.presentation.response.PaymentOrderStatusResponse;
@@ -36,6 +37,7 @@ public class PaymentConfirmTxService {
     private final AvailableScheduleRepository availableScheduleRepository;
     private final MatchingRepository matchingRepository;
     private final PaymentRetryPolicy paymentRetryPolicy;
+    private final PaymentProperties paymentProperties;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public PreConfirmResult preConfirm(String userEmail, PaymentConfirmRequest request) {
@@ -44,7 +46,7 @@ public class PaymentConfirmTxService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
         // 2. 🔒 결제 정보 조회
-        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderIdWithLock(request.orderId())
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
 
         // 3. 소유자 검증
@@ -71,7 +73,7 @@ public class PaymentConfirmTxService {
     // =============== 토스 결과 ===============
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public PaymentConfirmResponse finalizeSuccess(String orderId, String paymentKey, LocalDateTime approvedAt) {
-        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderIdWithLock(orderId)
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
 
         if (paymentOrder.isDone()) {
@@ -87,7 +89,7 @@ public class PaymentConfirmTxService {
     // 결제 실패 -> 주문 실패 확정 및 롤백
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void finalizeRejected(String orderId, String failedCode, String failedMessage) {
-        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderIdWithLock(orderId)
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
 
         if (paymentOrder.isTerminal()) {
@@ -103,7 +105,7 @@ public class PaymentConfirmTxService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public PaymentConfirmResponse markUnknown(String orderId, String failedCode, String failedMessage,
             LocalDateTime now) {
-        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderIdWithLock(orderId)
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
 
         if (paymentOrder.isTerminal()) {
@@ -121,7 +123,7 @@ public class PaymentConfirmTxService {
     // =============== 재조회 갱신 ===============
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleReconcileRetryFailure(String orderId, String failedCode, String failedMessage, LocalDateTime now) {
-        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderIdWithLock(orderId)
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
 
         // UNKNOWN으로 전이 후 재시도 메타 기록, 한계 초과 시 MANUAL_REVIEW로 격리
@@ -166,7 +168,7 @@ public class PaymentConfirmTxService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
-        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderIdWithUserAndMatching(orderId)
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
 
         validateOwner(user, paymentOrder);
@@ -191,10 +193,12 @@ public class PaymentConfirmTxService {
     }
 
     private List<AvailableSchedule> reserveSchedules(PaymentOrder paymentOrder) {
-        List<Long> requestedScheduleIds = paymentOrder.getRequestedScheduleIdList();
+        List<Long> requestedScheduleIds = paymentOrder.getRequestedScheduleIdList().stream()
+                .sorted()
+                .toList();
 
         // 스케줄 조회 및 락
-        List<AvailableSchedule> schedules = availableScheduleRepository.findAllByIdInWithLock(requestedScheduleIds);
+        List<AvailableSchedule> schedules = availableScheduleRepository.findAllByIdIn(requestedScheduleIds);
 
         if (schedules.size() != requestedScheduleIds.size()) {
             throw GlobalException.of(ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND);
