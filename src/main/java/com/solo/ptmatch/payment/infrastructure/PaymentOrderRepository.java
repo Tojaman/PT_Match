@@ -60,9 +60,10 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
                 attempt_count = 0,
                 next_retry_at = NULL,
                 resolve_deadline_at = NULL,
-                updated_at = :now
+                updated_at = :now,
+                version = version + 1
             WHERE status = 'READY'
-            AND expires_at <= :now
+            AND expires_at < :now
             """, nativeQuery = true)
     int bulkExpireReadyOrders(@Param("now") LocalDateTime now);
 }

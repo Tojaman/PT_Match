@@ -45,36 +45,6 @@ public class MatchingService {
     private final ReviewRepository reviewRepository;
     private final MatchingScheduleRepository matchingScheduleRepository;
 
-    // PT 신청
-    @Transactional
-    public MatchingRequestCreateResponse requestMatching(String userEmail, MatchingRequestCreateRequest request) {
-
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
-        TrainerProfile trainerProfile = trainerProfileRepository.findById(request.trainerProfileId())
-                .orElseThrow(() -> GlobalException.of(ErrorCode.TRAINER_PROFILE_NOT_FOUND));
-
-        // 1. 매칭 엔티티 생성
-        MatchingUserInfo matchingUserInfo = MatchingUserInfo.from(request.userInfo());
-        Matching matching = Matching.create(user, trainerProfile, request.message(), matchingUserInfo, trainerProfile.getPricePerSession());
-
-        // 2. 매칭 엔티티에 매칭 스케줄 추가(세션 횟수만큼)
-        List<AvailableSchedule> schedules = availableScheduleRepository.findAllByIdInWithLock(request.availableScheduleIds()); // 공유 락 획득
-        for (AvailableSchedule schedule : schedules) {
-            if (schedule == null) {
-                throw GlobalException.of(ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND);
-            }
-            if (schedule.getReservationStatus() != ReservationStatus.AVAILABLE) {
-                throw GlobalException.of(ErrorCode.SCHEDULE_ALREADY_RESERVED);
-            }
-            schedule.markAsPending(); // 베타 락 승격
-            matching.addSchedule(MatchingSchedule.from(schedule));
-        }
-        // 3. 최종 매칭 엔티티 저장
-        Matching savedMatching = matchingRepository.save(matching);
-        return MatchingRequestCreateResponse.from(savedMatching);
-    }
-
     // 매칭 신청 응답 (수락/거절)
     @Transactional
     public void respondMatching(Long matchingId, String userEmail, MatchingRespondRequest request) {

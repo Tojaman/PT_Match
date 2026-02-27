@@ -34,18 +34,6 @@ public class MatchingController {
 
     private final MatchingService matchingService;
 
-    @Operation(summary = "PT 매칭 신청", description = "사용자가 PT 매칭을 신청한다")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "매칭 신청 성공")
-    @PreAuthorize("hasRole('USER')")
-    @PostMapping
-    public ResponseEntity<ApiResponse<MatchingRequestCreateResponse>> requestMatching(
-            @AuthenticationPrincipal(expression = "username") String email,
-        @Valid @RequestBody MatchingRequestCreateRequest request
-    ) {
-        MatchingRequestCreateResponse response = matchingService.requestMatching(email, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
-    }
-
     @Operation(summary = "매칭 신청 응답", description = "트레이너가 매칭 신청을 수락 또는 거절한다")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "매칭 응답 처리 성공")
     @PreAuthorize("hasRole('TRAINER')")
