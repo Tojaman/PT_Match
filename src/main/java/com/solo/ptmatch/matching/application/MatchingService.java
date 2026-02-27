@@ -6,6 +6,7 @@ import com.solo.ptmatch.matching.domain.Matching;
 import com.solo.ptmatch.matching.domain.MatchingSchedule;
 import com.solo.ptmatch.matching.domain.MatchingStatus;
 import com.solo.ptmatch.matching.domain.MatchingUserInfo;
+import com.solo.ptmatch.matching.domain.SessionStatus;
 import com.solo.ptmatch.matching.infrastructure.AvailableScheduleRepository;
 import com.solo.ptmatch.matching.infrastructure.MatchingRepository;
 import com.solo.ptmatch.matching.infrastructure.MatchingScheduleRepository;
@@ -17,7 +18,7 @@ import com.solo.ptmatch.matching.presentation.response.MatchingRequestCreateResp
 import com.solo.ptmatch.matching.presentation.response.MatchingScheduleDetailResponse;
 import com.solo.ptmatch.matching.presentation.response.MatchingSentSummaryResponse;
 import com.solo.ptmatch.matching.presentation.response.ReviewInfo;
-
+import java.time.LocalDateTime;
 import java.util.List;
 import com.solo.ptmatch.trainer.domain.AvailableSchedule;
 import com.solo.ptmatch.trainer.domain.ReservationStatus;
@@ -76,6 +77,29 @@ public class MatchingService {
         }
     }
 
+    @Transactional
+    public void cancelMatching(Long matchingId, String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
+
+        Matching matching = matchingRepository.findById(matchingId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_NOT_FOUND));
+
+        if (!matching.canCancel()) {
+            throw GlobalException.of(ErrorCode.MATCHING_CANNOT_BE_CANCELED);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        validateCancelDeadline(matching, now);
+
+        
+        restoreAndRemoveCancelableSchedules(matching, now);
+        if (matching.getRemainingSessions() == matching.getSchedules().size()) {
+            matching.cancel();
+        } else {
+            matching.complete();
+        }
+    }
     // 보낸 매칭 신청 목록 조회(매칭 스케줄은 별도 API 구성)
     @Transactional(readOnly = true)
     public Page<MatchingSentSummaryResponse> getSentMatchings(String userEmail, List<MatchingStatus> status, Pageable pageable) {
@@ -175,5 +199,29 @@ public class MatchingService {
         if (matching.getRemainingSessions() <= 0) {
             matching.complete();
         }
+    }
+
+    private void validateCancelDeadline(Matching matching, LocalDateTime now) {
+        LocalDateTime lastScheduleStartTime = matching.getSchedules().stream()
+                .map(MatchingSchedule::getStartTime)
+                .max(LocalDateTime::compareTo)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.MATCHING_SCHEDULE_NOT_FOUND));
+
+        LocalDateTime deadline = lastScheduleStartTime.minusHours(24);
+        if (now.isAfter(deadline)) {
+            throw GlobalException.of(ErrorCode.MATCHING_CANCEL_DEADLINE_EXCEEDED);
+        }
+    }
+
+    private void restoreAndRemoveCancelableSchedules(Matching matching, LocalDateTime now) {
+        List<MatchingSchedule> cancelTargets = matching.getSchedules().stream()
+                .filter(schedule -> schedule.getSessionStatus() == SessionStatus.SCHEDULED)
+                .filter(schedule -> schedule.getStartTime().isAfter(now))
+                .toList();
+
+        cancelTargets.forEach(schedule -> {
+            schedule.getAvailableSchedule().markAsAvailable();
+            matching.removeSchedule(schedule);
+        });
     }
 }
