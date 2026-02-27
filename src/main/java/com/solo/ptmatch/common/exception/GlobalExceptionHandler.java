@@ -2,6 +2,7 @@ package com.solo.ptmatch.common.exception;
 
 import com.solo.ptmatch.common.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.orm.OptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -19,6 +20,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(errorCode.getStatus()).body(ErrorResponse.from(exception));
     }
 
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(OptimisticLockingFailureException e) {
+        ErrorCode errorCode = ErrorCode.CONFLICT;
+        log.warn("OptimisticLockingFailureException 발생: {}", e.getMessage());
+
+        return ResponseEntity.status(errorCode.getStatus()).body(ErrorResponse.of(errorCode, errorCode.getMessage()));
+    }
+
     // @Valid DTO 유효성 검증 실패 예외 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
@@ -34,7 +43,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
         ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
         log.error("처리되지 않은 예외 발생: {}", e.getMessage(), e);
-        
+
         return ResponseEntity.status(errorCode.getStatus()).body(ErrorResponse.of(errorCode, errorCode.getMessage()));
     }
 }
+

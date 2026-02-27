@@ -19,8 +19,7 @@ public interface AvailableScheduleRepository extends JpaRepository<AvailableSche
     public List<AvailableSchedule> findAllByTrainerProfileId(Long trainerId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT s FROM AvailableSchedule s WHERE s.id IN :ids")
-    public List<AvailableSchedule> findAllByIdInWithLock(@Param("ids") List<Long> ids);
+    public List<AvailableSchedule> findAllByIdIn(@Param("ids") List<Long> ids);
 
     @Query("SELECT COUNT(s) FROM AvailableSchedule s " +
             "WHERE s.trainerProfile.id = :trainerId " +

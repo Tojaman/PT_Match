@@ -19,14 +19,6 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
 
     @Query("""
             SELECT po FROM PaymentOrder po
-            JOIN FETCH po.user
-            LEFT JOIN FETCH po.matching
-            WHERE po.orderId = :orderId
-            """)
-    Optional<PaymentOrder> findByOrderIdWithUserAndMatching(@Param("orderId") String orderId);
-
-    @Query("""
-            SELECT po FROM PaymentOrder po
             WHERE po.status = :status
                 AND po.nextRetryAt IS NOT NULL
                 AND po.nextRetryAt <= :now
@@ -59,16 +51,6 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
                     @Param("now") LocalDateTime now,
                     Pageable pageable);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
-            SELECT po FROM PaymentOrder po
-            JOIN FETCH po.user
-            JOIN FETCH po.trainerProfile
-            LEFT JOIN FETCH po.matching
-            WHERE po.orderId = :orderId
-            """)
-    Optional<PaymentOrder> findByOrderIdWithLock(@Param("orderId") String orderId);
-
     @Modifying
     @Query(value = """
             UPDATE payment_orders
@@ -78,9 +60,10 @@ public interface PaymentOrderRepository extends JpaRepository<PaymentOrder, Long
                 attempt_count = 0,
                 next_retry_at = NULL,
                 resolve_deadline_at = NULL,
-                updated_at = :now
+                updated_at = :now,
+                version = version + 1
             WHERE status = 'READY'
-            AND expires_at <= :now
+            AND expires_at < :now
             """, nativeQuery = true)
     int bulkExpireReadyOrders(@Param("now") LocalDateTime now);
 }
