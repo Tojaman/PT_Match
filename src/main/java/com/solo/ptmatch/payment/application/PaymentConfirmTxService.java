@@ -2,13 +2,12 @@ package com.solo.ptmatch.payment.application;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Locale;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import com.solo.ptmatch.common.exception.ErrorCode;
 import com.solo.ptmatch.common.exception.GlobalException;
+import com.solo.ptmatch.email.application.EmailOutboxService;
 import com.solo.ptmatch.matching.domain.Matching;
 import com.solo.ptmatch.matching.domain.MatchingSchedule;
 import com.solo.ptmatch.matching.domain.MatchingUserInfo;
@@ -17,7 +16,6 @@ import com.solo.ptmatch.matching.infrastructure.MatchingRepository;
 import com.solo.ptmatch.payment.domain.PaymentOrder;
 import com.solo.ptmatch.payment.domain.PaymentStatus;
 import com.solo.ptmatch.payment.infrastructure.PaymentOrderRepository;
-import com.solo.ptmatch.payment.infrastructure.PaymentProperties;
 import com.solo.ptmatch.payment.presentation.request.PaymentConfirmRequest;
 import com.solo.ptmatch.payment.presentation.response.PaymentConfirmResponse;
 import com.solo.ptmatch.payment.presentation.response.PaymentOrderStatusResponse;
@@ -37,7 +35,7 @@ public class PaymentConfirmTxService {
     private final AvailableScheduleRepository availableScheduleRepository;
     private final MatchingRepository matchingRepository;
     private final PaymentRetryPolicy paymentRetryPolicy;
-    private final PaymentProperties paymentProperties;
+    private final EmailOutboxService emailOutboxService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public PreConfirmResult preConfirm(String userEmail, PaymentConfirmRequest request) {
@@ -46,7 +44,7 @@ public class PaymentConfirmTxService {
                 .orElseThrow(() -> GlobalException.of(ErrorCode.USER_NOT_FOUND));
 
         // 2. 🔒 결제 정보 조회
-        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(request.orderId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
 
         // 3. 소유자 검증
@@ -83,6 +81,13 @@ public class PaymentConfirmTxService {
         Matching matching = paymentOrder.getMatching();
         paymentOrder.markDone(paymentKey, approvedAt);
         matching.markPending();
+        emailOutboxService.createPaymentCompleted(
+                paymentOrder.getCustomerEmail(),
+                paymentOrder.getOrderId(),
+                paymentOrder.getCustomerName(),
+                paymentOrder.getAmount(),
+                approvedAt);
+
         return PaymentConfirmResponse.from(paymentOrder);
     }
 
