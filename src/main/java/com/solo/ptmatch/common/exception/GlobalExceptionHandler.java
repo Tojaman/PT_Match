@@ -2,7 +2,8 @@ package com.solo.ptmatch.common.exception;
 
 import com.solo.ptmatch.common.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.orm.OptimisticLockingFailureException;
+
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;

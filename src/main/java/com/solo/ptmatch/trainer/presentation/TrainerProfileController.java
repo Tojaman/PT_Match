@@ -24,11 +24,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/trainers")
@@ -73,8 +73,9 @@ public class TrainerProfileController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상세 조회 성공")
         @GetMapping("/{trainerId}")
         public ResponseEntity<ApiResponse<TrainerDetailResponse>> getTrainer(
-                        @AuthenticationPrincipal(expression = "username") String loggedInEmail,
+                        @AuthenticationPrincipal UserDetails principal,
                         @PathVariable Long trainerId) {
+                String loggedInEmail = principal == null ? null : principal.getUsername();
                 TrainerDetailResponse response = trainerProfileService.getTrainerDetail(trainerId, loggedInEmail);
                 return ResponseEntity.ok(ApiResponse.success(response));
         }
