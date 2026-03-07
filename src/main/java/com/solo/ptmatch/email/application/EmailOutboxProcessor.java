@@ -1,6 +1,7 @@
 package com.solo.ptmatch.email.application;
 
 import com.solo.ptmatch.email.domain.EmailOutbox;
+import com.solo.ptmatch.email.domain.EmailOutboxStatus;
 import com.solo.ptmatch.email.infrastructure.EmailOutboxRepository;
 import com.solo.ptmatch.email.infrastructure.EmailSender;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,8 @@ public class EmailOutboxProcessor {
             emailSender.send(
                     outbox.getRecipientEmail(),
                     outbox.getSubject(),
-                    outbox.getBody());
+                    outbox.getBody(),
+                    outbox.getReferenceId());
 
             outbox.markSent();
         } catch (Exception e) {
