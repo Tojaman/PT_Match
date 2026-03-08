@@ -18,9 +18,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "email_outbox",
-        indexes = @Index(name = "idx_email_outbox_status_retry",
-                columnList = "status, next_retry_at"))
+@Table(name = "email_outbox", indexes = @Index(name = "idx_email_outbox_status_retry", columnList = "status, next_retry_at"))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EmailOutbox extends BaseEntity {
 
@@ -79,7 +77,6 @@ public class EmailOutbox extends BaseEntity {
         return new EmailOutbox(recipientEmail, subject, body, maxRetry, orderId);
     }
 
-
     public void markSent() {
         this.status = EmailOutboxStatus.SENT;
         this.lastErrorMessage = null;
@@ -92,6 +89,7 @@ public class EmailOutbox extends BaseEntity {
         if (this.retryCount >= this.maxRetry) {
             this.status = EmailOutboxStatus.FAILED;
         } else {
+            this.status = EmailOutboxStatus.PENDING;
             // 지수 백오프: 30s → 60s → 120s → 240s → ...
             long delaySeconds = 30L * (long) Math.pow(2, this.retryCount - 1);
             this.nextRetryAt = LocalDateTime.now().plusSeconds(delaySeconds);
