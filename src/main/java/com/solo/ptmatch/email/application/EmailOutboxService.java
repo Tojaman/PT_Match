@@ -31,4 +31,31 @@ public class EmailOutboxService {
 
         applicationEventPublisher.publishEvent(new EmailOutboxCreatedEvent(outbox.getId()));
     }
+
+    //PENDING → PROCESSING
+    @Transactional
+    public EmailOutbox claimAndGet(Long outboxId) {
+        int updated = emailOutboxRepository.markAsProcessing(outboxId);
+        if (updated == 0) {
+            return null;
+        }
+        return emailOutboxRepository.findById(outboxId)
+                .orElseThrow(() -> new IllegalArgumentException("이메일 Outbox를 찾을 수 없습니다. outboxId=" + outboxId));
+    }
+
+    //PROCESSING → SENT
+    @Transactional
+    public void markSent(Long outboxId) {
+        EmailOutbox outbox = emailOutboxRepository.findById(outboxId)
+                .orElseThrow(() -> new IllegalArgumentException("이메일 Outbox를 찾을 수 없습니다. outboxId=" + outboxId));
+        outbox.markSent();
+    }
+
+    //PROCESSING → PENDING or FAILED
+    @Transactional
+    public void markFailed(Long outboxId, String errorMessage) {
+        EmailOutbox outbox = emailOutboxRepository.findById(outboxId)
+                .orElseThrow(() -> new IllegalArgumentException("이메일 Outbox를 찾을 수 없습니다. outboxId=" + outboxId));
+        outbox.incrementRetry(errorMessage);
+    }
 }
