@@ -33,15 +33,4 @@ public class StatisticsController {
         MonthlyDashboardResponse response = monthlyStatsService.getDashboardData(trainerProfileId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-
-    @Operation(summary = "월별 통계 수동 집계", description = "현재 월의 통계를 수동으로 집계한다 (테스트용)")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "집계 성공")
-    @PreAuthorize("hasRole('TRAINER')")
-    @PostMapping("/monthly/aggregate")
-    public ResponseEntity<ApiResponse<String>> aggregateMonthlyStats(
-            @AuthenticationPrincipal(expression = "username") String loggedInEmail) {
-        LocalDate now = LocalDate.now();
-        monthlyStatsService.aggregateAllTrainersMonthlyStats(now.getYear(), now.getMonthValue());
-        return ResponseEntity.ok(ApiResponse.success("Stats aggregated successfully"));
-    }
 }

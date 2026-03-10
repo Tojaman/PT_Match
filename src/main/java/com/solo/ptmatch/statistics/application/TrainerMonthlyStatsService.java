@@ -8,150 +8,30 @@ import com.solo.ptmatch.statistics.infrastructure.TrainerMonthlyStatsRepository;
 import com.solo.ptmatch.statistics.presentation.response.*;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
 public class TrainerMonthlyStatsService {
 
     private final TrainerMonthlyStatsRepository statsRepository;
-    private final TrainerProfileRepository trainerProfileRepository;
-    private final MatchingRepository matchingRepository;
-    private final MatchingScheduleRepository scheduleRepository;
     private final ReviewRepository reviewRepository;
-    private final ThreadPoolTaskExecutor statsExecutor;
 
     public TrainerMonthlyStatsService(
             TrainerMonthlyStatsRepository statsRepository,
-            TrainerProfileRepository trainerProfileRepository,
-            MatchingRepository matchingRepository,
-            MatchingScheduleRepository scheduleRepository,
-            ReviewRepository reviewRepository,
-            @Qualifier("statsExecutor") ThreadPoolTaskExecutor statsExecutor) {
+            ReviewRepository reviewRepository) {
         this.statsRepository = statsRepository;
-        this.trainerProfileRepository = trainerProfileRepository;
-        this.matchingRepository = matchingRepository;
-        this.scheduleRepository = scheduleRepository;
         this.reviewRepository = reviewRepository;
-        this.statsExecutor = statsExecutor;
-    }
-
-    // 특정 트레이너의 특정 월 통계 집계
-    @Transactional
-    public void aggregateMonthlyStats(Long trainerProfileId, int year, int month) {
-        TrainerProfile trainerProfile = trainerProfileRepository.findById(trainerProfileId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Trainer not found: " + trainerProfileId));
-
-        LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
-        LocalDateTime end = start.plusMonths(1);
-
-        // 1. 회원 통계
-        int activeMembers = matchingRepository.countActiveMembersByTrainerProfileIdAndDateRange(
-                trainerProfileId, start, end);
-        int newMembers = matchingRepository.countFirstTimeMembers(trainerProfileId, start, end);
-        int reRegistered = matchingRepository.countReRegisteredMembers(trainerProfileId, start, end);
-
-        // 2. 수업 통계
-        int completedSessions = scheduleRepository.countCompletedSessionsByTrainerProfileIdAndDateRange(
-                trainerProfileId, start, end);
-        int scheduledSessions = scheduleRepository.countScheduledSessionsByTrainerProfileIdAndDateRange(
-                trainerProfileId, start, end);
-
-        // 3. 매출 계산 (완료된 세션 × 세션당 가격)
-        Long revenueValue = scheduleRepository.calculateMonthlyRevenue(trainerProfileId, start, end);
-        BigDecimal totalRevenue = BigDecimal.valueOf(revenueValue != null ? revenueValue : 0);
-
-        // 4. 리뷰 통계
-        int reviewCount = reviewRepository.countByTrainerProfileIdAndDateRange(trainerProfileId, start, end);
-        Double avgRating = reviewRepository.getAverageRatingByTrainerProfileIdAndDateRange(trainerProfileId, start,
-                end);
-        BigDecimal averageRating = BigDecimal.valueOf(avgRating != null ? avgRating : 0)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        // Upsert: 기존 데이터가 있으면 업데이트, 없으면 생성
-        TrainerMonthlyStats stats = statsRepository.findByTrainerProfileIdAndYearAndMonth(trainerProfileId, year, month)
-                .orElseGet(() -> TrainerMonthlyStats.create(trainerProfile, year, month));
-
-        stats.updateStats(
-                activeMembers,
-                newMembers,
-                reRegistered,
-                completedSessions,
-                scheduledSessions,
-                totalRevenue,
-                reviewCount,
-                averageRating);
-
-        statsRepository.save(stats);
-
-        log.info(
-                "Aggregated stats for trainer {} - {}/{}: active={}, new={}, reRegistered={}, completed={}, revenue={}",
-                trainerProfileId, year, month, activeMembers, newMembers, reRegistered,
-                completedSessions,
-                totalRevenue);
-    }
-
-    // 모든 트레이너의 특정 월 통계 집계 (병렬 처리)
-    public void aggregateAllTrainersMonthlyStats(int year, int month) {
-        List<TrainerProfile> trainers = trainerProfileRepository.findAll();
-        log.info("===== 월간 통계 집계 시작: {}/{}, 트레이너 {}명 =====", year, month, trainers.size());
-
-        long startTime = System.currentTimeMillis();
-        AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger failCount = new AtomicInteger(0);
-
-        // CompletableFuture로 병렬 처리
-        List<CompletableFuture<Void>> futures = trainers.stream()
-                .map(trainer -> CompletableFuture.runAsync(() -> {
-                    try {
-                        aggregateMonthlyStats(trainer.getId(), year, month);
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        log.error("트레이너 {} 통계 집계 실패: {}", trainer.getId(), e.getMessage());
-                        failCount.incrementAndGet();
-                    }
-                }, statsExecutor))
-                .toList();
-
-        // 모든 작업 완료 대기
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-        long duration = System.currentTimeMillis() - startTime;
-        log.info("===== 월간 통계 집계 완료 =====");
-        log.info("소요 시간: {}초, 성공: {}건, 실패: {}건", duration / 1000, successCount.get(), failCount.get());
-    }
-
-    // 모든 트레이너의 특정 월 통계 집계 (단일 스레드 - 순차 처리)
-    public void aggregateAllTrainersMonthlyStatsSingleThread(int year, int month) {
-        List<TrainerProfile> trainers = trainerProfileRepository.findAll();
-        log.info("Starting monthly stats aggregation for {} trainers - {}/{}", trainers.size(), year, month);
-
-        for (TrainerProfile trainer : trainers) {
-            try {
-                aggregateMonthlyStats(trainer.getId(), year, month);
-            } catch (Exception e) {
-                log.error("Failed to aggregate stats for trainer {}: {}", trainer.getId(), e.getMessage());
-            }
-        }
-
-        log.info("Completed monthly stats aggregation for {}/{}", year, month);
     }
 
     /**
