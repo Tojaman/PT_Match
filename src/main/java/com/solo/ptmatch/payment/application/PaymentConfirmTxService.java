@@ -91,7 +91,7 @@ public class PaymentConfirmTxService {
         return PaymentConfirmResponse.from(paymentOrder);
     }
 
-    // 결제 실패 -> 주문 실패 확정 및 롤백
+    // 결제 실패(ABORTED) -> 주문 실패 확정 및 롤백
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void finalizeRejected(String orderId, String failedCode, String failedMessage) {
         PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
@@ -101,9 +101,49 @@ public class PaymentConfirmTxService {
             return;
         }
 
-        // 주문 실패 처리 및 매칭/스케줄 롤백
         paymentOrder.markFailed(failedCode, failedMessage);
         releaseMatching(paymentOrder);
+    }
+
+    // 결제 만료(EXPIRED) -> 주문 만료 확정 및 롤백
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void finalizeExpired(String orderId, String failedCode, String failedMessage) {
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
+
+        if (paymentOrder.isTerminal()) {
+            return;
+        }
+
+        paymentOrder.markExpired();
+        releaseMatching(paymentOrder);
+    }
+
+    // 결제 취소(CANCELED) -> 주문 취소 확정 및 롤백
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void finalizeCanceled(String orderId, String failedCode, String failedMessage) {
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
+
+        if (paymentOrder.isTerminal()) {
+            return;
+        }
+
+        paymentOrder.markCanceled();
+        releaseMatching(paymentOrder);
+    }
+
+    // 수동 검토 격리 (웹훅/스케줄러에서 직접 호출)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markManualReview(String orderId, String failedCode, String failedMessage, LocalDateTime now) {
+        PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(orderId)
+                .orElseThrow(() -> GlobalException.of(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
+
+        if (paymentOrder.isTerminal()) {
+            return;
+        }
+
+        paymentOrder.markManualReview(failedCode, failedMessage);
     }
 
     // 5xx -> 주문 UNKNOWN 전이, 재시도

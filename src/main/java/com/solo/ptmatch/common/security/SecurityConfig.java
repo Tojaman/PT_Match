@@ -46,6 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh",
                                 "/api/auth/logout")
                         .permitAll()
+                        .requestMatchers("/api/webhooks/**").permitAll() // 외부 웹훅 (토스페이먼츠 등)
                         .requestMatchers(HttpMethod.POST, "/api/users/me/verification").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/trainers/me").hasRole("TRAINER") // ID 와일드카드보다 먼저 선언하여 보호
                         .requestMatchers(HttpMethod.GET, "/api/map/**").permitAll()
