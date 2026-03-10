@@ -18,12 +18,12 @@ payment:
   success-url: ${PAYMENT_SUCCESS_URL}
   fail-url: ${PAYMENT_FAIL_URL}
   retry:
-    backoff-delays: [1m, 2m, 4m, 8m, 16m, 30m, 30m]
-    max-attempts: 7
-    resolve-deadline: 90m
-    reconcile-interval: 30s
+    backoff-delays: [10s, 30s, 1m, 3m, 5m, 10m]
+    max-attempts: 6
+    resolve-deadline: 20m
+    reconcile-interval: 10s
     reconcile-batch-size: 50
-    approving-stale-threshold: 2m
+    approving-stale-threshold: 1m
   toss:
     base-url: ${TOSS_BASE_URL}
     client-key: ${TOSS_CLIENT_KEY}
