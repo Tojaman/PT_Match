@@ -29,7 +29,10 @@ public class TossPaymentsApiClient implements TossPaymentsClient {
         try {
             return tossRestClient.post()
                     .uri("/v1/payments/confirm")
-                    .headers(headers -> headers.setBasicAuth(tossPaymentsProperties.secretKey(), ""))
+                    .headers(headers -> {
+                        headers.setBasicAuth(tossPaymentsProperties.secretKey(), "");
+                        headers.set("Idempotency-Key", orderId);
+                    })
                     .body(request)
                     .retrieve()
                     .body(TossPaymentResponse.class);
