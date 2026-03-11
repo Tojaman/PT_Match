@@ -30,12 +30,12 @@ public class EmailOutboxProcessor {
                     outbox.getBody(),
                     outbox.getReferenceId());
             // TX2 성공: PROCESSING → SENT
-            emailOutboxService.markSent(outbox);
+            emailOutboxService.markSent(outbox.getId());
         } catch (Exception e) {
             log.warn("이메일 발송 실패. outboxId={}, retryCount={}/{}. error={}",
                     outbox.getId(), outbox.getRetryCount(), outbox.getMaxRetry(), e.getMessage());
             // TX2 실패: PROCESSING → PENDING or FAILED
-            emailOutboxService.handleSendFailure(outbox, e.getMessage());
+            emailOutboxService.handleSendFailure(outbox.getId(), e.getMessage());
         }
     }
 }

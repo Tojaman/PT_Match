@@ -51,13 +51,17 @@ public class EmailOutboxService {
 
     //PROCESSING → SENT
     @Transactional
-    public void markSent(EmailOutbox outbox) {
-        outbox.markSent();
+    public void markSent(Long outboxId) {
+        EmailOutbox managedOutbox = emailOutboxRepository.findById(outboxId)
+                .orElseThrow(() -> new IllegalArgumentException("이메일 Outbox를 찾을 수 없습니다. outboxId=" + outboxId));
+        managedOutbox.markSent();
     }
 
     //PROCESSING → PENDING or FAILED
     @Transactional
-    public void handleSendFailure(EmailOutbox outbox, String errorMessage) {
-        outbox.incrementRetry(errorMessage);
+    public void handleSendFailure(Long outboxId, String errorMessage) {
+        EmailOutbox managedOutbox = emailOutboxRepository.findById(outboxId)
+                .orElseThrow(() -> new IllegalArgumentException("이메일 Outbox를 찾을 수 없습니다. outboxId=" + outboxId));
+        managedOutbox.incrementRetry(errorMessage);
     }
 }
