@@ -82,6 +82,16 @@ public class EmailOutbox extends BaseEntity {
         this.lastErrorMessage = null;
     }
 
+    public void markDelivered() {
+        this.status = EmailOutboxStatus.DELIVERED;
+        this.lastErrorMessage = null;
+    }
+
+    public void markFailed() {
+        this.status = EmailOutboxStatus.FAILED;
+        this.lastErrorMessage = null;
+    }
+
     public void incrementRetry(String errorMessage) {
         this.retryCount++;
         this.lastErrorMessage = errorMessage;
