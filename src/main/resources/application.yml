@@ -30,6 +30,7 @@ payment:
     secret-key: ${TOSS_SECRET_KEY}
 resend:
   api-key: ${RESEND_API_KEY}
+  webhook-secret: ${RESEND_WEBHOOK_SECRET}
   from-email: ${RESEND_FROM_EMAIL:PTMatch <noreply@ptmatch.com>}
 email:
   outbox:

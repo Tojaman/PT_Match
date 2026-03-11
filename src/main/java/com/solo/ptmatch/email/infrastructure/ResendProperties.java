@@ -12,5 +12,6 @@ import org.springframework.stereotype.Component;
 public class ResendProperties {
 
     private String apiKey;
+    private String webhookSecret;
     private String fromEmail;
 }
