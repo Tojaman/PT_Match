@@ -4,6 +4,8 @@ import com.resend.Resend;
 import com.resend.core.exception.ResendException;
 import com.resend.core.net.RequestOptions;
 import com.resend.services.emails.model.CreateEmailOptions;
+import com.resend.services.emails.model.Tag;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +28,11 @@ public class ResendEmailSender implements EmailSender {
                 .to(to)
                 .subject(subject)
                 .html(htmlBody)
+                .tags(List.of(
+                        Tag.builder()
+                                .name("reference_id")
+                                .value(referenceId)
+                                .build()))
                 .build();
 
         try {

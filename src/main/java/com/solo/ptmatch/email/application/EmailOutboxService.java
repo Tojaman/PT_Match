@@ -4,6 +4,7 @@ import com.solo.ptmatch.email.domain.EmailOutbox;
 import com.solo.ptmatch.email.infrastructure.EmailOutboxProperties;
 import com.solo.ptmatch.email.infrastructure.EmailOutboxRepository;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -43,19 +44,20 @@ public class EmailOutboxService {
                 .orElseThrow(() -> new IllegalArgumentException("이메일 Outbox를 찾을 수 없습니다. outboxId=" + outboxId));
     }
 
+    @Transactional(readOnly = true)
+    public Optional<EmailOutbox> findByReferenceId(String referenceId) {
+        return emailOutboxRepository.findByReferenceId(referenceId);
+    }
+
     //PROCESSING → SENT
     @Transactional
-    public void markSent(Long outboxId) {
-        EmailOutbox outbox = emailOutboxRepository.findById(outboxId)
-                .orElseThrow(() -> new IllegalArgumentException("이메일 Outbox를 찾을 수 없습니다. outboxId=" + outboxId));
+    public void markSent(EmailOutbox outbox) {
         outbox.markSent();
     }
 
     //PROCESSING → PENDING or FAILED
     @Transactional
-    public void markFailed(Long outboxId, String errorMessage) {
-        EmailOutbox outbox = emailOutboxRepository.findById(outboxId)
-                .orElseThrow(() -> new IllegalArgumentException("이메일 Outbox를 찾을 수 없습니다. outboxId=" + outboxId));
+    public void handleSendFailure(EmailOutbox outbox, String errorMessage) {
         outbox.incrementRetry(errorMessage);
     }
 }
