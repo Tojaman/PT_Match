@@ -54,6 +54,22 @@ public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, 
             @Param("limit") int limit
     );
 
+    @Modifying
+    @Query(value = """
+            UPDATE trainer_profiles t
+            SET popularity_score = CASE
+                WHEN t.review_count = 0 THEN 0
+                ELSE ROUND(
+                    ((t.review_count * 1.0 / (t.review_count + :m)) * t.average_rating) +
+                    ((:m * 1.0 / (t.review_count + :m)) * s.global_average_rating),
+                    4
+                )
+            END
+            FROM trainer_popularity_stats s
+            WHERE t.sport_type = s.sport_type
+            """, nativeQuery = true)
+    int recalculateAllPopularityScores(@Param("m") int m);
+
     // ST_DWithin 기반 반경 검색
     @Query(value = """
             SELECT * FROM trainer_profiles t
