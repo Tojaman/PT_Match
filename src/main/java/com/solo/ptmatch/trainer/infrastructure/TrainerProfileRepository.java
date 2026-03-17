@@ -43,19 +43,16 @@ public interface TrainerProfileRepository extends JpaRepository<TrainerProfile, 
     // 위치 기반 인기 트레이너 조회 (인기도 점수 정렬)
     @Query(value = """
             SELECT * FROM trainer_profiles t
-            WHERE ST_DWithin(
-                t.location,
-                ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography,
-                :radiusMeters
-            )
-            ORDER BY (t.likes_count * 1.0 + t.review_count * 2.0 + t.average_rating * 10) DESC
+            WHERE t.s2_cell_id IN (:s2CellIds)
+              AND t.sport_type = :sportType
+            ORDER BY t.popularity_score DESC
             LIMIT :limit
             """, nativeQuery = true)
-    List<TrainerProfile> findPopularTrainersNearby(
-            @Param("lat") double latitude,
-            @Param("lon") double longitude,
-            @Param("radiusMeters") double radiusMeters,
-            @Param("limit") int limit);
+    List<TrainerProfile> findPopularTrainersNearbyByS2CellIdInV2(
+            @Param("sportType") String sportType,
+            @Param("s2CellIds") List<Long> s2CellIds,
+            @Param("limit") int limit
+    );
 
     // ST_DWithin 기반 반경 검색
     @Query(value = """

@@ -105,4 +105,12 @@ public class S2Util {
 
         return ranges;
     }
+
+    // === 주변 셀 ===
+    public static List<Long> getNeighborCellIds(long cellId) {
+        S2CellId cell = new S2CellId(cellId);
+        List<S2CellId> neighbors = new ArrayList<>();
+        cell.getAllNeighbors(STORAGE_LEVEL, neighbors);
+        return neighbors.stream().map(S2CellId::id).toList();
+    }
 }
