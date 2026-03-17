@@ -23,6 +23,8 @@ import lombok.NoArgsConstructor;
 public class TrainerProfile extends BaseEntity {
 
     private static final BigDecimal DEFAULT_RATING = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+    private static final BigDecimal DEFAULT_POPULARITY_SCORE = BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
+    private static final int POPULARITY_CALCULATION_SCALE = 10;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -78,6 +80,9 @@ public class TrainerProfile extends BaseEntity {
     @Column(name = "average_rating", nullable = false, precision = 4, scale = 2)
     private BigDecimal averageRating;
 
+    @Column(name = "popularity_score", nullable = false, precision = 6, scale = 4)
+    private BigDecimal popularityScore;
+
     @Column(name = "price_per_session")
     private Integer pricePerSession;
 
@@ -106,6 +111,7 @@ public class TrainerProfile extends BaseEntity {
         this.profileImageUrl = profileImageUrl;
         this.pricePerSession = pricePerSession;
         this.averageRating = DEFAULT_RATING;
+        this.popularityScore = DEFAULT_POPULARITY_SCORE;
     }
 
     public static TrainerProfile create(
@@ -199,6 +205,33 @@ public class TrainerProfile extends BaseEntity {
         totalRating = totalRating.subtract(BigDecimal.valueOf(rating));
         this.reviewCount--;
         this.averageRating = totalRating.divide(BigDecimal.valueOf(this.reviewCount), 2, RoundingMode.HALF_UP);
+    }
+
+    // Bayesian rating = (v / (v + m)) * R + (m / (v + m)) * C
+    // v = reviewCount, m = bayesianM, R = averageRating, C = globalAverageRating
+    public void recalculatePopularityScore(BigDecimal globalAverageRating) {
+        if (this.reviewCount == 0) {
+            this.popularityScore = DEFAULT_POPULARITY_SCORE;
+            return;
+        }
+
+        BigDecimal reviewCountValue = BigDecimal.valueOf(this.reviewCount);
+        BigDecimal bayesianM = BigDecimal.valueOf(TrainerPopularityScorePolicy.BAYESIAN_M);
+        BigDecimal denominator = reviewCountValue.add(bayesianM); // v + M
+        BigDecimal trainerWeight = reviewCountValue.divide(
+                denominator,
+                POPULARITY_CALCULATION_SCALE,
+                RoundingMode.HALF_UP
+        );
+        BigDecimal globalWeight = bayesianM.divide(
+                denominator,
+                POPULARITY_CALCULATION_SCALE,
+                RoundingMode.HALF_UP
+        );
+
+        this.popularityScore = trainerWeight.multiply(this.averageRating)
+                .add(globalWeight.multiply(globalAverageRating))
+                .setScale(4, RoundingMode.HALF_UP);
     }
 
     private void validateCareerYears(int careerYears) {

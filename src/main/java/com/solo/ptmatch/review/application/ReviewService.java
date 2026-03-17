@@ -9,10 +9,12 @@ import com.solo.ptmatch.review.infrastructure.ReviewRepository;
 import com.solo.ptmatch.review.presentation.request.ReviewCreateRequest;
 import com.solo.ptmatch.review.presentation.request.ReviewUpdateRequest;
 import com.solo.ptmatch.review.presentation.response.*;
+import com.solo.ptmatch.statistics.application.TrainerPopularityStatsService;
 import com.solo.ptmatch.trainer.domain.TrainerProfile;
 import com.solo.ptmatch.trainer.infrastructure.TrainerProfileRepository;
 import com.solo.ptmatch.user.domain.User;
 import com.solo.ptmatch.user.infrastructure.UserRepository;
+import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ public class ReviewService {
     private final MatchingRepository matchingRepository;
     private final ReviewRepository reviewRepository;
     private final TrainerProfileRepository trainerProfileRepository;
+    private final TrainerPopularityStatsService trainerPopularityStatsService;
 
     @Transactional(readOnly = true)
     public Page<TrainerReviewSummaryResponse> getMyTrainerReviews(String userEmail, Pageable pageable) {
@@ -70,11 +73,13 @@ public class ReviewService {
             throw GlobalException.of(ErrorCode.REVIEW_ALREADY_EXISTS);
         }
 
+        TrainerProfile trainerProfile = matching.getTrainerProfile();
         Review review = Review.create(matching, request.rating(), request.content());
-        // 평균 평점 계산 및 리뷰 수 증가
-        matching.getTrainerProfile().addReviewRating(request.rating());
+        trainerProfile.addReviewRating(request.rating());
 
         reviewRepository.save(review);
+        BigDecimal globalAverageRating = trainerPopularityStatsService.applyReviewCreated(trainerProfile.getSportType(), request.rating());
+        trainerProfile.recalculatePopularityScore(globalAverageRating);
 
         return ReviewCreateResponse.of(review.getId());
     }
@@ -88,8 +93,13 @@ public class ReviewService {
         Review review = reviewRepository.findByIdAndMatchingUserId(reviewId, user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.REVIEW_NOT_FOUND));
 
-        review.getMatching().getTrainerProfile().updateReviewRating(review.getRating(), request.rating());
+        TrainerProfile trainerProfile = review.getMatching().getTrainerProfile();
+        int oldRating = review.getRating();
+
+        trainerProfile.updateReviewRating(oldRating, request.rating());
         review.update(request.rating(), request.content());
+        BigDecimal globalAverageRating = trainerPopularityStatsService.applyReviewUpdated(trainerProfile.getSportType(), oldRating, request.rating());
+        trainerProfile.recalculatePopularityScore(globalAverageRating);
 
         return ReviewUpdateResponse.from(review);
     }
@@ -103,8 +113,13 @@ public class ReviewService {
         Review review = reviewRepository.findByIdAndMatchingUserId(reviewId, user.getId())
                 .orElseThrow(() -> GlobalException.of(ErrorCode.REVIEW_NOT_FOUND));
 
-        review.getMatching().getTrainerProfile().deleteReviewRating(review.getRating());
+        TrainerProfile trainerProfile = review.getMatching().getTrainerProfile();
+        int rating = review.getRating();
+
+        trainerProfile.deleteReviewRating(rating);
 
         reviewRepository.delete(review);
+        BigDecimal globalAverageRating = trainerPopularityStatsService.applyReviewDeleted(trainerProfile.getSportType(), rating);
+        trainerProfile.recalculatePopularityScore(globalAverageRating);
     }
 }
