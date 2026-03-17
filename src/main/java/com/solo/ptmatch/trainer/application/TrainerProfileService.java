@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.solo.ptmatch.common.util.S2Util;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -113,10 +114,9 @@ public class TrainerProfileService {
     }
 
     @Transactional(readOnly = true)
-    public List<TrainerSummaryResponse> getPopularTrainers(double latitude, double longitude, double radiusMeters,
-                                                           int limit) {
-        List<TrainerProfile> trainers = trainerProfileRepository.findPopularTrainersNearby(latitude, longitude,
-                radiusMeters, limit);
+    public List<TrainerSummaryResponse> getPopularTrainers(SportType sportType, double latitude, double longitude, int limit) {
+        List<TrainerProfile> trainers = trainerProfileRepository.findPopularTrainersNearbyByS2CellIdInV2(sportType.name(), buildCandidateCellIds(latitude, longitude), limit);
+
         return trainers.stream()
                 .map(TrainerSummaryResponse::from)
                 .toList();
@@ -329,5 +329,14 @@ public class TrainerProfileService {
                 .filter(user -> !user.getId().equals(profile.getUser().getId()))
                 .map(user -> trainerLikeRepository.existsByUserIdAndTrainerProfileId(user.getId(), profile.getId()))
                 .orElse(false);
+    }
+
+    private List<Long> buildCandidateCellIds(double latitude, double longitude) {
+        Long currentCellId = S2Util.calculateS2CellId(latitude, longitude);
+        List<Long> neighborCellIds = S2Util.getNeighborCellIds(currentCellId);
+        List<Long> candidateCellIds = new ArrayList<>(neighborCellIds.size() + 1);
+        candidateCellIds.add(currentCellId);
+        candidateCellIds.addAll(neighborCellIds);
+        return candidateCellIds;
     }
 }

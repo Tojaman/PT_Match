@@ -5,6 +5,7 @@ import com.solo.ptmatch.common.response.PageResponse;
 import com.solo.ptmatch.product.presentation.request.PresignedUrlRequest;
 import com.solo.ptmatch.product.presentation.response.PresignedUrlResponse;
 import com.solo.ptmatch.trainer.application.TrainerProfileService;
+import com.solo.ptmatch.trainer.domain.SportType;
 import com.solo.ptmatch.trainer.presentation.request.TrainerProfileUpsertRequest;
 import com.solo.ptmatch.trainer.presentation.request.TrainerSearchRequest;
 import com.solo.ptmatch.trainer.presentation.response.TrainerDetailResponse;
@@ -13,8 +14,6 @@ import com.solo.ptmatch.trainer.presentation.response.TrainerSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -51,11 +50,11 @@ public class TrainerProfileController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "인기 트레이너 조회 성공")
         @GetMapping("/popular")
         public ResponseEntity<ApiResponse<List<TrainerSummaryResponse>>> getPopularTrainers(
+                        @RequestParam SportType sportType,
                         @RequestParam double lat,
                         @RequestParam double lon,
-                        @RequestParam(defaultValue = "10000") double radiusMeters,
                         @RequestParam(defaultValue = "8") int limit) {
-                List<TrainerSummaryResponse> trainers = trainerProfileService.getPopularTrainers(lat, lon, radiusMeters, limit);
+                List<TrainerSummaryResponse> trainers = trainerProfileService.getPopularTrainers(sportType, lat, lon, limit);
                 return ResponseEntity.ok(ApiResponse.success(trainers));
         }
 
